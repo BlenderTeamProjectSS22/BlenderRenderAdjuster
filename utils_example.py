@@ -1,5 +1,5 @@
 """
-Example script which creates a simple scene with a monkey.
+Example script which creates a simple scene.
 To run, execute 
 
 blender --background --python ./utils_example.py
@@ -11,6 +11,7 @@ in shell.
 import bpy
 import os
 import sys
+import importlib
 
 sys.path.append(os.getcwd())
 
@@ -18,16 +19,16 @@ from utils import *
 
 clear_scene()
 
-bpy.ops.mesh.primitive_monkey_add()
-monkey = bpy.context.object
+tower = import_mesh("assets/STL samples/eiffel_tower.stl")
 
-scene = bpy.context.scene
-camera = add_camera(monkey, 6)
+myScene = bpy.context.scene
+myCamera = OrbitCam(tower)
+myCamera.set_distance(6)
+myCamera.rotate_z(150)
+myCamera.rotate_x(30)
 
-set_output_properties(scene)
-set_cycles_renderer(scene, camera)
+myRenderer = Renderer(myScene, myCamera.camera)
+myRenderer.set_output_properties()
+myRenderer.set_eevee()
 
-rotate_view_z(camera, 150)
-rotate_view_x(camera, 30)
-
-render()
+myRenderer.render()
