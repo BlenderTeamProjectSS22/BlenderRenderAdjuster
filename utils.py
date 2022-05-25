@@ -42,6 +42,14 @@ class OrbitCam:
         self.controller.name = self.camera.name + "_controller"
         bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
         self.camera.parent = bpy.context.object
+  
+    
+    #returns cube object which controlls rotation
+    def get_controller(self) -> bpy.types.Object:
+        return self.controller
+    
+    def get_location(self) -> (float, float, float):
+        return self.camera.location
     
     #rotate camera position around object and global z axis
     #angle: degrees
@@ -52,6 +60,9 @@ class OrbitCam:
     #angle: degrees
     def rotate_x(self, angle: float) -> None:
         self.controller.rotation_euler[0] += radians(angle)
+    
+    def get_distance(self) -> float:
+        return self.distance_constraint.distance
     
     #set distance between camera and object  
     #distance: meters
