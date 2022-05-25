@@ -1,125 +1,146 @@
 import bpy
 import math
 
-#Lichtklasse mit Attributen:
-#---name=Name des Lichts
-#---type=Typ des Lichts(POINT,SUN,SPOT,AREA)
-#---xLoxation=Die x-Koordinate
-#---yLoxation=Die y-Koordinate
-#---zLoxation=Die z-Koordinate
-#---brightness=Die Lichtstärke
-#------color=Die Farbe des Lichts in rgb (Wertebereich [0;1]) (default ist [1,1,1])
+#light class with attributes:
+#---name=name of the light
+#---type=type of the light(POINT,SUN,SPOT,AREA)
+#---xLoxation=the x-coordinate
+#---yLoxation=the y-coordinate
+#---zLoxation=the z-coordinate
+#---brightness=the strength of the light
+#------color=the color of the light in rgb (values are [0;1]) (default is [1,1,1])
 class Light:
-    def __init__(self, name , type, xLocation, yLocation, zLocation, brightness):
+    def __init__(self, name: str, type: str, xLocation: float,
+                 yLocation: float, zLocation: float, brightness: float):
         self._name = name
         self._type = type
-        self._xLocation = xLocation
-        self._yLocation = yLocation
-        self._zLocation = zLocation
-        self._brightness = brightness
         self._color = [1, 1, 1]
         self._light_data=bpy.data.lights.new(name=name,type=self._type)
-        self._light_data.energy=self._brightness
+        self.setBrightness(brightness)
         self._light_data.color=(self._color[0],self._color[1],self._color[2])
         self._Licht = bpy.data.objects.new(name,object_data=self._light_data)
         bpy.context.collection.objects.link(self._Licht)
         bpy.context.view_layer.objects.active = self._Licht
-        #setzt die Position des lichts
-        self._Licht.location = (self._xLocation, self._yLocation, self._zLocation)  
+        #set the light position
+        self.setPosition(xLocation, yLocation, zLocation)  
     
-    #gibt die Position des Lichts als [x,y,z]-Array zurück
+    #get the position in [x,y,z]-array 
     def getPosition(self):
         return [self._xLocation, self._yLocation, self._zLocation]
 
-    #setzt die Position des Lichts in (x,y,z)
+    #set the position in (x,y,z)
     def setPosition(self, xLocation, yLocation, zLocation):
         self._xLocation = xLocation
         self._yLocation = yLocation
         self._zLocation = zLocation
         self._Licht.location = (self._xLocation, self._yLocation, self._zLocation)
 
-    #gibt den Namen des Lichts zurück
+    #get the name
     def getName(self):
         return self._name
 
-    #bennent das Licht in "name" um
+    #rename the light to "name"
     def rename(self, name):
         self._name=name
         self._light_data.name=name
         self._Licht.name=name
 
-    #gibt den Typ des Lichts zurück
+    #get the typ of light
     def getType(self):
         return self._type
 
-    #setzt den Typ des Lichts
+    #set the type of light
     def setType(self, newType):
         if newType == "SUN" or newType == "POINT" or newType == "AREA" or newType == "SPOT":
             self._type = newType
             self._light_data.type=newType
         else:
-            print(" Typ: "+ newType + " is not a valid type")
+            print(str(self._name)+": type: "+ str(newType) + " is not a valid type")
     
-    #gibt die Lichtstärke zurück
+    #get the brightness
     def getBrightness(self):
-        return self._type
+        return self._brightness
 
-    #setzt die Lichtstärke
+    #set the brightness
     def setBrightness(self, newBrigthness):
-        if newBrigthness >= 0:
-            self._brightness = newBrigthness
-            self._light_data.energy=self._brightness
+        if newBrigthness >= 0:            
+            self._brightness = newBrigthness           
         else:
-            print(" Helligkeit: "+ newBrigthness + " is not a valid")
+            print(str(self._name)+": brightness: only positiv values allowed")
+            self._brightness = 0
+        self._light_data.energy=self._brightness
+            
     
-    #setzt die Farbe (Wertebereich [0;1])
+    #set the color (values are [0;1])
     def setColor(self, red, green, blue):
         if (red < 0 or red > 1 or green < 0 or
             green > 1 or blue < 0 or blue > 1):
-            print(" Farbe: nur Werte im Wertebereich [0;1] erlaubt")
+            print(str(self._name)+": color: only values in [0;1] allowed")
         else:
             self._color = [red, green, blue]
             self._light_data.color=(self._color[0],self._color[1],self._color[2])
     
-    #gibt die Farbe zurück
+    #get the color as [r,g,b]-array with values [0;1]
     def getColor(self):
         return self._color
 
-#PointLight = eine Subklasse von Licht mit zusätzlichen Attributen
-#---radius=der Radius des Punktes
-#Typ wird nicht angegeben
+#PointLight = a subclass of light with extra attributes
+#---radius=the Radius of the point
+#type is not an input
 class PointLight(Light):
-    def __init__(self, name, xLocation, yLocation, zLocation, brightness, radius):
+    def __init__(self, name: str, xLocation: float, yLocation: float,
+                 zLocation: float, brightness: float, radius: float):
         super().__init__(name, "POINT", xLocation, yLocation, zLocation, brightness)
-        self._radius = radius
-        self._light_data.shadow_soft_size=radius
+        self.setRadius(radius)
     
-    #setzt den Radius (nur positive Werte erlaubt)
-    def setRadius(self, newRadius):
+    #set the radius (only positiv values allowed)
+    def setRadius(self, newRadius: float):
         if (newRadius < 0):
-            print(" Radius: nur positive Werte erlaubt")
+            print(str(self._name)+": radius: only positiv values allowed")
+            self._radius = 0.25
         else:
             self._radius = newRadius
-            self._light_data.shadow_soft_size=newRadius
+        self._light_data.shadow_soft_size=newRadius
 
-    #gibt den Radius zurück
+    #get the radius
     def getRadius(self):
-        return self._color
+        return self._radius
 
-###Zu Testzwecken
+#RotateLight = a subclass of light with rotation
+#---xRotation=the x-rotation
+#---yRotation=the y-rotation
+#---zRotation=the z-rotation
+class RotateLight(Light):
+    def __init__(self, name: str, type: str, xLocation: float, yLocation: float, zLocation: float,
+                 xRotation: float, yRotation: float, zRotation: float, brightness: float):
+        super().__init__(name, type, xLocation, yLocation, zLocation, brightness)
+        self.setRotation(xRotation, yRotation, zRotation)
+    
+    #set the rotation
+    def setRotation(self, xRotation: float, yRotation: float, zRotation: float):
+        self._xRotation = xRotation
+        self._yRotation = yRotation
+        self._zRotation = zRotation
+        self._Licht.rotation_euler = (self._xRotation, self._yRotation, self._zRotation)
+
+    #get the rotation as [x,y,z]-array
+    def getRotation(self):
+        return [self._xRotation, self._yRotation, self._zRotation]
+
+###for testing
 
 ##Variabeln
 #
-##Einschlagswinkel des Sonnenlichts
-#winkel=80
-##Entfernung des Sonnenlichts
+##angle of the light
+#winkel=10
+##distance of the light
 #radius=20
-##Lichtstärke des Sonnenlichts
+##brightness of the light
 #sun_brightness=3
-##Farbe
+##color
 #color=[0.001,0.044,0.107]
 
-##Lösche alle Testlichter
+##delete all test lights
 #bpy.ops.object.select_all(action='DESELECT')
 #if bpy.context.scene.objects.get('Sonne'):
 #    bpy.data.objects['Sonne'].select_set(True)
@@ -128,7 +149,7 @@ class PointLight(Light):
 ## delete all selected objects
 #bpy.ops.object.delete()
 
-##Testlichter
+##test lights
 #l1=Light("Sonne", "SUN",radius*math.sin(math.radians(10)),
 #         radius*math.cos(math.radians(winkel)),
 #         radius*math.sin(math.radians(winkel)),
@@ -141,6 +162,12 @@ class PointLight(Light):
 #l1.setType("POINT")
 #l2=PointLight("fill",-14,16,0.3,3000,2)
 #l2.setRadius(5)
+#l3=RotateLight("Sonne","SUN",radius*math.sin(math.radians(10)),
+#            radius*math.cos(math.radians(winkel)),
+#            radius*math.sin(math.radians(winkel)),
+#            0,0,0,
+#            -4)
+#l3.setRotation(-math.cos(math.radians(winkel)),math.sin(math.radians(10)),0)
 
 ## update scene, if needed
 #dg = bpy.context.evaluated_depsgraph_get() 
