@@ -44,7 +44,35 @@ def apply_emissive(obj, strength: float = 5) -> None:
 	# The following will set the emission color, but somehow I need to get the current color set in the UI
 	#obj.active_material.node_tree.nodes["Principled BSDF"].inputs["Emission"].default_value = 
 	
+# Create and return a bump material to an object, with adjustable scale and detail level of the noise
+def bump_material(scale: float = 5, detail: float = 2) -> bpy.types.Material:
+	bump_mat = bpy.data.materials.new(name="BumpMaterial")
+	bump_mat.use_nodes = True
+
+	nodes = bump_mat.node_tree.nodes
+	links = bump_mat.node_tree.links
+
+	noise = nodes.new(type="ShaderNodeTexNoise")
+	bump = nodes.new(type="ShaderNodeBump")
+	bsdf = nodes.get("Principled BSDF")
+	material_output = nodes.get("Material Output")
+	
+	links.new(noise.outputs[1], bump.inputs[2]) # Connect Noise Color output to Bump Height input
+	links.new(bump.outputs[0], bsdf.inputs[20]) # Connect Bump Normal output to Normal input of BDSF
+	
+	# Set scale and detail properties of the noise
+	noise.inputs[2].default_value = scale	# Scale
+	noise.inputs[3].default_value = detail	# Detail
+	
+	return bump_mat
 
 
+# Apply a stone like material to an object
+def apply_stone(obj):
+	stone = bump_material(5, 10)
 
+	obj.data.materials.append(stone)
+	obj.active_material = stone
+	
+	set_base_color(obj, (0.345151, 0.345151, 0.345151, 1) )  # Set color to light gray
 	
