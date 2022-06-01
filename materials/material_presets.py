@@ -12,6 +12,11 @@ def set_roughness(obj: object, roughness : int) -> None:
 def set_metallic(obj: object, metallic : int) -> None:
     obj.active_material.metallic = metallic
 	obj.active_material.node_tree.nodes["Principled BSDF"].inputs[4].default_value = metallic
+
+# Change the color of an object
+# Requires a float array with length 4, (r,g,b,alpha)
+def set_base_color(obj: object, color: Vector) -> None:
+    obj.active_material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = color
 	
 # Apply a transparent glass material to an object
 def apply_glass(obj) -> None:
