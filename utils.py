@@ -21,7 +21,7 @@ class OrbitCam:
         default_distance = 6 #chosen so that camera frame approx. corresponds to center unit box
 
         self.target = target
-        bpy.ops.object.camera_add(location=(target.location[0], target.location[1] + default_distance, target.location[2]))
+        bpy.ops.object.camera_add(location=(target.location[0] + default_distance, target.location[1], target.location[2]))
         self.camera = bpy.context.object
 
         #add limit_distance_constraint to control distance from camera to object
@@ -93,14 +93,20 @@ class Renderer:
     #configure output parameters
     def set_output_properties(self,
                               resolution_percentage: int = 100,
-                              output_file_path: str = os.getcwd() + "/renders/result.png",
+                              output_file_path: str = os.getcwd() + "/renders/result",
                               res_x: int = 1920,
-                              res_y: int = 1080) -> None:
+                              res_y: int = 1080,
+                              animation: bool = False) -> None:
         self.scene.render.resolution_percentage = resolution_percentage
         self.scene.render.resolution_x = res_x
         self.scene.render.resolution_y = res_y
-        self.scene.render.image_settings.file_format = 'PNG'
         self.scene.render.filepath = output_file_path
+        self.animation = animation
+        if animation:
+            self.scene.render.image_settings.file_format = 'FFMPEG'
+        else:
+            self.scene.render.image_settings.file_format = 'PNG'
+            
             
     #choose cycles engine and configure parameters
     def set_cycles(self,
@@ -125,7 +131,13 @@ class Renderer:
 
     #render image to configured output destination 
     def render(self) -> None:
-        bpy.ops.render.render(write_still=True)
+        bpy.ops.render.render(write_still=True, animation=self.animation)
+
+
+
+        
+                     
+                 
 
 
 #some other useful functions:
@@ -153,4 +165,3 @@ def import_mesh(filepath: str) -> bpy.types.Object:
 def scale_to_unit_cube(obj: bpy.types.Object) -> None:
     obj.dimensions = obj.dimensions / max(obj.dimensions) * 2 #downscaling
     bpy.ops.object.origin_set(type='GEOMETRY_ORIGIN', center='BOUNDS') #align object's bounding box' center and origin
-    

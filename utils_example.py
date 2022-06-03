@@ -4,7 +4,7 @@ To run, execute
 
 blender --background --python ./utils_example.py
 
-in shell.
+in shell.o
 
 """
 
@@ -19,16 +19,19 @@ from utils import *
 
 clear_scene()
 
-tower = import_mesh("assets/STL samples/eiffel_tower.stl")
+tower = import_mesh("assets/STL samples/Eiffel_tower.stl")
 
 myScene = bpy.context.scene
 myCamera = OrbitCam(tower)
 myCamera.set_distance(6)
+
+myRenderer = Renderer(myScene, myCamera.camera)
+myRenderer.set_output_properties()    # animation=True would render video
+myRenderer.set_cycles()
+
 myCamera.rotate_z(150)
 myCamera.rotate_x(30)
 
-myRenderer = Renderer(myScene, myCamera.camera)
-myRenderer.set_output_properties()
-myRenderer.set_eevee()
-
 myRenderer.render()
+
+print(myCamera.get_location())
