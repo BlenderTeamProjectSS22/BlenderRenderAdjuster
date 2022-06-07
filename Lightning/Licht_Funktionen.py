@@ -59,6 +59,9 @@ def creatingFillAndRimLight(radius_rim: float, brightness_rim: float,
                     20 * math.cos(rimLightAngle),
                     20 * math.sin(math.radians(170)),
                     brightness_fill, 5)
+        #link lights to controller
+        rim.getDatas()[1].parent = cameraObject.get_controller()  
+        fill.getDatas()[1].parent = cameraObject.get_controller()     
     #if camera is not used
     else:
         #creating Lights
@@ -67,20 +70,6 @@ def creatingFillAndRimLight(radius_rim: float, brightness_rim: float,
                         radius_rim*math.sin(math.radians(170)),
                         brightness_rim, 0.25)
     return [fill, rim]
-
-###not good tested
-#applies the new location of the camera and the lights
-def fitLightLocation(cameraObject: object, rimLight: PointLight, fillLight: PointLight) -> None:
-    #values
-    rimLightAngle = math.asin(cameraObject.get_location()[0] / cameraObject.get_distance())
-    radius_rim = radiusOfLightObject(rimLight)
-    #creating lights
-    rimLight.setPosition(-radius_rim * math.sin(rimLightAngle),
-                         -radius_rim * math.cos(rimLightAngle),
-                         oldPosition[2])
-    fillLight.setPosition(20 * math.sin(rimLightAngle),
-                          20 * math.cos(rimLightAngle),
-                          fillLight.getPosition()[2])
 
 #creating the daylight (plus rim- and fill-Licht if addFillAndRimLight = True)
 #returns an array of all objects
@@ -277,16 +266,12 @@ def DayNightCircle(startingTime: int, brightness: float,
 
 ##test functions
 #deleteAllLights()
-#Nightlight(1, 50, True, None)
+#Nightlight(1, 50, True, myCamera)
 #deleteLights(Nightlight(1, 90, True, None))
 #lights = Daylight(1, 180, True, None)
 #Laternlight(1, 20, True, None)
 #DayNightCircle(12, 1, True, None)
-
-##not good tested
-#myCamera.rotate_z(2)
-#fitLightLocation(myCamera, lights[2])
-#myCamera.rotate_x(90)
+#myCamera.rotate_z(270)
 
 # update scene, if needed
 dg = bpy.context.evaluated_depsgraph_get() 
