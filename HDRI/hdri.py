@@ -46,11 +46,11 @@ class Background:
         self.mapping_node.inputs["Rotation"].default_value[1] += radians(angle)
 
     # static function to set the background brightness (parameter has to be a positiv value)
-    def setBrightness(self, newStrength : float) -> None:
-        if newStrength == None:
+    def set_brightness(self, new_strength : float) -> None:
+        if new_strength == None:
             print("setBackgroundStrength: parameter is None")
-        elif newStrength < 0:
+        elif new_strength < 0:
             print("Background strength can only have positiv values")
         else:
-            self.world.node_tree.nodes['Background'].inputs[1].default_value = newStrength
+            self.world.node_tree.nodes['Background'].inputs[1].default_value = new_strength
 
