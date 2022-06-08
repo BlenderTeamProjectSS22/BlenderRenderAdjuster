@@ -44,3 +44,13 @@ class Background:
     # angle: degree, image moves down if positive
     def pan_vertical(self, angle: float) -> None:
         self.mapping_node.inputs["Rotation"].default_value[1] += radians(angle)
+
+    # static function to set the background brightness (parameter has to be a positiv value)
+    def setBrightness(self, newStrength : float) -> None:
+        if newStrength == None:
+            print("setBackgroundStrength: parameter is None")
+        elif newStrength < 0:
+            print("Background strength can only have positiv values")
+        else:
+            self.world.node_tree.nodes['Background'].inputs[1].default_value = newStrength
+
