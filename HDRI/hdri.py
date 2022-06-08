@@ -1,3 +1,12 @@
+"""
+author: Romain Carl
+created on: 03/06/2022
+edited by:
+
+description:
+A class that allows setting an HDRI image as world texture
+"""
+
 import bpy
 from math import radians
 
@@ -21,16 +30,18 @@ class Background:
         self.mapping_node = mapping_node
         
         self.set_image(hdri_path)
-        
+    
+    #sets the background image to image specified by hdri_path    
     def set_image(self, hdri_path: str) -> None:
         self.environment_texture_node.image = bpy.data.images.load(hdri_path)
         
-    #degree, + -> image goes to the right
+    #rotates background image around global Z axis
+    #angle: degree, image moves to the right if positive
     def pan_horizontal(self, angle: float) -> None:
         self.mapping_node.inputs["Rotation"].default_value[2] += radians(angle)
         
-    #rotates around global Y axis
-    #can only be sensibly used when camera is on X axis
-    #degree, + -> image goes down
+    #rotates background image around global Y axis
+    #can only be sensibly used when camera is located on X axis
+    #angle: degree, image moves down if positive
     def pan_vertical(self, angle: float) -> None:
         self.mapping_node.inputs["Rotation"].default_value[1] += radians(angle)
