@@ -32,6 +32,7 @@ myRenderer.set_cycles()
 myCamera.rotate_z(150)
 myCamera.rotate_x(30)
 
+export_blend("renders/export.blend")
 myRenderer.render()
 
 print(myCamera.get_location())
