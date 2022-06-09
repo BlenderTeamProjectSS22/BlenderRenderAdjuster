@@ -67,10 +67,7 @@ def pan_background_vertical(angle: float) -> None:
 # new_strength < 1: background will appear darker than normal
 # new_strength > 1: background will appear brighter than normal
 def set_background_brightness(new_strength : float) -> None:
-    if new_strength == None:
-        print("setBackgroundStrength: parameter is None")
-    elif new_strength < 0:
-        print("Background strength can only have positiv values")
-    else:
-        self.world.node_tree.nodes['Background'].inputs[1].default_value = new_strength
+    assert new_strength != None and new_strength > 0
+    world = bpy.data.worlds["World"]
+    self.world.node_tree.nodes["Background"].inputs[1].default_value = new_strength
 
