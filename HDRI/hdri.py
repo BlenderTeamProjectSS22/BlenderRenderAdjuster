@@ -38,9 +38,12 @@ def remove_background_image() -> None:
     world = bpy.data.worlds["World"]
     environment_texture_node = world.node_tree.nodes["Environment Texture"]
     link = environment_texture_node.outputs["Color"].links[0]
-    
     world.node_tree.links.remove(link)
-        
+    
+    image = world.node_tree.nodes["Environment Texture"].image
+    image.user_clear()
+    bpy.data.images.remove(image)
+
 # rotates background image around global Z axis
 # angle: degree, image moves to the right if positive
 def pan_background_horizontal(angle: float) -> None:
