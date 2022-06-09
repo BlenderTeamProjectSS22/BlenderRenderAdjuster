@@ -15,6 +15,7 @@ import webbrowser
 import enum
 
 from render_preview import RenderPreview
+from gui_options import SettingsWindow
 
 class ProgramGUI:
     def __init__(self, master):
@@ -102,7 +103,7 @@ class LeftPanel(Frame):
         pass
     
     def open_settings_window(self):
-        pass
+        settings = SettingsWindow(self.master)
     
     def check_update(self):
         # TODO-END Update check, will need an online server or resources hosted at Github
