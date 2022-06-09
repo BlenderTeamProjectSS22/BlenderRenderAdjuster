@@ -1,9 +1,9 @@
 # author: Romain Carl
 # created on: 03/06/2022
-# edited by:
+# edited by: Romain Carl
 
 # description:
-# A class that allows setting an HDRI image as world texture
+# A set of fuction that allows setting an HDRI image as world texture
 
 
 import bpy
