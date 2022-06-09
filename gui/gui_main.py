@@ -6,10 +6,12 @@
 # GUI element: Main program, renders the GUI and connects it to other function
 
 import tkinter as tk
-from tkinter import Frame, Label, Button, StringVar, Checkbutton, OptionMenu, Scale, Canvas, Entry
+from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
+from tkinter import filedialog
 
+import webbrowser
 import enum
 
 from render_preview import RenderPreview
@@ -70,10 +72,22 @@ class LeftPanel(Frame):
         frame_ops.pack()
     
     def import_model(self):
-        pass
+        filetypes = [
+            ("PLY object", "*.ply"),
+            ("STL file", "*.stl")
+            #("Wavefront OBJ", "*.obj")
+        ]
+        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
+        # TODO Import the file using utils.py
+        
     
     def export_model(self):
-        pass
+        filename = filedialog.asksaveasfile(
+            title="Save model at",
+            initialfile = "untitled.blend",
+            defaultextension=".blend",
+            filetypes=[("Blender project","*.blend")])
+        # TODO Save the current scene in memory as a .blend file
     
     def render_image(self):
         pass
@@ -91,10 +105,11 @@ class LeftPanel(Frame):
         pass
     
     def check_update(self):
+        # TODO-END Update check, will need an online server or resources hosted at Github
         pass
     
     def open_help_page(self):
-        pass
+        webbrowser.open_new_tab("https://github.com/garvita-tiwari/blender_render/wiki")
         
 
 class CameraControls(Frame):
@@ -108,13 +123,19 @@ class CameraControls(Frame):
 class ColorMeshWidgets(Frame):
     def __init__(self, master):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
+        
+        self.current_color = None
+        
         lbl_look    = Label(master=self, text="Look", font="Arial 10 bold")
         lbl_color   = Label(master=self, text="Color")
         btn_picker  = Button(master=self, text="pick", command=self.pick_color)
         lbl_type    = Label(master=self, text="Type")
-        check_vertc = Checkbutton(master=self, text="Vertex color", anchor="w", command=self.switch_vertex_color)
-        check_mesh  = Checkbutton(master=self, text="Full mesh", anchor="w", command=self.switch_mesh)
-        check_point = Checkbutton(master=self, text="Point cloud", anchor="w", command=self.switch_pointcloud)
+        self.vertc = BooleanVar()
+        self.mesh  = BooleanVar()
+        self.point = BooleanVar()
+        check_vertc = Checkbutton(master=self, text="Vertex color", variable=self.vertc, anchor="w", command=self.switch_vertex_color)
+        check_mesh  = Checkbutton(master=self, text="Full mesh", variable=self.mesh, anchor="w", command=self.switch_mesh)
+        check_point = Checkbutton(master=self, text="Point cloud", variable=self.point, anchor="w", command=self.switch_pointcloud)
         lbl_look.grid(row=0, column=0, columnspan=2)
         lbl_color.grid(row=1, column=0)
         lbl_type.grid(row=1, column=1)
@@ -131,10 +152,16 @@ class ColorMeshWidgets(Frame):
         pass
     
     def switch_mesh(self):
-        pass
+        if self.mesh.get():
+            self.point.set(False)
+        else:
+            self.point.set(True)
     
     def switch_pointcloud(self):
-        pass
+        if self.point.get():
+            self.mesh.set(False)
+        else:
+            self.mesh.set(True)
 
 class MaterialWidgets(Frame):
     def __init__(self, master):
@@ -146,11 +173,17 @@ class MaterialWidgets(Frame):
         mat_selected.set("default")
         lbl_materials = Label(master=self, text="Material selection", font="Arial 10 bold")
         lbl_metallic = Label(master=self, text="Metallic")
-        self.ent_metallic = Entry(master=self, width=10)
         lbl_roughness = Label(master=self, text="Roughness")
-        self.ent_roughness = Entry(master=self, width=10)
-        slider_metallic = Scale(master=self, orient="horizontal", showvalue=False, command=self.set_metallic)
-        slider_roughness  = Scale(master=self, orient="horizontal", showvalue=False,  command=self.set_roughness)
+        
+        validate_int = self.register(self.validate_integer)
+        self.ent_metallic = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
+        self.ent_metallic.bind('<Return>', self.set_metallic_input)
+        self.ent_roughness = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
+        self.ent_roughness.bind('<Return>', self.set_roughness_input)
+        
+        self.slider_metallic = Scale(master=self, orient="horizontal", showvalue=False, command=self.set_metallic)
+        self.slider_roughness  = Scale(master=self, orient="horizontal", showvalue=False, command=self.set_roughness)
+        
         lbl_sel_mat   = Label(master=self, text="Select:")
         materials = ("default", Materials.GLASS.value, Materials.EMISSIVE.value, Materials.STONE.value)
         dropdown_materials = OptionMenu(self, mat_selected, *materials, command=self.set_material)
@@ -158,26 +191,58 @@ class MaterialWidgets(Frame):
         lbl_materials.grid(row=0, column=0, columnspan=2, sticky="we")
         lbl_metallic.grid(row=1, column=0, sticky="we")
         self.ent_metallic.grid(row=1, column=1, sticky="w")
-        slider_metallic.grid(row=2, column=0, sticky="we", columnspan=2)
+        self.slider_metallic.grid(row=2, column=0, sticky="we", columnspan=2)
         lbl_roughness.grid(row=3, column=0, sticky="we")
         self.ent_roughness.grid(row=3, column=1, sticky="w")
-        slider_roughness.grid(row=4, column=0, sticky="we", columnspan=2)
+        self.slider_roughness.grid(row=4, column=0, sticky="we", columnspan=2)
         lbl_sel_mat.grid(row=5, column=0, sticky="w")
         dropdown_materials.grid(row=5, column=1, sticky="w")
         
         # default starting value
-        slider_metallic.set(0)
         self.set_metallic(0)
-        slider_roughness.set(50)
         self.set_roughness(50)
     
+    def validate_integer(self, P):
+        # TODO This prevents deleting e.g. '5', because field can't be empty
+        # Implement that it sets it to 0 automatically if last digit is deleted
+        if str.isdigit(P) or P == "":
+            return True
+        else:
+            return False
+    
     def set_material(self, *args):
-        pass
+        mat = Materials(args[0])
+        if mat == Materials.GLASS:
+            pass
+        elif mat == Materials.STONE:
+            pass
+        elif mat == Materials.EMISSIVE:
+            pass
+        else: #default
+            pass
+    
+    def set_metallic_input(self, event):
+        x = 0
+        if self.ent_metallic.get() != "":
+            x = clamp(int(self.ent_metallic.get()), 0, 100)
+        self.set_metallic(x)
+        
+    def set_roughness_input(self, event):
+        x = 0
+        if self.ent_roughness.get() != "":
+            x = clamp(int(self.ent_roughness.get()), 0, 100)
+        self.set_roughness(x)
     
     def set_metallic(self, value):
+        self.ent_metallic.delete(0, tk.END)
+        self.ent_metallic.insert(tk.END, value)
+        self.slider_metallic.set(value)
         pass
     
     def set_roughness(self, value):
+        self.ent_roughness.delete(0, tk.END)
+        self.ent_roughness.insert(tk.END, value)
+        self.slider_roughness.set(value)
         pass
 
 # Enum containing all possible materials
@@ -185,6 +250,11 @@ class Materials(enum.Enum):
     GLASS = "glass"
     STONE = "stone"
     EMISSIVE = "emissive"
+
+# Clamps a value to the range of mimimum to maximum
+# TODO Move to other module?
+def clamp(val, minimum, maximum):
+    return min(max(val, minimum), maximum)
 
 class TextureWidgets(Frame):
     def __init__(self, master):
@@ -207,10 +277,20 @@ class TextureWidgets(Frame):
         dropdown_textures.grid(row=2, column=1, sticky="we")
     
     def set_texture(self, *args):
-        pass
+        tex = Textures(args[0])
+        if tex == Textures.WOOD:
+            pass
+        elif tex == Textures.BRICKS:
+            pass
+        else: # NONE
+            pass
     
     def import_texture(self):
-        pass
+        filetypes = [
+            ("PNG image", "*.png"),
+        ]
+        filename = filedialog.askopenfilename(title="Select a texture", filetypes=filetypes)
+        # TODO Apply the texure to the object
         
         
 # Enum containing all possible textures
@@ -239,6 +319,7 @@ class LightingWidgets(Frame):
         btn_night.grid(row=2, column=1, sticky="we",pady=1)
     
     def set_brightness(self, value):
+        # TODO set brightness of the lights
         pass
         
     def set_day(self):
