@@ -6,9 +6,11 @@
 # GUI element: Main program, renders the GUI and connects it to other function
 
 import tkinter as tk
-from tkinter import Frame, Label, Button, StringVar, Checkbutton, OptionMenu, Scale, Canvas
+from tkinter import Frame, Label, Button, StringVar, Checkbutton, OptionMenu, Scale, Canvas, Entry
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
+
+import enum
 
 from render_preview import RenderPreview
 
@@ -36,6 +38,7 @@ class ProgramGUI:
 class LeftPanel(Frame):
     def __init__(self, master):
         Frame.__init__(self, master) # master or parent
+        self.master = master
         lbl_fileop = Label(master=self, text="File operations", font="Arial 10 bold")
         btn_import = Button(master=self, text="Import model")
         btn_export = Button(master=self, text="Export model")
@@ -106,14 +109,35 @@ class MaterialWidgets(Frame):
         mat_selected = StringVar(master)
         mat_selected.set("default")
         lbl_materials = Label(master=self, text="Material selection", font="Arial 10 bold")
+        lbl_metallic = Label(master=self, text="Metallic")
+        ent_metallic = Entry(master=self, width=10)
+        lbl_roughness = Label(master=self, text="Roughness")
+        ent_roughness = Entry(master=self, width=10)
+        slider_metallic = Scale(master=self, orient="horizontal", showvalue=False)
+        slider_roughness  = Scale(master=self, orient="horizontal", showvalue=False)
         lbl_sel_mat   = Label(master=self, text="Select:")
-        dropdown_materials = OptionMenu(self, mat_selected, "default", "glass", "emissive", "stone")
-        but_test = Button(master=self, text="Test")
+        materials = ("default", Materials.GLASS.value, Materials.EMISSIVE.value, Materials.STONE.value)
+        dropdown_materials = OptionMenu(self, mat_selected, *materials)
         #TODO: material_picker = MaterialPicker(self)
         lbl_materials.grid(row=0, column=0, columnspan=2, sticky="we")
-        lbl_sel_mat.grid(row=1, column=0, sticky="w")
-        dropdown_materials.grid(row=1, column=1, sticky="w")
+        lbl_metallic.grid(row=1, column=0, sticky="we")
+        ent_metallic.grid(row=1, column=1, sticky="w")
+        slider_metallic.grid(row=2, column=0, sticky="we", columnspan=2)
+        lbl_roughness.grid(row=3, column=0, sticky="we")
+        ent_roughness.grid(row=3, column=1, sticky="w")
+        slider_roughness.grid(row=4, column=0, sticky="we", columnspan=2)
+        lbl_sel_mat.grid(row=5, column=0, sticky="w")
+        dropdown_materials.grid(row=5, column=1, sticky="w")
+        
+        # default starting value
+        slider_metallic.set(0)
+        slider_roughness.set(50)
 
+# Enum containing all possible materials
+class Materials(enum.Enum):
+    GLASS = "glass"
+    STONE = "stone"
+    EMISSIVE = "emissive"
 
 class TextureWidgets(Frame):
     def __init__(self, master):
@@ -128,12 +152,19 @@ class TextureWidgets(Frame):
         lbl_textures = Label(master=self, text="Texture selection:", font="Arial 10 bold")
         btn_import_texture = Button(master=self, text="Import")
         lbl_sel_tex    = Label(master=self, text="Select:")
-        dropdown_textures = OptionMenu(self, tex_selected, "none", "wood", "bricks")
+        textures = (Textures.NONE.value, Textures.WOOD.value, Textures.BRICKS.value)
+        dropdown_textures = OptionMenu(self, tex_selected, *textures)
         lbl_textures.grid(row=0, column=0, columnspan=2, sticky="we")
         btn_import_texture.grid(row=1, column=0, columnspan=2, sticky="")
         lbl_sel_tex.grid(row=2, column=0, sticky="w")
         dropdown_textures.grid(row=2, column=1, sticky="we")
-
+        
+        
+# Enum containing all possible textures
+class Textures(enum.Enum):
+    NONE = "none"
+    WOOD = "wood"
+    BRICKS = "bricks"
 
 class LightingWidgets(Frame):
     def __init__(self, master):
@@ -147,7 +178,7 @@ class LightingWidgets(Frame):
         lbl_brightness = Label(master=self, text="Brightness")
         btn_day = Button(master=self, text="Day")
         btn_night = Button(master=self, text="Night")
-        slider_brightness = ttk.Scale(master=self, orient='horizontal')
+        slider_brightness = Scale(master=self, orient="horizontal", showvalue=False)
         lbl_light.grid(row=0, column=0, columnspan=2)
         lbl_brightness.grid(row=1, column=0, sticky="w")
         slider_brightness.grid(row=1, column=1,  sticky="we")
