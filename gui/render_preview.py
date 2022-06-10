@@ -18,7 +18,7 @@ class RenderPreview(Frame):
             self.canvas = tk.Canvas(self, width=self.w, height=self.h)
             self.canvas.pack(fill=tk.BOTH, expand=True)
             self.canvas.bind("<Configure>", self.conf)
-            self.image = Image.open("../assets/gui/preview_unavailable.png")
+            self.image = Image.open("assets/gui/preview_unavailable.png")
             self.img = ImageTk.PhotoImage(self.image)
             self.canvas_img = self.canvas.create_image(0, 0, anchor="nw", image=self.img)
             
@@ -42,8 +42,8 @@ class RenderPreview(Frame):
             # Resulting file must be called "preview.png"
             # Alternatively execute a render on each button change -> maybe better because render doesnt block updating
             try:
-                self.image = Image.open("../assets/gui/preview.png")
+                self.image = Image.open("assets/gui/preview.png")
             except FileNotFoundError:
-                self.image = Image.open("../assets/gui/preview_unavailable.png")
+                self.image = Image.open("assets/gui/preview_unavailable.png")
             self.resize(self.w, self.h)
             self.after(1000, self.reload)

@@ -1,2 +1,6 @@
 __pycache__/
 renders/
+build/
+dist/
+venv/
+.venv-blender
