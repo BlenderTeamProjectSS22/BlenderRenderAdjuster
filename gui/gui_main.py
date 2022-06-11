@@ -10,6 +10,7 @@ from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, Op
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter import filedialog
+from PIL import ImageTk, Image
 
 import webbrowser
 import enum
@@ -21,7 +22,8 @@ class ProgramGUI:
     def __init__(self, master):
         master.title("Render adjuster")
         master.minsize(107+184+480,307)
-        master.iconbitmap("assets/gui/icon.ico")
+        icon = ImageTk.PhotoImage(Image.open("assets/gui/icon.ico"))
+        master.iconphoto(True, icon)
         
         master.columnconfigure(0, weight=0, minsize=107)
         master.columnconfigure(1, weight=16)
