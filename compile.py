@@ -13,6 +13,17 @@
 # ---------------------------
 
 import subprocess
+import platform
 
-command = "pyinstaller --noconfirm main-windows.spec"
-process = subprocess.run(command)
+os = platform.system()
+if os == "Windows":
+    print("Compiling for Windows...")
+    command = "pyinstaller --noconfirm main-windows.spec"
+elif os == "Linux":
+    print("Compiling for Linux...")
+    command = "pyinstaller --noconfirm main-linux.spec"
+else:
+    print("You are running an unsupported operating system for building. (" + os + ")")
+    exit()
+
+process = subprocess.run(command, shell=True)
