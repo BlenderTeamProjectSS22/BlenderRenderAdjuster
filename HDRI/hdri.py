@@ -69,5 +69,5 @@ def pan_background_vertical(angle: float) -> None:
 def set_background_brightness(new_strength : float) -> None:
     assert new_strength != None and new_strength > 0
     world = bpy.data.worlds["World"]
-    self.world.node_tree.nodes["Background"].inputs[1].default_value = new_strength
+    world.node_tree.nodes["Background"].inputs[1].default_value = new_strength
 

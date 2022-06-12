@@ -59,7 +59,7 @@ class OrbitCam:
     #rotate camera position around object and local (relative to camera) x axis 
     #angle: degrees
     def rotate_x(self, angle: float) -> None:
-        self.controller.rotation_euler[0] += radians(angle)
+        self.controller.rotation_euler[1] += radians(angle)
     
     def get_distance(self) -> float:
         return self.distance_constraint.distance
