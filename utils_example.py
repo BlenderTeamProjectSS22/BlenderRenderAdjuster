@@ -19,7 +19,7 @@ from utils import *
 
 clear_scene()
 
-tower = import_mesh("assets/STL samples/Eiffel_tower.stl")
+tower = import_mesh("assets/STL samples/Eiffel_tower.STL")
 
 myScene = bpy.context.scene
 myCamera = OrbitCam(tower)
