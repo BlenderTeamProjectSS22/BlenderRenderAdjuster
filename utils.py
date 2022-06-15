@@ -149,14 +149,16 @@ def clear_scene(keepLight: bool = True) -> None:
         if not(o.name == "Light" and keepLight):
             bpy.data.objects.remove(o)
 
-#import .ply or .stl file
+#import .ply, .stl or .obj file
 def import_mesh(filepath: str) -> bpy.types.Object:
     if fnmatch.fnmatch(filepath, '*.ply'):
         bpy.ops.import_mesh.ply(filepath=filepath)
     elif fnmatch.fnmatch(filepath, '*.stl'):
         bpy.ops.import_mesh.stl(filepath=filepath)
+    elif fnmatch.fnmatch(filepath.lower(), '*.obj'):
+        bpy.ops.wm.obj_import(filepath=filepath)
     else:
-        raise ImportError("can only import .ply and .stl files")
+        raise ImportError("can only import .ply, .stl or .obj files")
     newObj = bpy.context.object
     scale_to_unit_cube(newObj)
     return newObj
