@@ -77,10 +77,10 @@ class LeftPanel(Frame):
     
     def import_model(self):
         filetypes = [
-            ("All model files", "*.ply *.stl"),
+            ("All model files", "*.ply *.stl *.obj"),
             ("PLY object", "*.ply"),
             ("STL file", "*.stl")
-            #("Wavefront OBJ", "*.obj")
+            ("Wavefront OBJ", "*.obj")
         ]
         filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
         # TODO Import the file using utils.py
