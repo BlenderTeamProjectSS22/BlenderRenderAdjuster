@@ -345,22 +345,37 @@ class LightingWidgets(Frame):
         lbl_brightness = Label(master=self, text="Brightness")
         btn_day = Button(master=self, text="Day", command=self.set_day)
         btn_night = Button(master=self, text="Night", command=self.set_night)
-        slider_brightness = Scale(master=self, orient="horizontal", showvalue=False, command=self.set_brightness)
+        self.slider_brightness = Scale(master=self, orient="horizontal", showvalue=False, command=self.set_brightness)
         lbl_light.grid(row=0, column=0, columnspan=2)
         lbl_brightness.grid(row=1, column=0, sticky="w")
-        slider_brightness.grid(row=1, column=1,  sticky="we")
+        self.slider_brightness.grid(row=1, column=1,  sticky="we")
         btn_day.grid(row=2, column=0, sticky="we",pady=1)
         btn_night.grid(row=2, column=1, sticky="we",pady=1)
+        self.light_objects = []
+        self.is_day = None
     
+    # set the brightness to "value"
     def set_brightness(self, value):
-        # TODO set brightness of the lights
-        pass
+        # set the new brightness
+        self.slider_brightness.set(value)
+        # recreate lights with new brightness
+        if self.is_day != None:
+            if self.is_day:
+                self.set_day()
+            else:
+               self.set_night()
         
+    # set day time
     def set_day(self):
-        pass
+        self.is_day = True
+        delete_lights(self.light_objects)
+        self.light_objects = day_light(self.slider_brightness.get(), 80, True, None)
     
+    # set night time
     def set_night(self):
-        pass
+        self.is_day = False
+        delete_lights(self.light_objects)
+        self.light_objects = night_light(self.slider_brightness.get(), 80, True, None)
 
 
 class RightPanel(Frame):
