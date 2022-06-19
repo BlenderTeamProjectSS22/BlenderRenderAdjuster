@@ -20,7 +20,7 @@ import HDRI.hdri as hdri
 
 clear_scene()
 
-tower = import_mesh(os.getcwd() + "/assets/STL samples/Eiffel_tower.STL")
+tower = import_mesh("assets/STL samples/Eiffel_tower.STL")
 
 myScene = bpy.context.scene
 myCamera = OrbitCam(tower)
