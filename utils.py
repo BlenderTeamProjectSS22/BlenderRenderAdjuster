@@ -59,7 +59,7 @@ class OrbitCam:
     #rotate camera position around object and local (relative to camera) x axis 
     #angle: degrees
     def rotate_x(self, angle: float) -> None:
-        self.controller.rotation_euler[0] += radians(angle)
+        self.controller.rotation_euler[1] += radians(angle)
     
     def get_distance(self) -> float:
         return self.distance_constraint.distance
@@ -149,17 +149,22 @@ def clear_scene(keepLight: bool = True) -> None:
         if not(o.name == "Light" and keepLight):
             bpy.data.objects.remove(o)
 
-#import .ply or .stl file
+#import .ply, .stl or .obj file
 def import_mesh(filepath: str) -> bpy.types.Object:
     if fnmatch.fnmatch(filepath.lower(), '*.ply'):
         bpy.ops.import_mesh.ply(filepath=filepath)
     elif fnmatch.fnmatch(filepath.lower(), '*.stl'):
         bpy.ops.import_mesh.stl(filepath=filepath)
+    elif fnmatch.fnmatch(filepath.lower(), '*.obj'):
+        bpy.ops.wm.obj_import(filepath=filepath)
     else:
-        raise ImportError("can only import .ply and .stl files")
+        raise ImportError("can only import .ply, .stl or .obj files")
     newObj = bpy.context.object
     scale_to_unit_cube(newObj)
     return newObj
+
+def export_blend(filepath: str) -> None:
+    bpy.ops.wm.save_mainfile(filepath=filepath)
 
 #scale obj down so that its bounding box fits into the unit cube (2 x 2 x 2)
 def scale_to_unit_cube(obj: bpy.types.Object) -> None:
