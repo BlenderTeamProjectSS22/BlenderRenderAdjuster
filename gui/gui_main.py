@@ -9,14 +9,17 @@ import tkinter as tk
 from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
+from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
 import webbrowser
+import requests
 import enum
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
+from properties import *
 
 class ProgramGUI:
     def __init__(self, master):
@@ -76,9 +79,10 @@ class LeftPanel(Frame):
     
     def import_model(self):
         filetypes = [
+            ("All model files", "*.ply *.stl *.obj"),
             ("PLY object", "*.ply"),
             ("STL file", "*.stl")
-            #("Wavefront OBJ", "*.obj")
+            ("Wavefront OBJ", "*.obj")
         ]
         filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
         # TODO Import the file using utils.py
@@ -108,8 +112,37 @@ class LeftPanel(Frame):
         settings = SettingsWindow(self.master)
     
     def check_update(self):
-        # TODO-END Update check, will need an online server or resources hosted at Github
-        pass
+        try:
+            page = requests.get(UPDATE_URL, timeout=2)
+        except requests.HTTPError:
+            showerror(title="Version check", message="Something is wrong with the update server", detail="Please try again another time")
+            return
+        except (requests.ConnectionError, requests.Timeout):
+            showerror(title="Version check", message="You propably aren't connected to the internet")
+            return
+        except Exception as e:
+            showerror(title="Version check", message="Unknown error during update check")
+            print(e)
+            return
+        
+        versionlist = page.text.split(".")
+        
+        major = int(versionlist[0])
+        minor = int(versionlist[1])
+        patch = int(versionlist[2])
+        
+        update_available = False
+        if major > VERSION_MAJOR:
+            update_available = True
+        elif minor > VERSION_MINOR:
+            update_available = True
+        elif patch > VERSION_PATCH:
+            update_available = True
+            
+        if update_available:
+            showinfo(title="Version check", message="Update available!", detail="Download it from Github releases")
+        else:
+            showinfo(title="Version check", message="No update available!", detail="You are using the latest version")
     
     def open_help_page(self):
         webbrowser.open_new_tab("https://github.com/garvita-tiwari/blender_render/wiki")
