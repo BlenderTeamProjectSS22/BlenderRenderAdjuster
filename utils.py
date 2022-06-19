@@ -151,9 +151,9 @@ def clear_scene(keepLight: bool = True) -> None:
 
 #import .ply or .stl file
 def import_mesh(filepath: str) -> bpy.types.Object:
-    if fnmatch.fnmatch(filepath, '*.ply'):
+    if fnmatch.fnmatch(filepath.lower(), '*.ply'):
         bpy.ops.import_mesh.ply(filepath=filepath)
-    elif fnmatch.fnmatch(filepath, '*.stl'):
+    elif fnmatch.fnmatch(filepath.lower(), '*.stl'):
         bpy.ops.import_mesh.stl(filepath=filepath)
     else:
         raise ImportError("can only import .ply and .stl files")
