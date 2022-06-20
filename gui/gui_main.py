@@ -14,12 +14,16 @@ from tkinter import filedialog
 from PIL import ImageTk, Image
 
 import webbrowser
-import requests
+#import requests
 import enum
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
-from properties import *
+#from properties import *
+
+from Lightning.light_functions import day_light, night_light, delete_lights
+from Lightning.light_class import Light
+from HDRI.hdri import set_background_brightness
 
 class ProgramGUI:
     def __init__(self, master):
@@ -353,16 +357,34 @@ class LightingWidgets(Frame):
         slider_brightness.grid(row=1, column=1,  sticky="we")
         btn_day.grid(row=2, column=0, sticky="we",pady=1)
         btn_night.grid(row=2, column=1, sticky="we",pady=1)
+        self.light_objects : list[Light] = []
+        self.is_day : bool = None
+        self.brightness : float = 3
     
     def set_brightness(self, value):
-        # TODO set brightness of the lights
-        pass
+        # recreate lights with new brightness
+        if self.is_day != None:
+            if self.is_day:
+                self.set_day()
+            else:
+                self.set_night()
+        # set new brightness
+        self.brightness = float(value)
+
+    def get_brightness(self) -> float:
+        return self.brightness
         
     def set_day(self):
-        pass
+        set_background_brightness(0)
+        self.is_day = True
+        delete_lights(self.light_objects)
+        self.light_objects = day_light(self.get_brightness(), 80, True, None) # replace "None" with camera-object
     
     def set_night(self):
-        pass
+        set_background_brightness(0)
+        self.is_day = False
+        delete_lights(self.light_objects)
+        self.light_objects = night_light(self.get_brightness(), 80, True, None) # replace "None" with camera-object
 
 
 class RightPanel(Frame):
