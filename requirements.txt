@@ -1,3 +1,5 @@
 future
 Pillow
 pyinstaller
+requests
+pyyaml
