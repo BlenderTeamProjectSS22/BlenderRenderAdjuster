@@ -83,9 +83,8 @@ class OrbitCam:
 #basic renderer
 class Renderer:
     def __init__(self, 
-                 scene: bpy.types.Scene, 
                  camera: bpy.types.Object):
-        self.scene = scene
+        self.scene = bpy.context.scene
         self.camera = camera
         self.scene.camera = self.camera
     
