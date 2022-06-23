@@ -3,7 +3,7 @@ import math
 
 # light class with attributes:
 # --- name = name of the light
-# --- type = type of the light (POINT, SUN, SPOT, AREA)
+# --- type = type of the light (POINT, SUN, SPOT, AREA) (default POINT)
 # --- x_loxation = the x-coordinate
 # --- y_loxation = the y-coordinate
 # --- z_loxation = the z-coordinate
@@ -13,8 +13,16 @@ class Light:
     def __init__(self, name: str, type: str, x_Location: float,
                  y_Location: float, z_Location: float, brightness: float) -> None:
         self._name = name
-        self._type = type
         self._color = [1, 1, 1]
+        # set type
+        if type == "SUN" or type == "POINT" or type == "AREA" or type == "SPOT":
+            self._type = type
+            self._light_data.type = type
+        else:
+            print(str(self._name) + ": type: " + str(type) + " is not a valid type")
+            self._type = "POINT"
+            self._light_data.type = "POINT"
+            print(str(self._name) + ": type: type is set to POINT")
         # apply settings
         self._light_data = bpy.data.lights.new(name = name, type = self._type)
         self.set_brightness(brightness)
@@ -49,14 +57,6 @@ class Light:
     # get the typ of light
     def get_type(self) -> str:
         return self._type
-
-    # set the type of light
-    def set_type(self, new_type: str) -> None:
-        if new_type == "SUN" or new_type == "POINT" or new_type == "AREA" or new_type == "SPOT":
-            self._type = new_type
-            self._light_data.type = new_type
-        else:
-            print(str(self._name) + ": type: " + str(new_type) + " is not a valid type")
     
     # get the brightness
     def get_brightness(self) -> float:
@@ -159,12 +159,10 @@ class RotateLight(Light):
 #            radius * math.cos(math.radians(angle)),
 #            radius * math.sin(math.radians(angle)),
 #            sun_brightness)
-# l1.set_type("s")
 # l1.set_color(color[0], color[1], color[2])
 # l1.set_position(0, 0, 10)
 # l1.rename("Ilios")
 # l1.set_brightness(100)
-# l1.set_type("POINT")
 # print(l1.get_color())
 # l2 = PointLight("fill", -14, 16, 0.3, 3000, 2)
 # l2.set_radius(5)

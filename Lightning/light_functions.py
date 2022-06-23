@@ -174,6 +174,49 @@ def latern_light(brightness: float, height: float,
     else:
         return [spot]
 
+# private method
+# set the value for every frame of the day-night circle function
+# function should only be used in day_night_circle()
+def frame_setting_of_day_night_circle(f: int, lights: list[Light], scene, current_angle: int, day_color: list[float],
+                                        brightnesses: list[float], is_day: bool, lightcollection: list[Light], radius: float) -> None:
+    scene.frame_set(f)
+    # day and night change
+    if current_angle >= 180:
+        lights[0].set_brightness(0)
+        if first_element:
+             lights[0] = lightcollection[1]
+             lights[0].set_brightness(brightnesses[1])
+             assert lightcollection[0].get_brightness() == 0
+        else:
+             lights[0] = lightcollection[0]
+             lights[0].set_brightness(brightnesses[0])
+             assert lightcollection[1].get_brightness() == 0
+        first_element = not first_element
+        is_day = not is_day
+        if is_day:
+            lights[0].set_color(day_color[0], day_color[1], day_color[2])
+        currentAngle = 0
+        radius = radius_of_light_object(lights[0])
+        assert lights[0].get_type() == "SUN" 
+    # day and night dont change
+    else:
+        # dawnlight
+        if is_day and current_angle >= 140:               
+            lights[0].set_color(day_color[0],
+                               day_color[1] - (current_angle-140) * 0.021,
+                               day_color[2] - (current_angle-140) * 0.016)
+        # fit position and rotation 
+        lights[0].set_position(radius * math.sin(math.radians(10)),
+                              radius * math.cos(math.radians(current_angle)),
+                              radius * math.sin(math.radians(current_angle))) 
+        lights[0].set_rotation(-math.cos(math.radians(current_angle)), math.sin(math.radians(10)), 0)
+    # increment angle and saving datas in frames
+    current_angle += 1
+    lights[0].get_datas()[1].keyframe_insert(data_path = "rotation_euler", frame = f)
+    lights[0].get_datas()[1].keyframe_insert(data_path = "location", frame = f)
+    for light in lightcollection:
+        light.get_datas()[0].keyframe_insert(data_path = "energy", frame = f)
+        light.get_datas()[0].keyframe_insert(data_path = "color", frame = f)
 
 # makes a day-night-circle
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
@@ -200,7 +243,7 @@ def day_night_circle(starting_time: int, brightness: float,
         lightcollection.extend(night_light(brightness, 0, False, camera_object))
     else:
         is_day = False
-        lights = night_light(brightness, currentAngle,
+        lights = night_light(brightness, current_angle,
                              add_fill_and_rim_light, camera_object)
         lightcollection = [lights[0]]
         lightcollection.extend(day_light(brightness, 0, False, camera_object))
@@ -214,44 +257,7 @@ def day_night_circle(starting_time: int, brightness: float,
     
     # setting per frame
     for f in range(scene.frame_start, scene.frame_end + 1):
-        scene.frame_set(f)
-        # day and night change
-        if current_angle >= 180:
-            lights[0].set_brightness(0)
-            if first_element:
-                 lights[0] = lightcollection[1]
-                 lights[0].set_brightness(brightnesses[1])
-                 assert lightcollection[0].get_brightness() == 0
-            else:
-                 lights[0] = lightcollection[0]
-                 lights[0].set_brightness(brightnesses[0])
-                 assert lightcollection[1].get_brightness() == 0
-            first_element = not first_element
-            is_day = not is_day
-            if is_day:
-                lights[0].set_color(day_color[0], day_color[1], day_color[2])
-            currentAngle = 0
-            radius = radius_of_light_object(lights[0])
-            assert lights[0].get_type() == "SUN" 
-        # day and night dont change
-        else:
-            # dawnlight
-            if is_day and current_angle >= 140:               
-                lights[0].set_color(day_color[0],
-                                   day_color[1] - (current_angle-140) * 0.021,
-                                   day_color[2] - (current_angle-140) * 0.016)
-            # fit position and rotation 
-            lights[0].set_position(radius * math.sin(math.radians(10)),
-                                  radius * math.cos(math.radians(current_angle)),
-                                  radius * math.sin(math.radians(current_angle))) 
-            lights[0].set_rotation(-math.cos(math.radians(current_angle)), math.sin(math.radians(10)), 0)
-        # increment angle and saving datas in frames
-        current_angle += 1
-        lights[0].get_datas()[1].keyframe_insert(data_path = "rotation_euler", frame = f)
-        lights[0].get_datas()[1].keyframe_insert(data_path = "location", frame = f)
-        for light in lightcollection:
-            light.get_datas()[0].keyframe_insert(data_path = "energy", frame = f)
-            light.get_datas()[0].keyframe_insert(data_path = "color", frame = f)
+        frame_setting_of_day_night_circle(f, lights, scene, current_angle, day_color, brightnesses, is_day, lightcollection, radius)
     scene.frame_set(frame_current) 
 
 ### for testing

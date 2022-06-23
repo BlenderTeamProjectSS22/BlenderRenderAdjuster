@@ -19,7 +19,7 @@ import enum
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
-#from properties import *
+from gui.properties import *
 
 from Lightning.light_functions import day_light, night_light, delete_lights
 from Lightning.light_class import Light
