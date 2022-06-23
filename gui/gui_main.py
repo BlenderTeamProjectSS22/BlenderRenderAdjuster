@@ -19,10 +19,18 @@ import enum
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
-from properties import *
+from gui.settings import load_settings
+from gui.properties import *
 
 class ProgramGUI:
     def __init__(self, master):
+    
+        # Try loading settings and exit if not available/malformed
+        self.settings = load_settings()
+        if self.settings is None:
+            print("Problem loading settings")
+            exit()
+        
         master.title("Render adjuster")
         master.minsize(107+184+480,307)
         icon = ImageTk.PhotoImage(Image.open("assets/gui/icon.ico"))
@@ -33,20 +41,26 @@ class ProgramGUI:
         master.columnconfigure(2, weight=0, minsize=184)
         master.rowconfigure(0, weight=9, minsize=307)
         
-        left  = LeftPanel(master)
-        preview = RenderPreview(master)
-        right = RightPanel(master)
-        camcontrols = CameraControls(master)
+        left  = LeftPanel(master, self)
+        preview = RenderPreview(master, self)
+        right = RightPanel(master, self)
+        camcontrols = CameraControls(master, self)
         
         left.grid(row=0, column=0, sticky="nw")
         preview.grid(row=0, column=1, sticky="nwes")
         camcontrols.grid(row=1, column=1)
         right.grid(row=0, column=2, sticky="ne")
         
+    def re_render(self):
+        # TODO in this function, render the preview
+        # It will always be called when an change happens
+        print("Updating preview...")
+        
 class LeftPanel(Frame):
-    def __init__(self, master):
-        Frame.__init__(self, master) # master or parent
+    def __init__(self, master, control):
+        Frame.__init__(self, master)
         self.master = master
+        self.control = control
         lbl_fileop = Label(master=self, text="File operations", font="Arial 10 bold")
         btn_import = Button(master=self, text="Import model", command=self.import_model)
         btn_export = Button(master=self, text="Export model", command=self.export_model)
@@ -81,11 +95,12 @@ class LeftPanel(Frame):
         filetypes = [
             ("All model files", "*.ply *.stl *.obj"),
             ("PLY object", "*.ply"),
-            ("STL file", "*.stl")
+            ("STL file", "*.stl"),
             ("Wavefront OBJ", "*.obj")
         ]
         filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
         # TODO Import the file using utils.py
+        self.control.re_render()
         
     
     def export_model(self):
@@ -109,7 +124,7 @@ class LeftPanel(Frame):
         pass
     
     def open_settings_window(self):
-        settings = SettingsWindow(self.master)
+        SettingsWindow(self.master, self.control)
     
     def check_update(self):
         try:
@@ -149,7 +164,7 @@ class LeftPanel(Frame):
         
 
 class CameraControls(Frame):
-    def __init__(self, master):
+    def __init__(self, master, control):
         Frame.__init__(self, master)
         
         lbl_controls = Label(master=self, text="Camera Controls", font="Arial 10 bold")
@@ -157,8 +172,9 @@ class CameraControls(Frame):
         
         
 class ColorMeshWidgets(Frame):
-    def __init__(self, master):
+    def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
+        self.control = control
         
         self.current_color = None
         
@@ -183,29 +199,36 @@ class ColorMeshWidgets(Frame):
     def pick_color(self):
         self.current_color = askcolor(self.current_color)[0]
         print(self.current_color)
+        # FIX Keep old color if no color is selected (current_color can be None)
+        # TODO Change the color of the object
+        self.control.re_render()
     
     def switch_vertex_color(self):
-        pass
+        self.control.re_render()
     
     def switch_mesh(self):
         if self.mesh.get():
             self.point.set(False)
         else:
             self.point.set(True)
+        self.control.re_render()
     
     def switch_pointcloud(self):
         if self.point.get():
             self.mesh.set(False)
         else:
             self.mesh.set(True)
+        self.control.re_render()
 
 class MaterialWidgets(Frame):
-    def __init__(self, master):
+    def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
+        self.control = control
+        
         self.columnconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
-        mat_selected = StringVar(master)
+        mat_selected = StringVar(self)
         mat_selected.set("default")
         lbl_materials = Label(master=self, text="Material selection", font="Arial 10 bold")
         lbl_metallic = Label(master=self, text="Metallic")
@@ -256,30 +279,33 @@ class MaterialWidgets(Frame):
             pass
         else: #default
             pass
+        self.control.re_render()
     
     def set_metallic_input(self, event):
         x = 0
         if self.ent_metallic.get() != "":
             x = clamp(int(self.ent_metallic.get()), 0, 100)
         self.set_metallic(x)
+        self.control.re_render()
         
     def set_roughness_input(self, event):
         x = 0
         if self.ent_roughness.get() != "":
             x = clamp(int(self.ent_roughness.get()), 0, 100)
         self.set_roughness(x)
+        self.control.re_render()
     
     def set_metallic(self, value):
         self.ent_metallic.delete(0, tk.END)
         self.ent_metallic.insert(tk.END, value)
         self.slider_metallic.set(value)
-        pass
+        self.control.re_render()
     
     def set_roughness(self, value):
         self.ent_roughness.delete(0, tk.END)
         self.ent_roughness.insert(tk.END, value)
         self.slider_roughness.set(value)
-        pass
+        self.control.re_render()
 
 # Enum containing all possible materials
 class Materials(enum.Enum):
@@ -293,14 +319,16 @@ def clamp(val, minimum, maximum):
     return min(max(val, minimum), maximum)
 
 class TextureWidgets(Frame):
-    def __init__(self, master):
+    def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
+        self.control = control
+        
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
-        tex_selected = StringVar(master)
+        tex_selected = StringVar(self)
         tex_selected.set("none")
         lbl_textures = Label(master=self, text="Texture selection:", font="Arial 10 bold")
         btn_import_texture = Button(master=self, text="Import", command=self.import_texture)
@@ -320,6 +348,7 @@ class TextureWidgets(Frame):
             pass
         else: # NONE
             pass
+        self.control.re_render()
     
     def import_texture(self):
         filetypes = [
@@ -327,6 +356,7 @@ class TextureWidgets(Frame):
         ]
         filename = filedialog.askopenfilename(title="Select a texture", filetypes=filetypes)
         # TODO Apply the texure to the object
+        self.control.re_render()
         
         
 # Enum containing all possible textures
@@ -336,8 +366,10 @@ class Textures(enum.Enum):
     BRICKS = "bricks"
 
 class LightingWidgets(Frame):
-    def __init__(self, master):
+    def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
+        self.control = control
+        
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(0, weight=1)
@@ -356,18 +388,18 @@ class LightingWidgets(Frame):
     
     def set_brightness(self, value):
         # TODO set brightness of the lights
-        pass
+        self.control.re_render()
         
     def set_day(self):
-        pass
+        self.control.re_render()
     
     def set_night(self):
-        pass
+        self.control.re_render()
 
 
 class RightPanel(Frame):
         
-    def __init__(self, master):
+    def __init__(self, master, control):
         Frame.__init__(self, master) 
         
         self.current_color = (255, 255, 0)
@@ -379,17 +411,17 @@ class RightPanel(Frame):
         self.columnconfigure(0, weight=1)
         
         # Color and render type widgets
-        frm_look = ColorMeshWidgets(self)
+        frm_look = ColorMeshWidgets(self, control)
         frm_look.grid(row=0, column=0, sticky="we")
         
         # Material widgets
-        frm_mat = MaterialWidgets(self)
+        frm_mat = MaterialWidgets(self, control)
         frm_mat.grid(row=1, column=0, sticky="ew")
         
         # Texture widgets
-        frm_tex = TextureWidgets(self)
+        frm_tex = TextureWidgets(self, control)
         frm_tex.grid(row=2, column=0, sticky="ew")
         
         # Lighting widgets
-        frm_light = LightingWidgets(self)
+        frm_light = LightingWidgets(self, control)
         frm_light.grid(row=3, column=0, sticky="we")

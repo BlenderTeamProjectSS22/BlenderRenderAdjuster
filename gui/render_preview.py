@@ -10,16 +10,19 @@ from tkinter import Frame, Canvas
 from PIL import ImageTk, Image
 
 class RenderPreview(Frame):
-        def __init__(self, master):
+        def __init__(self, master, control):
             Frame.__init__(self, master, bg="black")
+            self.control = control
             
-            self.w = int(1920 / 4)
-            self.h = int(1080 / 4)
+            # Load aspect ratio from settings
+            self.w = control.settings.aspect.width
+            self.h = control.settings.aspect.height
+            
             self.canvas = tk.Canvas(self, width=self.w, height=self.h)
             self.canvas.pack(fill=tk.BOTH, expand=True)
             self.canvas.bind("<Configure>", self.on_resize)
-            self.original_image = Image.open("../assets/gui/preview_unavailable.png")
-            self.img = ImageTk.PhotoImage(self.image)
+            self.original_image = Image.open("assets/gui/preview_unavailable.png")
+            self.img = ImageTk.PhotoImage(self.original_image)
             self.canvas_img = self.canvas.create_image(0, 0, anchor="nw", image=self.img)
             
             self.reload()
@@ -43,7 +46,7 @@ class RenderPreview(Frame):
             # Resulting file must be called "preview.png"
             # Alternatively execute a render on each button change -> maybe better because render doesnt block updating
             try:
-                self.original_image = Image.open("../assets/gui/preview.png")
+                self.original_image = Image.open("assets/gui/preview.png")
             except FileNotFoundError:
-                self.original_image = Image.open("../assets/gui/preview_unavailable.png")
+                self.original_image = Image.open("assets/gui/preview_unavailable.png")
             self.after(1000, self.reload)

@@ -31,7 +31,6 @@ class Settings():
             aspect = AspectRatio.from_dict(dic["aspect"])
         )
     
-    @staticmethod
     def set_aspect_ratio(self, width: int, height: int) -> None:
         self.aspect.width  = width
         self.aspect.height = height
@@ -40,7 +39,7 @@ class Settings():
 # Parses and returns a Settings object
 # May return NoneType, please check outside
 def load_settings() -> Settings:
-    with open("settings.yaml", "r") as f:
+    with open("assets/settings.yaml", "r") as f:
         config = yaml.safe_load(f)    
         print(config)
     try:

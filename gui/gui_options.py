@@ -1,9 +1,16 @@
+# author: Alexander Ritter
+# created on: 08/06/2022
+# edited by:
+
+# description:
 # GUI element: A seperate window for settings/options
+
 import tkinter as tk
 from tkinter import Frame, Toplevel, Label, Button, Entry
 from PIL import ImageTk, Image
+
 class SettingsWindow(Toplevel):
-        def __init__(self, master):
+        def __init__(self, master, control):
             Toplevel.__init__(self)
             self.master = master
             self.control = control
@@ -23,6 +30,7 @@ class SettingsContent(Frame):
     def __init__(self, master, control):
         Frame.__init__(self, master)
         self.master = master
+        self.control = control
         
         lbl_aspect = Label(master=self, text="Aspect ratio")
         self.ent_width  = Entry(master=self)
@@ -42,7 +50,9 @@ class SettingsContent(Frame):
     def accept(self):
         w = int(self.ent_width.get())
         h = int(self.ent_height.get())
+        self.control.settings.set_aspect_ratio(w, h)
         self.close_window()
+        print("New settings: " + str(self.control.settings))
         
     def cancel(self, event=None):
         print("Closing window")
