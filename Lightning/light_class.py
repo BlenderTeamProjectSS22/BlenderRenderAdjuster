@@ -17,11 +17,9 @@ class Light:
         # set type
         if type == "SUN" or type == "POINT" or type == "AREA" or type == "SPOT":
             self._type = type
-            self._light_data.type = type
         else:
             print(str(self._name) + ": type: " + str(type) + " is not a valid type")
             self._type = "POINT"
-            self._light_data.type = "POINT"
             print(str(self._name) + ": type: type is set to POINT")
         # apply settings
         self._light_data = bpy.data.lights.new(name = name, type = self._type)

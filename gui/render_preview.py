@@ -10,29 +10,33 @@ from tkinter import Frame, Canvas
 from PIL import ImageTk, Image
 
 class RenderPreview(Frame):
-        def __init__(self, master):
+        def __init__(self, master, control):
             Frame.__init__(self, master, bg="black")
+            self.control = control
             
-            self.w = int(1920 / 4)
-            self.h = int(1080 / 4)
+            # Load aspect ratio from settings
+            self.w = control.settings.aspect.width
+            self.h = control.settings.aspect.height
+            
             self.canvas = tk.Canvas(self, width=self.w, height=self.h)
             self.canvas.pack(fill=tk.BOTH, expand=True)
-            self.canvas.bind("<Configure>", self.conf)
-            self.image = Image.open("assets/gui/preview_unavailable.png")
-            self.img = ImageTk.PhotoImage(self.image)
+            self.canvas.bind("<Configure>", self.on_resize)
+            self.original_image = Image.open("assets/gui/preview_unavailable.png")
+            self.img = ImageTk.PhotoImage(self.original_image)
             self.canvas_img = self.canvas.create_image(0, 0, anchor="nw", image=self.img)
             
             self.reload()
         
-        # This function runs when the window is resized
-        def conf(self, event):
-            self.w = event.width
-            self.h = event.height
-            self.resize(event.width, event.height)
+        # Resize image keeping its aspect ratio 
+        def resize(self, image, width, height):
+            ratio = min(width / image.width, height / image.height)
+            new_w = image.width * ratio
+            new_h = image.height * ratio
+            return image.resize((int(new_w), int(new_h)))
         
-        # Resizes the image to width and height
-        def resize(self, width, height):
-            resized = self.image.resize((width,height))
+        # Automatically called when the canvas is resized
+        def on_resize(self, event):
+            resized = self.resize(self.original_image, event.width, event.height)
             self.img = ImageTk.PhotoImage(resized)
             self.canvas.itemconfig(self.canvas_img, image=self.img)
         
@@ -42,8 +46,7 @@ class RenderPreview(Frame):
             # Resulting file must be called "preview.png"
             # Alternatively execute a render on each button change -> maybe better because render doesnt block updating
             try:
-                self.image = Image.open("assets/gui/preview.png")
+                self.original_image = Image.open("assets/gui/preview.png")
             except FileNotFoundError:
-                self.image = Image.open("assets/gui/preview_unavailable.png")
-            self.resize(self.w, self.h)
+                self.original_image = Image.open("assets/gui/preview_unavailable.png")
             self.after(1000, self.reload)
