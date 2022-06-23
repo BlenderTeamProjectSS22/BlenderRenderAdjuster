@@ -20,11 +20,11 @@ class OrbitCam:
     def __init__(self):
         default_distance = 6 #chosen so that camera frame approx. corresponds to center unit box
 
+        bpy.ops.object.camera_add(location=(default_distance, 0, 0))
+        self.camera = bpy.context.object
         bpy.ops.object.empty_add(type='CUBE', location=(0, 0, 0), scale=(1, 1, 1))
         self.controller = bpy.context.object
         self.controller.name = self.camera.name + "_controller"
-        bpy.ops.object.camera_add(location=(default_distance, 0, 0))
-        self.camera = bpy.context.object
 
         #add limit_distance_constraint to control distance from camera to center cube
         self.distance_constraint = self.camera.constraints.new(type='LIMIT_DISTANCE')
