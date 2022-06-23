@@ -13,33 +13,32 @@ import os
 from math import radians
 import fnmatch
 
-#basic camera capable of orbiting around target
+#basic camera capable of orbiting around central cube
 #uses track-to-constraint, limit-distance-constraint
 class OrbitCam:
     
-    def __init__(self, target: bpy.types.Object):
+    def __init__(self):
         default_distance = 6 #chosen so that camera frame approx. corresponds to center unit box
 
-        self.target = target
-        bpy.ops.object.camera_add(location=(target.location[0] + default_distance, target.location[1], target.location[2]))
+        bpy.ops.object.empty_add(type='CUBE', location=(0, 0, 0), scale=(1, 1, 1))
+        self.controller = bpy.context.object
+        self.controller.name = self.camera.name + "_controller"
+        bpy.ops.object.camera_add(location=(default_distance, 0, 0))
         self.camera = bpy.context.object
 
-        #add limit_distance_constraint to control distance from camera to object
+        #add limit_distance_constraint to control distance from camera to center cube
         self.distance_constraint = self.camera.constraints.new(type='LIMIT_DISTANCE')
-        self.distance_constraint.target = target
+        self.distance_constraint.target = self.controller
         self.distance_constraint.limit_mode = 'LIMITDIST_ONSURFACE'
         self.distance_constraint.distance = default_distance
 
-        #add track_to_constraint to point camera at target object
+        #add track_to_constraint to point camera at center cube
         self.track_constraint = self.camera.constraints.new(type='TRACK_TO')
-        self.track_constraint.target = target
+        self.track_constraint.target = self.controller
         self.track_constraint.track_axis = 'TRACK_NEGATIVE_Z'
         self.track_constraint.up_axis = 'UP_Y'
 
-        #add empty box to control the camera's rotation
-        bpy.ops.object.empty_add(type='CUBE', location=target.location, scale=(1, 1, 1))
-        self.controller = bpy.context.object
-        self.controller.name = self.camera.name + "_controller"
+        #add parenting to control camera's rotation
         bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
         self.camera.parent = bpy.context.object
   
