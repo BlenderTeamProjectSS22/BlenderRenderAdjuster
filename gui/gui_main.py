@@ -101,6 +101,8 @@ class LeftPanel(Frame):
             ("Wavefront OBJ", "*.obj")
         ]
         filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
+        if filename == "":
+            return
         self.control.model = utils.import_mesh(filename)
         self.control.re_render()
         
@@ -111,6 +113,8 @@ class LeftPanel(Frame):
             initialfile = "untitled.blend",
             defaultextension=".blend",
             filetypes=[("Blender project","*.blend")])
+        if filename == None:
+            return
         utils.export_blend(filename.name)
     
     def render_image(self):
