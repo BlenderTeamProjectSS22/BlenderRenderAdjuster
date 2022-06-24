@@ -137,7 +137,7 @@ class Renderer:
    
     # set aspect ratio
     def set_aspect_ratio(self, w: int, h: int) -> None:
-        self.scene.render.resolution_y = self.scene.render.resolution_x / (w / h)
+        self.scene.render.resolution_y = int(self.scene.render.resolution_x / (w / h))
 
 
 
