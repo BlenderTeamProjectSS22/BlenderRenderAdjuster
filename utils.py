@@ -86,42 +86,6 @@ class Renderer:
         self.scene = bpy.context.scene
         self.camera = camera
         self.scene.camera = self.camera
-    
-
-    # configure output parameters
-    def set_output_properties(self,
-                              resolution_percentage: int = 100,
-                              output_file_path: str = os.getcwd() + "/renders/result",
-                              res_x: int = 1920,
-                              res_y: int = 1080,
-                              animation: bool = False) -> None:
-        self.scene.render.resolution_percentage = resolution_percentage
-        self.scene.render.resolution_x = res_x
-        self.scene.render.resolution_y = res_y
-        self.scene.render.filepath = output_file_path
-        self.animation = animation
-        if animation:
-            self.scene.render.image_settings.file_format = 'FFMPEG'
-        else:
-            self.scene.render.image_settings.file_format = 'PNG'
-            
-            
-    # choose cycles engine and configure parameters
-    def set_cycles(self,
-                   num_samples: int = 64,
-                   use_denoising: bool = True,
-                   use_transparent_bg: bool = False) -> None:
-
-        self.scene.cycles.samples = num_samples
-    
-    # choose eevee engine and configure parameters
-    def set_eevee(self,
-                  num_samples: int = 32,
-                  use_transparent_bg: bool = False) -> None:
-
-        self.scene.render.engine = 'BLENDER_EEVEE'
-        self.scene.render.film_transparent = use_transparent_bg
-        self.scene.eevee.taa_render_samples = num_samples
 
     # render image to configured output destination 
     def render(self) -> None:
