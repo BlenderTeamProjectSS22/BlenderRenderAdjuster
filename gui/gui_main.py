@@ -50,7 +50,7 @@ class ProgramGUI:
         master.rowconfigure(0, weight=9, minsize=307)
         
         left  = LeftPanel(master, self)
-        self.preview = RenderPreview(master, self)
+        self.preview = RenderPreview(master)
         right = RightPanel(master, self)
         camcontrols = CameraControls(master, self)
         
