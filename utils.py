@@ -100,7 +100,7 @@ class Renderer:
         self.scene.render.engine = 'CYCLES'
         self.animation = False
         self.scene.render.image_settings.file_format = 'PNG'
-        self.scene.render.filepath = file_path
+        self.scene.render.filepath = bpy.path.relpath(file_path)
         self.scene.render.film_transparent = use_transparent_bg
         self.scene.view_layers[0].cycles.use_denoising = False
         self.scene.cycles.use_adaptive_sampling = True
