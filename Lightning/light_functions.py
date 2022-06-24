@@ -220,11 +220,12 @@ def frame_setting_of_day_night_circle(f: int, lights: list[Light], scene, curren
 
 # makes a day-night-circle
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
+# all light objects will be deleted
 def day_night_circle(starting_time: int, brightness: float,
-                     add_fill_and_rim_light: bool, camera_object: OrbitCam) -> None:
+                     add_fill_and_rim_light: bool, camera_object: OrbitCam) -> list[Light]:
     # before starting time
     delete_all_lights()
-    first_element = True
+    lightcollection : list[Light] = []
     # color of the sun (important for the dawn light)
     day_color = [0.945, 0.855, 0.643]
     # preconditions
@@ -257,8 +258,18 @@ def day_night_circle(starting_time: int, brightness: float,
     
     # setting per frame
     for f in range(scene.frame_start, scene.frame_end + 1):
-        frame_setting_of_day_night_circle(f, lights, scene, current_angle, day_color, brightnesses, is_day, lightcollection, radius)
+        frame_setting_of_day_night_circle(f, lights, scene, current_angle, day_color, brightnesses, is_day, lightcollection,radius)
     scene.frame_set(frame_current) 
+    
+    # postconditions
+    assert len(lightcollection) == 2
+    if add_fill_and_rim_light == False:
+        return lightcollection
+    assert len(lights) == 3
+    lightcollection.append(lights[1])
+    lightcollection.append(lights[2])
+    assert len(lightcollection) == 1
+    return lightcollection
 
 ### for testing
 
@@ -273,7 +284,7 @@ def day_night_circle(starting_time: int, brightness: float,
 # delete_lights(night_light(1, 90, True, None))
 # lights = day_light(1, 180, True, None)
 # latern_light(1, 20, True, None)
-# day_night_circle(12, 1, True, None)
+# print(day_night_circle(12, 1, True, None))
 # myCamera.rotate_z(270)
 
 # update scene, if needed

@@ -14,7 +14,7 @@ from tkinter import filedialog
 from PIL import ImageTk, Image
 
 import webbrowser
-#import requests
+import requests
 import enum
 
 from gui.render_preview import RenderPreview
@@ -22,7 +22,7 @@ from gui.gui_options import SettingsWindow
 from gui.settings import load_settings
 from gui.properties import *
 
-from Lightning.light_functions import day_light, night_light, delete_lights
+from Lightning.light_functions import day_light, night_light, delete_lights, latern_light, day_night_circle
 from Lightning.light_class import Light
 from HDRI.hdri import set_background_brightness
 
@@ -381,42 +381,85 @@ class LightingWidgets(Frame):
         self.rowconfigure(2, weight=1)
         lbl_light = Label(master=self, text="Lighting", font="Arial 10 bold")
         lbl_brightness = Label(master=self, text="Brightness")
+        btn_day = Button(master=self, text="use Lights on/off", command=self.use_lights_switch)
         btn_day = Button(master=self, text="Day", command=self.set_day)
         btn_night = Button(master=self, text="Night", command=self.set_night)
+        btn_latern = Button(master=self, text="Latern", command=self.set_latern)
+        btn_day_night = Button(master=self, text="Day Night Circle activate", command=self.set_day_night_circle)
         slider_brightness = Scale(master=self, orient="horizontal", showvalue=False, command=self.set_brightness)
         lbl_light.grid(row=0, column=0, columnspan=2)
         lbl_brightness.grid(row=1, column=0, sticky="w")
         slider_brightness.grid(row=1, column=1,  sticky="we")
         btn_day.grid(row=2, column=0, sticky="we",pady=1)
         btn_night.grid(row=2, column=1, sticky="we",pady=1)
+        btn_latern.grid(row=2, column=2, sticky="we",pady=1)
+        btn_day_night.grid(row=3, column=1, sticky="we",pady=1)
         self.light_objects : list[Light] = []
         self.is_day : bool = None
+        self.is_lights_used : bool = False
         self.brightness : float = 3
     
-    def set_brightness(self, value):
-        # recreate lights with new brightness
-        if self.is_day != None:
-            if self.is_day:
-                self.set_day()
-            else:
-                self.set_night()
-        # set new brightness
-        self.brightness = float(value)
+    # switches if lightning objects should be used
+    def use_lights_switch(self):
+        self.is_lights_used = not self.is_lights_used
 
+    # set the brightness
+    def set_brightness(self, value : float):
+        self.brightness = float(value)
+        self.fit_brightness_to_lights()
+        
+    # recreate lights with new brightness
+    # if lights are not used the background strength will be changed
+    def fit_brightness_to_lights(self):
+        if self.is_lights_used:
+            match self.is_day:
+                case True:
+                    self.set_day()
+                case False:
+                    self.set_night()
+                case None:
+                    self.set_latern()    
+        else:
+            delete_lights(self.light_objects)
+            set_background_brightness(self.get_brightness())
+            self.control.re_render()
+
+    # returns the brightness
     def get_brightness(self) -> float:
         return self.brightness
         
+    # some setting that should be made before creating new lights
+    def standard_light_settings(self, is_day_value: bool):
+        set_background_brightness(0)
+        self.is_day = is_day_value
+        delete_lights(self.light_objects)
+
+    # set day light
     def set_day(self):
-        set_background_brightness(0)
-        self.is_day = True
-        delete_lights(self.light_objects)
+        self.standard_light_settings(True)
         self.light_objects = day_light(self.get_brightness(), 80, True, None) # replace "None" with camera-object
+        self.control.re_render()
     
+    # set night light
     def set_night(self):
-        set_background_brightness(0)
-        self.is_day = False
-        delete_lights(self.light_objects)
+        self.standard_light_settings(False)
         self.light_objects = night_light(self.get_brightness(), 80, True, None) # replace "None" with camera-object
+        self.control.re_render()
+
+    # set latern light
+    def set_latern(self):
+        self.standard_light_settings(None)
+        self.light_objects = latern_light(self.get_brightness(), 80, True, None) # replace "None" with camera-object
+        self.control.re_render()
+
+    # need more testing
+    # creates a day night circle
+    def set_day_night_circle(self):
+        set_background_brightness(0)
+        self.light_objects = latern_light(0, self.get_brightness(), True, None) # replace "None" with camera-object
+        self.control.re_render()
+    
+
 
 
 class RightPanel(Frame):
