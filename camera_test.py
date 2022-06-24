@@ -11,21 +11,35 @@ if not dir in sys.path:
     
 
 from utils import *
-from camera_animation import *
-
+import camera_animation.camera_animation_module as cam
+import HDRI.hdri as hdri
 
 clear_scene()
 
-tower = import_mesh("assets/STL samples/eiffel_tower.stl")
+tower = import_mesh("assets/STL samples/Eiffel_tower.STL")
 
 myScene = bpy.context.scene
-myCamera = OrbitCam(tower)
-myCamera.set_distance(6)
-myCamera.rotate_z(150)
-myCamera.rotate_x(30)
+myCamera = cam.Camera("cam1", 6, 0, 0.5)
 
-myRenderer = Renderer(myScene, myCamera.camera)
-myRenderer.set_output_properties()
+startp = [6,-1,0.5]
+endP = [6,1,0.5]
+rot = [90,0,90]
+myCamera.driveBy(100, startp, endP, rot)
+
+
+myRenderer = Renderer(myCamera.cam)
+myRenderer.set_output_properties(animation=False)    # animation=True would render video
 myRenderer.set_eevee()
 
+
+
+hdri.initialize_world_texture()
+path = bpy.path.relpath("assets/HDRIs/green_point_park_2k.hdr")
+hdri.set_background_image(path)
+hdri.pan_background_vertical(10)
+hdri.pan_background_horizontal(-20)
+export_blend(os.path.abspath("renders/export.blend"))
 myRenderer.render()
+
+print(myCamera.getCameraPosition())
+print(myCamera.getCameraRotation())
