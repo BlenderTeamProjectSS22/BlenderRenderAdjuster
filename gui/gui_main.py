@@ -224,7 +224,7 @@ class CameraControls(Frame):
         self.control.re_render()
 
     def move_left(self):
-        self.control.camera.rotate_x(-10)
+        self.control.camera.rotate_z(-10)
         self.control.re_render()
 
     def pan_in(self):
