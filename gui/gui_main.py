@@ -123,6 +123,8 @@ class LeftPanel(Frame):
             initialfile = "render.png",
             defaultextension=".png",
             filetypes=[("Portable Network Graphics","*.png")])
+        if filename == None:
+            return
         self.control.renderer.set_final_render(file_path=filename.name)
         self.control.renderer.render()
         self.control.renderer.set_preview_render()
@@ -133,6 +135,8 @@ class LeftPanel(Frame):
             initialfile = "render.mkv",
             defaultextension=".mkv",
             filetypes=[("Matroska video","*.mkv")])
+        if filename == None:
+            return
         self.control.renderer.set_final_render(file_path=filename.name, animation=True)
         self.control.renderer.render()
         self.control.renderer.set_preview_render()
