@@ -19,7 +19,7 @@ import enum
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
-from gui.settings import load_settings
+from gui.settings import Control
 from gui.properties import *
 
 import utils
@@ -29,15 +29,10 @@ class ProgramGUI:
     
         # blender initialization
         utils.clear_scene()
-        self.camera = utils.OrbitCam()
-        self.renderer = utils.Renderer(self.camera.camera)
-        self.renderer.set_preview_render()
+        camera   = utils.OrbitCam()
+        renderer = utils.Renderer(camera.camera)
+        renderer.set_preview_render()
         
-        # Try loading settings and exit if not available/malformed
-        self.settings = load_settings()
-        if self.settings is None:
-            print("Problem loading settings")
-            exit()
         
         master.title("Render adjuster")
         master.minsize(107+184+480,307)
@@ -49,20 +44,19 @@ class ProgramGUI:
         master.columnconfigure(2, weight=0, minsize=184)
         master.rowconfigure(0, weight=9, minsize=307)
         
-        left  = LeftPanel(master, self)
+        # Create global control object
         self.preview = RenderPreview(master)
-        right = RightPanel(master, self)
-        camcontrols = CameraControls(master, self)
+        self.control = Control(renderer, self.preview, camera)
+        
+        left  = LeftPanel(master, self.control)
+        right = RightPanel(master, self.control)
+        camcontrols = CameraControls(master, self.control)
         
         left.grid(row=0, column=0, sticky="nw")
         self.preview.grid(row=0, column=1, sticky="nwes")
         camcontrols.grid(row=1, column=1)
         right.grid(row=0, column=2, sticky="ne")
         
-    def re_render(self):
-        self.renderer.render()
-        self.preview.reload()
-        print("Updating preview...")
         
 class LeftPanel(Frame):
     def __init__(self, master, control):
