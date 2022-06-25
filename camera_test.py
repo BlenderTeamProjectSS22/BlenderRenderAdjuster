@@ -11,7 +11,7 @@ if not dir in sys.path:
     
 
 from utils import *
-import camera_animation.camera_animation_module as cam
+import camera_animation.camera_animation_module as cammod
 import HDRI.hdri as hdri
 
 clear_scene()
@@ -19,19 +19,20 @@ clear_scene()
 tower = import_mesh("assets/STL samples/Eiffel_tower.STL")
 
 myScene = bpy.context.scene
-myCamera = cam.Camera("cam1", 6, 0, 0.5)
-#path = myCamera.CameraPath("camera_animation/testpath.obj")
+myCamera = cammod.Camera("cam1", 6, 0, 0.5)
+path = cammod.CameraPath("camera_animation/testpath.obj", myCamera)
+
 
 startp = [-3,-5,0.5]
 endP = [6,5,0.5]
 rot = [90,0,90]
-myCamera.set_mode("track", True, tower)
-myCamera.drive_by(100, startp, endP, rot, True)
 
+#path.follow_path(path.pathObj, 50)
+myCamera.drive_by(50, startp, endP, rot, True, tower)
 
 
 myRenderer = Renderer(myCamera.cam)
-myRenderer.set_output_properties(animation=True)    # animation=True would render video
+myRenderer.set_output_properties(animation=False)    # animation=True would render video
 myRenderer.set_eevee()
 
 
