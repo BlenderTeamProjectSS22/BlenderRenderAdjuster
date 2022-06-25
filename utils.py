@@ -121,7 +121,7 @@ class Renderer:
         self.scene.render.engine = 'CYCLES'
         self.animation = animation
         if animation:
-            self.scene.render.image_settings.file_format = 'FFMPEG'
+            self.scene.render.image_settings.file_format = 'AVI_JPEG'
         else:
             self.scene.render.image_settings.file_format = 'PNG'
         self.scene.render.filepath = file_path

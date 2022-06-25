@@ -132,9 +132,9 @@ class LeftPanel(Frame):
     def render_video(self):
         filename = filedialog.asksaveasfile(
             title="Save video at",
-            initialfile = "render.mkv",
-            defaultextension=".mkv",
-            filetypes=[("Matroska video","*.mkv")])
+            initialfile = "render.avi",
+            defaultextension=".avi",
+            filetypes=[("Audio Video Interleave","*.avi")])
         if filename == None:
             return
         self.control.renderer.set_final_render(file_path=filename.name, animation=True)
