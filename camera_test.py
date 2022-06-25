@@ -20,15 +20,18 @@ tower = import_mesh("assets/STL samples/Eiffel_tower.STL")
 
 myScene = bpy.context.scene
 myCamera = cam.Camera("cam1", 6, 0, 0.5)
+#path = myCamera.CameraPath("camera_animation/testpath.obj")
 
-startp = [6,-1,0.5]
-endP = [6,1,0.5]
+startp = [-3,-5,0.5]
+endP = [6,5,0.5]
 rot = [90,0,90]
-myCamera.driveBy(100, startp, endP, rot)
+myCamera.set_mode("track", True, tower)
+myCamera.drive_by(100, startp, endP, rot, True)
+
 
 
 myRenderer = Renderer(myCamera.cam)
-myRenderer.set_output_properties(animation=False)    # animation=True would render video
+myRenderer.set_output_properties(animation=True)    # animation=True would render video
 myRenderer.set_eevee()
 
 
@@ -41,5 +44,5 @@ hdri.pan_background_horizontal(-20)
 export_blend(os.path.abspath("renders/export.blend"))
 myRenderer.render()
 
-print(myCamera.getCameraPosition())
-print(myCamera.getCameraRotation())
+print(myCamera.get_camera_position())
+print(myCamera.get_camera_rotation())
