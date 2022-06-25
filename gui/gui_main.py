@@ -19,17 +19,20 @@ import enum
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
-from gui.settings import load_settings
+from gui.settings import Control
 from gui.properties import *
+
+import utils
 
 class ProgramGUI:
     def __init__(self, master):
     
-        # Try loading settings and exit if not available/malformed
-        self.settings = load_settings()
-        if self.settings is None:
-            print("Problem loading settings")
-            exit()
+        # blender initialization
+        utils.clear_scene()
+        camera   = utils.OrbitCam()
+        renderer = utils.Renderer(camera.camera)
+        renderer.set_preview_render()
+        
         
         master.title("Render adjuster")
         master.minsize(107+184+480,307)
@@ -41,20 +44,19 @@ class ProgramGUI:
         master.columnconfigure(2, weight=0, minsize=184)
         master.rowconfigure(0, weight=9, minsize=307)
         
-        left  = LeftPanel(master, self)
-        preview = RenderPreview(master, self)
-        right = RightPanel(master, self)
-        camcontrols = CameraControls(master, self)
+        # Create global control object
+        self.preview = RenderPreview(master)
+        self.control = Control(renderer, self.preview, camera)
+        
+        left  = LeftPanel(master, self.control)
+        right = RightPanel(master, self.control)
+        camcontrols = CameraControls(master, self.control)
         
         left.grid(row=0, column=0, sticky="nw")
-        preview.grid(row=0, column=1, sticky="nwes")
+        self.preview.grid(row=0, column=1, sticky="nwes")
         camcontrols.grid(row=1, column=1)
         right.grid(row=0, column=2, sticky="ne")
         
-    def re_render(self):
-        # TODO in this function, render the preview
-        # It will always be called when an change happens
-        print("Updating preview...")
         
 class LeftPanel(Frame):
     def __init__(self, master, control):
@@ -99,7 +101,9 @@ class LeftPanel(Frame):
             ("Wavefront OBJ", "*.obj")
         ]
         filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
-        # TODO Import the file using utils.py
+        if filename == "":
+            return
+        self.control.model = utils.import_mesh(filename)
         self.control.re_render()
         
     
@@ -109,13 +113,33 @@ class LeftPanel(Frame):
             initialfile = "untitled.blend",
             defaultextension=".blend",
             filetypes=[("Blender project","*.blend")])
-        # TODO Save the current scene in memory as a .blend file
+        if filename == None:
+            return
+        utils.export_blend(filename.name)
     
     def render_image(self):
-        pass
+        filename = filedialog.asksaveasfile(
+            title="Save image at",
+            initialfile = "render.png",
+            defaultextension=".png",
+            filetypes=[("Portable Network Graphics","*.png")])
+        if filename == None:
+            return
+        self.control.renderer.set_final_render(file_path=filename.name)
+        self.control.renderer.render()
+        self.control.renderer.set_preview_render()
     
     def render_video(self):
-        pass
+        filename = filedialog.asksaveasfile(
+            title="Save video at",
+            initialfile = "render.avi",
+            defaultextension=".avi",
+            filetypes=[("Audio Video Interleave","*.avi")])
+        if filename == None:
+            return
+        self.control.renderer.set_final_render(file_path=filename.name, animation=True)
+        self.control.renderer.render()
+        self.control.renderer.set_preview_render()
     
     def undo(self):
         pass
@@ -165,10 +189,55 @@ class LeftPanel(Frame):
 
 class CameraControls(Frame):
     def __init__(self, master, control):
-        Frame.__init__(self, master)
+        Frame.__init__(self, master, borderwidth=2, relief="groove")
         
+        self.control = control
         lbl_controls = Label(master=self, text="Camera Controls", font="Arial 10 bold")
-        lbl_controls.grid(row=0, column=0)
+        lbl_rot   = Label(master=self, text="Rotation")
+        lbl_controls.grid(row=0, column=0, columnspan=4)
+        lbl_rot.grid(row=1, column=0, columnspan=3)
+
+        btn_up = Button(master=self, text="↑", command=self.move_up)
+        btn_down = Button(master=self, text="↓", command=self.move_down)
+        btn_right = Button(master=self, text="→", command=self.move_right)
+        btn_left = Button(master=self, text="←", command=self.move_left)
+
+        btn_up.grid(row=2, column=1)
+        btn_left.grid(row=3, column=0, sticky="w")
+        btn_right.grid(row=3, column=2, sticky="e")
+        btn_down.grid(row=4, column=1)
+
+        lbl_dist   = Label(master=self, text="Distance")
+        btn_in = Button(master=self, text="Pan in", command=self.pan_in)
+        btn_out = Button(master=self, text="Pan out", command=self.pan_out)
+
+        lbl_dist.grid(row = 1, column=3)
+        btn_in.grid(row=2, column=3, padx=8)
+        btn_out.grid(row=4, column=3, padx=8)
+
+    def move_up(self):
+        self.control.camera.rotate_x(-10)
+        self.control.re_render()
+    
+    def move_down(self):
+        self.control.camera.rotate_x(10)
+        self.control.re_render()
+
+    def move_right(self):
+        self.control.camera.rotate_z(10)
+        self.control.re_render()
+
+    def move_left(self):
+        self.control.camera.rotate_z(-10)
+        self.control.re_render()
+
+    def pan_in(self):
+        self.control.camera.change_distance(-1)
+        self.control.re_render()
+
+    def pan_out(self):
+        self.control.camera.change_distance(1)
+        self.control.re_render()
         
         
 class ColorMeshWidgets(Frame):
