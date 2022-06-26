@@ -47,14 +47,17 @@ def creating_fill_and_rim_light(radius_rim: float, brightness_rim: float,
                                 brightness_fill: float, camera_object: OrbitCam) -> list[Light]:
     # if camera is used
     if not camera_object == None:
-        rim_light_angle = math.asin(camera_object.get_location()[0] / camera_object.get_distance())
+        camera_angle_diff = camera_object.get_location()[0] / camera_object.get_distance()
+        if camera_angle_diff > 1:
+            camera_angle_diff = 1
+        camera_angle = math.asin(camera_angle_diff)
         # creating Lights
-        rim = PointLight("rim", -radius_rim * math.sin(rim_light_angle),
-                    -radius_rim * math.cos(rim_light_angle),
+        rim = PointLight("rim", -radius_rim * math.sin(camera_angle),
+                    -radius_rim * math.cos(camera_angle),
                     radius_rim * math.sin(math.radians(170)),
                     brightness_rim, 0.25)
-        fill = PointLight("fill", 20 * math.sin(rim_light_angle),
-                    20 * math.cos(rim_light_angle),
+        fill = PointLight("fill", 20 * math.sin(camera_angle),
+                    20 * math.cos(camera_angle),
                     20 * math.sin(math.radians(170)),
                     brightness_fill, 5)
         # link lights to controller

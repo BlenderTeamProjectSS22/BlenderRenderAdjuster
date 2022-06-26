@@ -26,7 +26,7 @@ myScene = bpy.context.scene
 myCamera = OrbitCam(tower)
 myCamera.set_distance(6)
 
-myRenderer = Renderer(myScene, myCamera.camera)
+myRenderer = Renderer(myCamera.camera)
 myRenderer.set_output_properties()    # animation=True would render video
 myRenderer.set_cycles()
 
@@ -38,7 +38,7 @@ path = bpy.path.relpath("assets/HDRIs/green_point_park_2k.hdr")
 hdri.set_background_image(path)
 hdri.pan_background_vertical(10)
 hdri.pan_background_horizontal(-20)
-export_blend("renders/export.blend")
+export_blend(os.path.abspath("renders/export.blend"))
 myRenderer.render()
 
 print(myCamera.get_location())

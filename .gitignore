@@ -5,3 +5,4 @@ dist/
 .venv-blender
 *.zip
 data_samples
+preview.png

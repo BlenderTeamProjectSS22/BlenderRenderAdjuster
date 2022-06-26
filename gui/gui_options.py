@@ -51,6 +51,7 @@ class SettingsContent(Frame):
         w = int(self.ent_width.get())
         h = int(self.ent_height.get())
         self.control.settings.set_aspect_ratio(w, h)
+        self.control.re_render()
         self.close_window()
         print("New settings: " + str(self.control.settings))
         

@@ -5,6 +5,8 @@
 # description:
 # GUI element: Main program, renders the GUI and connects it to other function
 
+from ctypes.wintypes import SHORT
+from email.policy import default
 import tkinter as tk
 from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry
 from tkinter import ttk
@@ -19,21 +21,23 @@ import enum
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
-from gui.settings import load_settings
+from gui.settings import Control
 from gui.properties import *
 
-from Lightning.light_functions import day_light, night_light, delete_lights, latern_light, day_night_circle
+from Lightning.light_functions import day_light, night_light, delete_lights, latern_light, day_night_circle, delete_all_lights
 from Lightning.light_class import Light
 from HDRI.hdri import set_background_brightness
+import utils
 
 class ProgramGUI:
     def __init__(self, master):
     
-        # Try loading settings and exit if not available/malformed
-        self.settings = load_settings()
-        if self.settings is None:
-            print("Problem loading settings")
-            exit()
+        # blender initialization
+        utils.clear_scene()
+        camera   = utils.OrbitCam()
+        renderer = utils.Renderer(camera.camera)
+        renderer.set_preview_render()
+        
         
         master.title("Render adjuster")
         master.minsize(107+184+480,307)
@@ -45,20 +49,19 @@ class ProgramGUI:
         master.columnconfigure(2, weight=0, minsize=184)
         master.rowconfigure(0, weight=9, minsize=307)
         
-        left  = LeftPanel(master, self)
-        preview = RenderPreview(master, self)
-        right = RightPanel(master, self)
-        camcontrols = CameraControls(master, self)
+        # Create global control object
+        self.preview = RenderPreview(master)
+        self.control = Control(renderer, self.preview, camera)
+        
+        left  = LeftPanel(master, self.control)
+        right = RightPanel(master, self.control, camera)
+        camcontrols = CameraControls(master, self.control)
         
         left.grid(row=0, column=0, sticky="nw")
-        preview.grid(row=0, column=1, sticky="nwes")
+        self.preview.grid(row=0, column=1, sticky="nwes")
         camcontrols.grid(row=1, column=1)
         right.grid(row=0, column=2, sticky="ne")
         
-    def re_render(self):
-        # TODO in this function, render the preview
-        # It will always be called when an change happens
-        print("Updating preview...")
         
 class LeftPanel(Frame):
     def __init__(self, master, control):
@@ -103,7 +106,9 @@ class LeftPanel(Frame):
             ("Wavefront OBJ", "*.obj")
         ]
         filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
-        # TODO Import the file using utils.py
+        if filename == "":
+            return
+        self.control.model = utils.import_mesh(filename)
         self.control.re_render()
         
     
@@ -113,13 +118,33 @@ class LeftPanel(Frame):
             initialfile = "untitled.blend",
             defaultextension=".blend",
             filetypes=[("Blender project","*.blend")])
-        # TODO Save the current scene in memory as a .blend file
+        if filename == None:
+            return
+        utils.export_blend(filename.name)
     
     def render_image(self):
-        pass
+        filename = filedialog.asksaveasfile(
+            title="Save image at",
+            initialfile = "render.png",
+            defaultextension=".png",
+            filetypes=[("Portable Network Graphics","*.png")])
+        if filename == None:
+            return
+        self.control.renderer.set_final_render(file_path=filename.name)
+        self.control.renderer.render()
+        self.control.renderer.set_preview_render()
     
     def render_video(self):
-        pass
+        filename = filedialog.asksaveasfile(
+            title="Save video at",
+            initialfile = "render.avi",
+            defaultextension=".avi",
+            filetypes=[("Audio Video Interleave","*.avi")])
+        if filename == None:
+            return
+        self.control.renderer.set_final_render(file_path=filename.name, animation=True)
+        self.control.renderer.render()
+        self.control.renderer.set_preview_render()
     
     def undo(self):
         pass
@@ -169,10 +194,55 @@ class LeftPanel(Frame):
 
 class CameraControls(Frame):
     def __init__(self, master, control):
-        Frame.__init__(self, master)
+        Frame.__init__(self, master, borderwidth=2, relief="groove")
         
+        self.control = control
         lbl_controls = Label(master=self, text="Camera Controls", font="Arial 10 bold")
-        lbl_controls.grid(row=0, column=0)
+        lbl_rot   = Label(master=self, text="Rotation")
+        lbl_controls.grid(row=0, column=0, columnspan=4)
+        lbl_rot.grid(row=1, column=0, columnspan=3)
+
+        btn_up = Button(master=self, text="↑", command=self.move_up)
+        btn_down = Button(master=self, text="↓", command=self.move_down)
+        btn_right = Button(master=self, text="→", command=self.move_right)
+        btn_left = Button(master=self, text="←", command=self.move_left)
+
+        btn_up.grid(row=2, column=1)
+        btn_left.grid(row=3, column=0, sticky="w")
+        btn_right.grid(row=3, column=2, sticky="e")
+        btn_down.grid(row=4, column=1)
+
+        lbl_dist   = Label(master=self, text="Distance")
+        btn_in = Button(master=self, text="Pan in", command=self.pan_in)
+        btn_out = Button(master=self, text="Pan out", command=self.pan_out)
+
+        lbl_dist.grid(row = 1, column=3)
+        btn_in.grid(row=2, column=3, padx=8)
+        btn_out.grid(row=4, column=3, padx=8)
+
+    def move_up(self):
+        self.control.camera.rotate_x(-10)
+        self.control.re_render()
+    
+    def move_down(self):
+        self.control.camera.rotate_x(10)
+        self.control.re_render()
+
+    def move_right(self):
+        self.control.camera.rotate_z(10)
+        self.control.re_render()
+
+    def move_left(self):
+        self.control.camera.rotate_z(-10)
+        self.control.re_render()
+
+    def pan_in(self):
+        self.control.camera.change_distance(-1)
+        self.control.re_render()
+
+    def pan_out(self):
+        self.control.camera.change_distance(1)
+        self.control.re_render()
         
         
 class ColorMeshWidgets(Frame):
@@ -370,7 +440,7 @@ class Textures(enum.Enum):
     BRICKS = "bricks"
 
 class LightingWidgets(Frame):
-    def __init__(self, master, control):
+    def __init__(self, master, control, orbit_camera):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
         self.control = control
         
@@ -381,7 +451,7 @@ class LightingWidgets(Frame):
         self.rowconfigure(2, weight=1)
         lbl_light = Label(master=self, text="Lighting", font="Arial 10 bold")
         lbl_brightness = Label(master=self, text="Brightness")
-        btn_day = Button(master=self, text="use Lights on/off", command=self.use_lights_switch)
+        btn_use_lights_switch = Button(master=self, text="use Lights off", command=self.use_lights_off)
         btn_day = Button(master=self, text="Day", command=self.set_day)
         btn_night = Button(master=self, text="Night", command=self.set_night)
         btn_latern = Button(master=self, text="Latern", command=self.set_latern)
@@ -390,35 +460,47 @@ class LightingWidgets(Frame):
         lbl_light.grid(row=0, column=0, columnspan=2)
         lbl_brightness.grid(row=1, column=0, sticky="w")
         slider_brightness.grid(row=1, column=1,  sticky="we")
-        btn_day.grid(row=2, column=0, sticky="we",pady=1)
-        btn_night.grid(row=2, column=1, sticky="we",pady=1)
-        btn_latern.grid(row=2, column=2, sticky="we",pady=1)
-        btn_day_night.grid(row=3, column=1, sticky="we",pady=1)
+        btn_use_lights_switch.grid(row=2, column=0, sticky="we",pady=1)
+        btn_day_night.grid(row=2, column=1, sticky="we",pady=1)
+        btn_day.grid(row=3, column=0, sticky="we",pady=1)
+        btn_night.grid(row=3, column=1, sticky="we",pady=1)
+        btn_latern.grid(row=3, column=2, sticky="we",pady=1)        
         self.light_objects : list[Light] = []
-        self.is_day : bool = None
-        self.is_lights_used : bool = False
-        self.brightness : float = 3
+        self.use_light_type : int = 0 # int instead of bool for Modular Continuity reasons
+        self.brightness : float = 0
+        self.camera_object = orbit_camera
+        self.use_lights_off()
+
+    # returns the orbit camera object
+    def get_camera_object(self) -> object:
+        return self.camera_object
     
-    # switches if lightning objects should be used
-    def use_lights_switch(self):
-        self.is_lights_used = not self.is_lights_used
+    # lights will be deleted
+    def use_lights_off(self) -> None:
+        delete_all_lights()
+        self.is_lights_used = False
+        self.set_brightness(self.get_brightness())
 
     # set the brightness
-    def set_brightness(self, value : float):
-        self.brightness = float(value)
+    def set_brightness(self, value : float) -> None:
+        fit_light_value = float(value)/3
+        self.brightness = fit_light_value
         self.fit_brightness_to_lights()
         
     # recreate lights with new brightness
     # if lights are not used the background strength will be changed
-    def fit_brightness_to_lights(self):
+    def fit_brightness_to_lights(self) -> None:
         if self.is_lights_used:
-            match self.is_day:
-                case True:
+            match self.use_light_type:
+                case 0:
                     self.set_day()
-                case False:
+                    return
+                case 1:
                     self.set_night()
-                case None:
+                    return
+                case _:
                     self.set_latern()    
+                    return
         else:
             delete_lights(self.light_objects)
             set_background_brightness(self.get_brightness())
@@ -429,34 +511,35 @@ class LightingWidgets(Frame):
         return self.brightness
         
     # some setting that should be made before creating new lights
-    def standard_light_settings(self, is_day_value: bool):
+    def standard_light_settings(self, use_light_type: int) -> None:
         set_background_brightness(0)
-        self.is_day = is_day_value
+        self.is_lights_used = True
+        self.use_light_type = use_light_type
         delete_lights(self.light_objects)
 
     # set day light
-    def set_day(self):
-        self.standard_light_settings(True)
-        self.light_objects = day_light(self.get_brightness(), 80, True, None) # replace "None" with camera-object
+    def set_day(self) -> None:
+        self.standard_light_settings(0)
+        self.light_objects = day_light(self.get_brightness(), 80, True, self.get_camera_object())
         self.control.re_render()
     
     # set night light
-    def set_night(self):
-        self.standard_light_settings(False)
-        self.light_objects = night_light(self.get_brightness(), 80, True, None) # replace "None" with camera-object
+    def set_night(self) -> None:
+        self.standard_light_settings(1)
+        self.light_objects = night_light(self.get_brightness(), 110, True, self.get_camera_object())
         self.control.re_render()
 
     # set latern light
-    def set_latern(self):
-        self.standard_light_settings(None)
-        self.light_objects = latern_light(self.get_brightness(), 80, True, None) # replace "None" with camera-object
+    def set_latern(self) -> None:
+        self.standard_light_settings(2)
+        self.light_objects = latern_light(self.get_brightness(), 2, True, self.get_camera_object())
         self.control.re_render()
 
-    # need more testing
+    # needs to be tested
     # creates a day night circle
-    def set_day_night_circle(self):
+    def set_day_night_circle(self) -> None:
         set_background_brightness(0)
-        self.light_objects = latern_light(0, self.get_brightness(), True, None) # replace "None" with camera-object
+        self.light_objects = latern_light(0, self.get_brightness(), True, self.get_camera_object())
         self.control.re_render()
     
 
@@ -464,7 +547,7 @@ class LightingWidgets(Frame):
 
 class RightPanel(Frame):
         
-    def __init__(self, master, control):
+    def __init__(self, master, control, orbit_camera):
         Frame.__init__(self, master) 
         
         self.current_color = (255, 255, 0)
@@ -488,5 +571,5 @@ class RightPanel(Frame):
         frm_tex.grid(row=2, column=0, sticky="ew")
         
         # Lighting widgets
-        frm_light = LightingWidgets(self, control)
+        frm_light = LightingWidgets(self, control, orbit_camera)
         frm_light.grid(row=3, column=0, sticky="we")
