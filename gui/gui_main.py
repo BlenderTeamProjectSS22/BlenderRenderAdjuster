@@ -5,8 +5,6 @@
 # description:
 # GUI element: Main program, renders the GUI and connects it to other function
 
-from ctypes.wintypes import SHORT
-from email.policy import default
 import tkinter as tk
 from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry
 from tkinter import ttk
@@ -54,7 +52,7 @@ class ProgramGUI:
         self.control = Control(renderer, self.preview, camera)
         
         left  = LeftPanel(master, self.control)
-        right = RightPanel(master, self.control, camera)
+        right = RightPanel(master, self.control)
         camcontrols = CameraControls(master, self.control)
         
         left.grid(row=0, column=0, sticky="nw")
@@ -440,7 +438,7 @@ class Textures(enum.Enum):
     BRICKS = "bricks"
 
 class LightingWidgets(Frame):
-    def __init__(self, master, control, orbit_camera):
+    def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
         self.control = control
         
@@ -451,12 +449,14 @@ class LightingWidgets(Frame):
         self.rowconfigure(2, weight=1)
         lbl_light = Label(master=self, text="Lighting", font="Arial 10 bold")
         lbl_brightness = Label(master=self, text="Brightness")
+        lbl_daytime = Label(master=self, text="Time of day/night")
         btn_use_lights_switch = Button(master=self, text="use Lights off", command=self.use_lights_off)
         btn_day = Button(master=self, text="Day", command=self.set_day)
         btn_night = Button(master=self, text="Night", command=self.set_night)
         btn_latern = Button(master=self, text="Latern", command=self.set_latern)
         btn_day_night = Button(master=self, text="Day Night Circle activate", command=self.set_day_night_circle)
-        slider_brightness = Scale(master=self, orient="horizontal", showvalue=False, command=self.set_brightness)
+        slider_brightness = Scale(master=self, to = 64, orient="horizontal", showvalue=False, command=self.set_brightness)
+        slider_daytime = Scale(master=self, from_= 0, to = 12, orient="horizontal", showvalue=True, command=self.set_daytime)
         lbl_light.grid(row=0, column=0, columnspan=2)
         lbl_brightness.grid(row=1, column=0, sticky="w")
         slider_brightness.grid(row=1, column=1,  sticky="we")
@@ -464,27 +464,34 @@ class LightingWidgets(Frame):
         btn_day_night.grid(row=2, column=1, sticky="we",pady=1)
         btn_day.grid(row=3, column=0, sticky="we",pady=1)
         btn_night.grid(row=3, column=1, sticky="we",pady=1)
-        btn_latern.grid(row=3, column=2, sticky="we",pady=1)        
+        btn_latern.grid(row=3, column=2, sticky="we",pady=1) 
+        lbl_daytime.grid(row=4, column=0, sticky="w")
+        slider_daytime.grid(row=4, column=1,  sticky="we")     
+        slider_brightness.set(4)  
         self.light_objects : list[Light] = []
         self.use_light_type : int = 0 # int instead of bool for Modular Continuity reasons
         self.brightness : float = 0
-        self.camera_object = orbit_camera
+        self.daytime : int = 0
         self.use_lights_off()
 
-    # returns the orbit camera object
-    def get_camera_object(self) -> object:
-        return self.camera_object
-    
     # lights will be deleted
     def use_lights_off(self) -> None:
         delete_all_lights()
         self.is_lights_used = False
-        self.set_brightness(self.get_brightness())
+        self.set_brightness(self.get_brightness()/4)
+
+    # set daytime value to "value"
+    def set_daytime(self, value : int) -> None:
+        self.daytime = value
+        self.fit_brightness_to_lights()
+
+    # returns the daytime value
+    def get_daytime(self) -> int:
+        return int(self.daytime)
 
     # set the brightness
     def set_brightness(self, value : float) -> None:
-        fit_light_value = float(value)/3
-        self.brightness = fit_light_value
+        self.brightness = float(value)
         self.fit_brightness_to_lights()
         
     # recreate lights with new brightness
@@ -512,7 +519,7 @@ class LightingWidgets(Frame):
         
     # some setting that should be made before creating new lights
     def standard_light_settings(self, use_light_type: int) -> None:
-        set_background_brightness(0)
+        set_background_brightness(0.1)
         self.is_lights_used = True
         self.use_light_type = use_light_type
         delete_lights(self.light_objects)
@@ -520,26 +527,26 @@ class LightingWidgets(Frame):
     # set day light
     def set_day(self) -> None:
         self.standard_light_settings(0)
-        self.light_objects = day_light(self.get_brightness(), 80, True, self.get_camera_object())
+        self.light_objects = day_light(self.get_brightness()/3, self.get_daytime() * 15, True, self.control.camera)
         self.control.re_render()
     
     # set night light
     def set_night(self) -> None:
         self.standard_light_settings(1)
-        self.light_objects = night_light(self.get_brightness(), 110, True, self.get_camera_object())
+        self.light_objects = night_light(self.get_brightness()/3, self.get_daytime() * 15, True, self.control.camera)
         self.control.re_render()
 
     # set latern light
     def set_latern(self) -> None:
         self.standard_light_settings(2)
-        self.light_objects = latern_light(self.get_brightness(), 2, True, self.get_camera_object())
+        self.light_objects = latern_light(self.get_brightness()/4, 2, True, self.control.camera)
         self.control.re_render()
 
     # needs to be tested
     # creates a day night circle
     def set_day_night_circle(self) -> None:
-        set_background_brightness(0)
-        self.light_objects = latern_light(0, self.get_brightness(), True, self.get_camera_object())
+        set_background_brightness(0.1)
+        self.light_objects = latern_light(6, self.get_brightness()/3, True, self.control.camera)
         self.control.re_render()
     
 
@@ -547,7 +554,7 @@ class LightingWidgets(Frame):
 
 class RightPanel(Frame):
         
-    def __init__(self, master, control, orbit_camera):
+    def __init__(self, master, control):
         Frame.__init__(self, master) 
         
         self.current_color = (255, 255, 0)
@@ -571,5 +578,5 @@ class RightPanel(Frame):
         frm_tex.grid(row=2, column=0, sticky="ew")
         
         # Lighting widgets
-        frm_light = LightingWidgets(self, control, orbit_camera)
+        frm_light = LightingWidgets(self, control)
         frm_light.grid(row=3, column=0, sticky="we")

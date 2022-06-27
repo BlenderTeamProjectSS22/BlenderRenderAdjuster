@@ -1,19 +1,8 @@
 import bpy
 import math
-import sys
-import os
-import random
-import inspect
-from typing import Union
-
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
-
 from Lightning.light_class import *
 from utils import *
 #from camera_animation_module import *
-
 
 # delete all lights
 def delete_all_lights() -> None:
