@@ -24,7 +24,7 @@ from gui.properties import *
 
 from Lightning.light_functions import day_light, night_light, delete_lights, latern_light, day_night_circle, delete_all_lights
 from Lightning.light_class import Light
-from HDRI.hdri import set_background_brightness
+from HDRI.hdri import set_background_brightness, background_brightness_affects_objects
 import utils
 
 class ProgramGUI:
@@ -450,13 +450,15 @@ class LightingWidgets(Frame):
         lbl_light = Label(master=self, text="Lighting", font="Arial 10 bold")
         lbl_brightness = Label(master=self, text="Brightness")
         lbl_daytime = Label(master=self, text="Time of day/night")
-        btn_use_lights_switch = Button(master=self, text="use Lights off", command=self.use_lights_off)
+        lbl_background = Label(master=self, text="Background Strength")
+        btn_use_lights_switch = Button(master=self, text="Lights off", command=self.lights_off)
         btn_day = Button(master=self, text="Day", command=self.set_day)
         btn_night = Button(master=self, text="Night", command=self.set_night)
         btn_latern = Button(master=self, text="Latern", command=self.set_latern)
         btn_day_night = Button(master=self, text="Day Night Circle activate", command=self.set_day_night_circle)
-        slider_brightness = Scale(master=self, to = 64, orient="horizontal", showvalue=False, command=self.set_brightness)
+        slider_brightness = Scale(master=self, to = 31, orient="horizontal", showvalue=False, command=self.set_brightness)
         slider_daytime = Scale(master=self, from_= 0, to = 12, orient="horizontal", showvalue=True, command=self.set_daytime)
+        slider_background = Scale(master=self, from_= 0, to = 100, orient="horizontal", showvalue=False, command=self.set_background_strength)
         lbl_light.grid(row=0, column=0, columnspan=2)
         lbl_brightness.grid(row=1, column=0, sticky="w")
         slider_brightness.grid(row=1, column=1,  sticky="we")
@@ -466,19 +468,27 @@ class LightingWidgets(Frame):
         btn_night.grid(row=3, column=1, sticky="we",pady=1)
         btn_latern.grid(row=3, column=2, sticky="we",pady=1) 
         lbl_daytime.grid(row=4, column=0, sticky="w")
-        slider_daytime.grid(row=4, column=1,  sticky="we")     
+        slider_daytime.grid(row=4, column=1,  sticky="we")  
+        lbl_background.grid(row=5, column=0,  sticky="w") 
+        slider_background.grid(row=5, column=1,  sticky="we")    
         slider_brightness.set(4)  
+        slider_background.set(10)  
+        self.lights_off()
+        background_brightness_affects_objects(False)
         self.light_objects : list[Light] = []
         self.use_light_type : int = 0 # int instead of bool for Modular Continuity reasons
-        self.brightness : float = 0
+        self.brightness : float
         self.daytime : int = 0
-        self.use_lights_off()
+
+    # set the background strength and rerenders
+    def set_background_strength(self, value : int) -> None:
+        set_background_brightness(float(value) / 10)
+        self.control.re_render()
 
     # lights will be deleted
-    def use_lights_off(self) -> None:
-        delete_all_lights()
-        self.is_lights_used = False
-        self.set_brightness(self.get_brightness()/4)
+    def lights_off(self) -> None:
+        delete_all_lights()   
+        self.control.re_render()
 
     # set daytime value to "value"
     def set_daytime(self, value : int) -> None:
@@ -495,23 +505,17 @@ class LightingWidgets(Frame):
         self.fit_brightness_to_lights()
         
     # recreate lights with new brightness
-    # if lights are not used the background strength will be changed
     def fit_brightness_to_lights(self) -> None:
-        if self.is_lights_used:
-            match self.use_light_type:
-                case 0:
-                    self.set_day()
-                    return
-                case 1:
-                    self.set_night()
-                    return
-                case _:
-                    self.set_latern()    
-                    return
-        else:
-            delete_lights(self.light_objects)
-            set_background_brightness(self.get_brightness())
-            self.control.re_render()
+        match self.use_light_type:
+            case 0:
+                self.set_day()
+                return
+            case 1:
+                self.set_night()
+                return
+            case _:
+                self.set_latern()
+              
 
     # returns the brightness
     def get_brightness(self) -> float:
@@ -519,8 +523,6 @@ class LightingWidgets(Frame):
         
     # some setting that should be made before creating new lights
     def standard_light_settings(self, use_light_type: int) -> None:
-        set_background_brightness(0.1)
-        self.is_lights_used = True
         self.use_light_type = use_light_type
         delete_lights(self.light_objects)
 
@@ -545,8 +547,7 @@ class LightingWidgets(Frame):
     # needs to be tested
     # creates a day night circle
     def set_day_night_circle(self) -> None:
-        set_background_brightness(0.1)
-        self.light_objects = latern_light(6, self.get_brightness()/3, True, self.control.camera)
+        self.light_objects = day_night_circle(6, self.get_brightness()/3, True, self.control.camera)
         self.control.re_render()
     
 
