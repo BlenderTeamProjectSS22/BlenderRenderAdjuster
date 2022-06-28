@@ -108,7 +108,7 @@ class Renderer:
         self.scene.render.use_persistent_data = True
         self.scene.cycles.max_bounces = 4
         self.scene.cycles.tile_size = 4096
-        self.scene.cycles.use_fast_gi = True7
+        self.scene.cycles.use_fast_gi = True
         self.scene.cycles.fast_gi_method = "ADD" # refer to issue #10 for why this is set
         self.scene.cycles.time_limit = 0.3
 
