@@ -309,17 +309,22 @@ class MaterialWidgets(Frame):
         lbl_materials = Label(master=self, text="Material selection", font="Arial 10 bold")
         lbl_metallic  = Label(master=self, text="Metallic")
         lbl_roughness = Label(master=self, text="Roughness")
+        lbl_transmiss = Label(master=self, text="Transmission")
         
         validate_int = self.register(self.validate_integer)
         self.ent_metallic  = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
         self.ent_roughness = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
+        self.ent_transmiss = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
         self.ent_metallic.bind("<Return>",  self.set_metallic_input)
         self.ent_roughness.bind("<Return>", self.set_roughness_input)
+        self.ent_transmiss.bind("<Return>", self.set_transmiss_input)
         
         self.slider_metallic  = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_metallic(val, False))
         self.slider_roughness = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_roughness(val, False))
+        self.slider_transmiss = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_transmission(val, False))
         self.slider_metallic.bind("<ButtonRelease-1>",  lambda event: self.set_metallic(self.slider_metallic.get(), True))
         self.slider_roughness.bind("<ButtonRelease-1>", lambda event: self.set_roughness(self.slider_roughness.get(), True))
+        self.slider_transmiss.bind("<ButtonRelease-1>", lambda event: self.set_transmission(self.slider_transmiss.get(), True)) 
         
         lbl_sel_mat   = Label(master=self, text="Select:")
         materials = ("default", Materials.GLASS.value, Materials.EMISSIVE.value, Materials.STONE.value)
@@ -334,12 +339,17 @@ class MaterialWidgets(Frame):
         self.ent_roughness.grid(row=3, column=1, sticky="w")
         self.slider_roughness.grid(row=4, column=0, sticky="we", columnspan=2)
         
+        lbl_transmiss.grid(row=5, column=0, sticky="we")
+        self.ent_transmiss.grid(row=5, column=1, sticky="we")
+        self.slider_transmiss.grid(row=6, column=0, sticky="we", columnspan=2)
+        
         lbl_sel_mat.grid(row=7, column=0, sticky="w")
         dropdown_materials.grid(row=7, column=1, sticky="w")
         
         # default starting value
         self.set_metallic(0, False)
         self.set_roughness(50, False)
+        self.set_transmission(0, False)
         
         
     def validate_integer(self, P):
@@ -376,6 +386,13 @@ class MaterialWidgets(Frame):
         self.set_roughness(x, True)
         self.control.re_render()
         
+    def set_transmiss_input(self, event):
+        x = 0
+        if self.ent_transmiss.get() != "":
+            x = clamp(int(self.ent_transmiss.get()), 0, 100)
+        self.set_transmission(x, True)
+        self.control.re_render()
+        
     def set_metallic(self, value, isReleased: bool):
         self.ent_metallic.delete(0, tk.END)
         self.ent_metallic.insert(tk.END, value)
@@ -394,6 +411,16 @@ class MaterialWidgets(Frame):
         
         if isReleased:
             print("Setting roughness to " + str(value))
+            self.control.re_render()
+    
+    def set_transmission(self, value, isReleased: bool):
+        self.ent_transmiss.delete(0, tk.END)
+        self.ent_transmiss.insert(tk.END, value)
+        self.slider_transmiss.set(value)
+        self.control.material.set_transmission(utils.percent(int(value)))
+        
+        if isReleased:
+            print("Setting transmission to " + str(value))
             self.control.re_render()
 
 # Enum containing all possible materials
