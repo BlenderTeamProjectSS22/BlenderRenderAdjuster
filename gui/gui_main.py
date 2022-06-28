@@ -5,12 +5,15 @@
 # description:
 # GUI element: Main program, renders the GUI and connects it to other function
 
+from asyncio import selector_events
+from select import select
 import tkinter as tk
 from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
+from tkinter.tix import Select
 from PIL import ImageTk, Image
 
 import webbrowser
@@ -425,6 +428,7 @@ class TextureWidgets(Frame):
         ]
         filename = filedialog.askopenfilename(title="Select a texture", filetypes=filetypes)
         # TODO Apply the texure to the object
+        load_texture(filename)
         self.control.re_render()
         
         
