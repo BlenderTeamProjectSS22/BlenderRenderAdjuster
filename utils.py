@@ -173,3 +173,6 @@ def export_blend(filepath: str) -> None:
 def scale_to_unit_cube(obj: bpy.types.Object) -> None:
     obj.dimensions = obj.dimensions / max(obj.dimensions) * 2 #downscaling
     bpy.ops.object.origin_set(type='GEOMETRY_ORIGIN', center='BOUNDS') #align object's bounding box' center and origin
+
+def percent(x: int) -> float:
+    return x / 100
