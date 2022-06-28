@@ -153,6 +153,9 @@ def clear_scene(keepLight: bool = True) -> None:
         if not(o.name == "Light" and keepLight):
             bpy.data.objects.remove(o)
 
+def remove_object(obj: bpy.types.Object) -> None:
+   bpy.data.objects.remove(obj)
+
 #import .ply, .stl or .obj file
 def import_mesh(filepath: str) -> bpy.types.Object:
     if fnmatch.fnmatch(filepath.lower(), '*.ply'):
