@@ -270,11 +270,13 @@ class ColorMeshWidgets(Frame):
         check_point.grid(row=3, column=1, sticky="w")
     
     def pick_color(self):
-        self.current_color = askcolor(self.current_color)[0]
-        print(self.current_color)
-        # FIX Keep old color if no color is selected (current_color can be None)
-        # TODO Change the color of the object
-        self.control.re_render()
+    
+        color = askcolor(self.current_color)[0]
+        
+        if color is not None:
+            self.current_color = color
+            self.control.material.set_color(utils.convert_color_to_bpy(self.current_color))
+            self.control.re_render()
     
     def switch_vertex_color(self):
         self.control.re_render()
