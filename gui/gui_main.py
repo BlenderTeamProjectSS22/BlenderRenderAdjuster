@@ -6,7 +6,7 @@
 # GUI element: Main program, renders the GUI and connects it to other function
 
 import tkinter as tk
-from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry
+from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
@@ -24,6 +24,8 @@ from gui.properties import *
 
 import utils
 
+import HDRI.hdri
+
 class ProgramGUI:
     def __init__(self, master):
     
@@ -32,6 +34,8 @@ class ProgramGUI:
         camera   = utils.OrbitCam()
         renderer = utils.Renderer(camera.camera)
         renderer.set_preview_render()
+
+        HDRI.hdri.initialize_world_texture()
         
         
         master.title("Render adjuster")
@@ -52,11 +56,13 @@ class ProgramGUI:
         left  = LeftPanel(master, self.control)
         right = RightPanel(master, self.control)
         camcontrols = CameraControls(master, self.control)
+        background = BackgroundControl(master, self.control)
         
         left.grid(row=0, column=0, sticky="nw")
         self.preview.grid(row=0, column=1, sticky="nwes")
-        camcontrols.grid(row=1, column=1)
+        camcontrols.grid(row=1, column=1, sticky="w")
         right.grid(row=0, column=2, sticky="ne")
+        background.grid(row=1, column=1, sticky="e")
         
         
 class LeftPanel(Frame):
@@ -466,6 +472,49 @@ class LightingWidgets(Frame):
         self.control.re_render()
     
     def set_night(self):
+        self.control.re_render()
+
+class BackgroundControl(Frame):
+    def __init__(self, master, control):
+        Frame.__init__(self, master, borderwidth=2, relief="groove")
+        
+        self.control = control
+        lbl_controls = Label(master=self, text="Background", font="Arial 10 bold")
+        lbl_select   = Label(master=self, text="Select HDRI image:")
+        lbl_controls.grid(row=0, column=0, columnspan=4)
+        lbl_select.grid(row=1, column=0, columnspan=4)
+
+        empty_bg_lbl = Label(master=self, text="Empty", font="Arial 10 bold")
+        empty_bg_lbl.grid(row=2, column=0)
+        self.empty_bg = PhotoImage(file = "assets/gui/empty_bg.png").subsample(6,6)
+        empty_bg_btn = Button(master=self, image=self.empty_bg, command=self.remove_background)
+        empty_bg_btn.grid(row = 3, column=0)
+
+        bg1_lbl = Label(master=self, text="Green Park", font="Arial 10 bold")
+        bg1_lbl.grid(row=2, column=1)
+        self.bg1 = PhotoImage(file = "assets/gui/empty_bg.png").subsample(6,6)
+        bg1_btn = Button(master=self, image=self.bg1, command=lambda: self.load_hdri("assets/HDRIs/green_point_park_2k.hdr"))
+        bg1_btn.grid(row = 3, column=1)
+
+        btn_import_hdri = Button(master=self, text="Import custom HDRI", command=self.import_hdri)
+        btn_import_hdri.grid(row=3, column=2)
+
+    def load_hdri(self, path: str):
+        HDRI.hdri.set_background_image(path)
+        self.control.re_render()
+
+    def import_hdri(self):
+        filetypes = [
+            ("High Dynamic Range Image", "*.hdr")
+        ]
+        filename = filedialog.askopenfilename(title="Select image to import", filetypes=filetypes)
+        if filename == "":
+            return
+        HDRI.hdri.set_background_image(filename)
+        self.control.re_render()
+    
+    def remove_background(self):
+        HDRI.hdri.remove_background_image()
         self.control.re_render()
 
 
