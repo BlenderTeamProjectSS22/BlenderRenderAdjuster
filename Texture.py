@@ -9,7 +9,7 @@ Texobj = bpy.context.collection.objects[self.control.model]
 Texobj.data.materials.append(mat)
 
 #import the Texture image
-def load_texture(texture_path: string):
+def load_texture(texture_path: str):
   texImage = mat.node_tree.nodes.new('ShaderNodeTexImage')
   texImage.image = bpy.data.image.load(texture_path)
   
