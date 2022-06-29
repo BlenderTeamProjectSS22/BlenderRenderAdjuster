@@ -1,7 +1,10 @@
+from calendar import c
 import bpy
 import math
 from math import radians
 from utils import *
+
+# .venv-blender\Scripts\activate.bat
 
 # Camera class with most important controll methods to move around the scene
 class Camera:
@@ -98,11 +101,26 @@ class CameraPath:
 
     # not working yet
     def follow_path(self, pathObj: bpy.types.Object, frames: int):
+        #path to curve
+        bpy.ops.object.select_all(action="DESELECT")
+
+        pathObj.select_set(True)
         bpy.ops.object.convert(target="CURVE")
 
-        self.cam.constraints.new(type="CLAMP_TO")
-        self.cam.constraints.new(type="FOLLOW_PATH")
-        self.cam.constraints["Clamp To"].target = pathObj
-        self.cam.constraints["Follow Path"].target = pathObj
-    
-        #bpy.ops.constraint.followpath_path_animate(frame_start=0, frame_end=frames)
+        bpy.ops.object.select_all(action="DESELECT")
+
+        camera = bpy.data.objects['Camera']
+        camera.location[0] = 0
+        camera.location[1] = 0
+        camera.location[2] = 0
+        followPath = camera.constraints.new(type='FOLLOW_PATH')
+        followPath.name = 'CameraFollowPath'
+        followPath.target = pathObj
+        followPath.use_curve_follow = True
+        animateContext = bpy.context.copy()
+        animateContext['constraint'] = followPath
+        bpy.ops.constraint.followpath_path_animate(animateContext,
+                                               constraint='CameraFollowPath',
+                                               frame_start=0,
+                                               length=frames)
+        bpy.ops.object.select_all(action='DESELECT')

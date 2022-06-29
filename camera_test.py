@@ -28,8 +28,8 @@ endP = [6,5,0.5]
 rot = [90,0,90]
 
 #path.follow_path(path.pathObj, 50)
-myCamera.drive_by(50, startp, endP, rot, True, tower)
-
+#myCamera.set_mode("track", tower)
+path.follow_path(path.pathObj, 50)
 
 myRenderer = Renderer(myCamera.cam)
 myRenderer.set_output_properties(animation=False)    # animation=True would render video
@@ -37,11 +37,7 @@ myRenderer.set_eevee()
 
 
 
-hdri.initialize_world_texture()
-path = bpy.path.relpath("assets/HDRIs/green_point_park_2k.hdr")
-hdri.set_background_image(path)
-hdri.pan_background_vertical(10)
-hdri.pan_background_horizontal(-20)
+
 export_blend(os.path.abspath("renders/export.blend"))
 myRenderer.render()
 
