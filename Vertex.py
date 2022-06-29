@@ -7,11 +7,6 @@ def import_vertex(material: bpy.types.Material):
   if not mesh.vertex_colors:
       mesh.vertex_colors.new()
 
-"""
-let us assume for sake of brevity that there is now 
-a vertex color map called  'Col'    
-"""
-
   color_layer = mesh.vertex_colors["Col"]
 
 # or you could avoid using the color_layer name
