@@ -313,21 +313,33 @@ class MaterialWidgets(Frame):
         lbl_metallic  = Label(master=self, text="Metallic")
         lbl_roughness = Label(master=self, text="Roughness")
         lbl_transmiss = Label(master=self, text="Transmission")
+        lbl_emissive  = Label(master=self, text="Emissive Strength")
+        
+        self.emissive = BooleanVar(self)
+        print(self.emissive.get())
+        self.glow     = BooleanVar(self)
+        check_emiss   = Checkbutton(master=self, text="Emissive", variable=self.emissive, anchor="w", command=self.toggle_emissive)
+        print(str(self.emissive.get()))
+        check_glow    = Checkbutton(master=self, text="Glow", variable=self.glow, command=self.toggle_glow)
         
         validate_int = self.register(self.validate_integer)
         self.ent_metallic  = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
         self.ent_roughness = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
         self.ent_transmiss = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
+        self.ent_emissive  = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
         self.ent_metallic.bind("<Return>",  self.set_metallic_input)
         self.ent_roughness.bind("<Return>", self.set_roughness_input)
         self.ent_transmiss.bind("<Return>", self.set_transmiss_input)
+        self.ent_emissive.bind("<Return>", self.set_emissive_input)
         
         self.slider_metallic  = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_metallic(val, False))
         self.slider_roughness = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_roughness(val, False))
         self.slider_transmiss = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_transmission(val, False))
+        self.slider_emissive  = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_emissive(val, False))
         self.slider_metallic.bind("<ButtonRelease-1>",  lambda event: self.set_metallic(self.slider_metallic.get(), True))
         self.slider_roughness.bind("<ButtonRelease-1>", lambda event: self.set_roughness(self.slider_roughness.get(), True))
         self.slider_transmiss.bind("<ButtonRelease-1>", lambda event: self.set_transmission(self.slider_transmiss.get(), True)) 
+        self.slider_emissive.bind("<ButtonRelease-1>", lambda event: self.set_emissive(self.slider_emissive.get(), True)) 
         
         lbl_sel_mat   = Label(master=self, text="Select:")
         materials = ("default", Materials.GLASS.value, Materials.EMISSIVE.value, Materials.STONE.value)
@@ -346,14 +358,24 @@ class MaterialWidgets(Frame):
         self.ent_transmiss.grid(row=5, column=1, sticky="we")
         self.slider_transmiss.grid(row=6, column=0, sticky="we", columnspan=2)
         
-        lbl_sel_mat.grid(row=7, column=0, sticky="w")
-        dropdown_materials.grid(row=7, column=1, sticky="w")
+        check_emiss.grid(row=7, column=0, sticky="w")
+        check_glow.grid(row=7, column=1, sticky="w")
+        lbl_emissive.grid(row=8, column=0, sticky="we")
+        self.ent_emissive.grid(row=8, column=1, sticky="we")
+        self.slider_emissive.grid(row=9, column=0, sticky="we", columnspan=2)
         
-        # default starting value
+        lbl_sel_mat.grid(row=10, column=0, sticky="w")
+        dropdown_materials.grid(row=10, column=1, sticky="w")
+        
+        self.default_values()
+        
+        
+    def default_values(self):
         self.set_metallic(0, False)
         self.set_roughness(50, False)
         self.set_transmission(0, False)
-        
+        self.set_emissive(0, False)
+        self.control.material.disable_bump()
         
     def validate_integer(self, P):
         # TODO This prevents deleting e.g. '5', because field can't be empty
@@ -401,6 +423,13 @@ class MaterialWidgets(Frame):
         if self.ent_transmiss.get() != "":
             x = clamp(int(self.ent_transmiss.get()), 0, 100)
         self.set_transmission(x, True)
+        self.control.re_render()
+    
+    def set_emissive_input(self, event):
+        x = 0
+        if self.ent_emissive.get() != "":
+            x = clamp(int(self.ent_emissive.get()), 0, 100)
+        self.set_emissive(x, True)
         self.control.re_render()
         
     def set_metallic(self, value, isReleased: bool):
