@@ -24,8 +24,10 @@ from gui.properties import *
 
 import utils
 import glob
+import os
 
 import HDRI.hdri
+
 
 class ProgramGUI:
     def __init__(self, master):
@@ -37,7 +39,11 @@ class ProgramGUI:
         renderer.set_preview_render()
 
         HDRI.hdri.initialize_world_texture()
-        
+
+        hdri_dir = os.fsencode("assets/HDRIs/")
+        for file in os.listdir(hdri_dir):
+            filename = os.fsdecode(file)
+            utils.generate_hdri_thumbnail("assets/HDRIs/" + filename)
         
         master.title("Render adjuster")
         master.minsize(107+184+480,307)
