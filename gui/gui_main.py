@@ -479,7 +479,7 @@ class TextureWidgets(Frame):
         ]
         filename = filedialog.askopenfilename(title="Select a texture", filetypes=filetypes)
 
-        load_texture(filename)
+        load_texture(filename, self.control.material.material)
         self.control.re_render()
         
         
