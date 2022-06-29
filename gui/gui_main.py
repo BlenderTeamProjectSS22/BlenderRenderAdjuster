@@ -22,7 +22,7 @@ from gui.gui_options import SettingsWindow
 from gui.settings import Control
 from gui.properties import *
 
-from Lightning.light_functions import day_light, night_light, delete_lights, latern_light, day_night_circle, delete_all_lights
+from Lightning.light_functions import day_light, night_light, delete_lights, latern_light, day_night_cycle, delete_all_lights
 from Lightning.light_class import Light
 from HDRI.hdri import set_background_brightness, background_brightness_affects_objects
 import utils
@@ -470,7 +470,7 @@ class LightingWidgets(Frame):
         btn_day = Button(master=self, text="Day", command=self.set_day)
         btn_night = Button(master=self, text="Night", command=self.set_night)
         btn_latern = Button(master=self, text="Lantern", command=self.set_latern)
-        btn_day_night = Button(master=self, text="Day Night Circle activate", command=self.set_day_night_circle)
+        btn_day_night = Button(master=self, text="Day Night Cycle", command=self.set_day_night_cycle)
         # slider
         slider_brightness = Scale(master=self, to = 8.0, orient="horizontal",
                                   resolution = 0.1, showvalue=False, command=lambda val: self.set_brightness(val, False))
@@ -575,9 +575,9 @@ class LightingWidgets(Frame):
         self.control.re_render()
 
     # needs to be tested
-    # creates a day night circle
-    def set_day_night_circle(self) -> None:
-        self.light_objects = day_night_circle(self.STARTING_TIME, self.get_brightness(), True, self.control.camera)
+    # creates a day night cycle
+    def set_day_night_cycle(self) -> None:
+        self.light_objects = day_night_cycle(self.STARTING_TIME, self.get_brightness(), True, self.control.camera)
         self.control.re_render()
     
 

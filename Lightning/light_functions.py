@@ -167,9 +167,9 @@ def latern_light(brightness: float, height: float,
         return [spot]
 
 # private method
-# set the value for every frame of the day-night circle function
-# function should only be used in day_night_circle()
-def frame_setting_of_day_night_circle(f: int, lights: list[Light], scene, current_angle: int, day_color: list[float],
+# set the value for every frame of the day-night cycle function
+# function should only be used in day_night_cycle()
+def frame_setting_of_day_night_cycle(f: int, lights: list[Light], scene, current_angle: int, day_color: list[float],
                                         brightnesses: list[float], is_day: bool, lightcollection: list[Light], radius: float) -> None:
     scene.frame_set(f)
     # day and night change
@@ -210,10 +210,10 @@ def frame_setting_of_day_night_circle(f: int, lights: list[Light], scene, curren
         light.get_datas()[0].keyframe_insert(data_path = "energy", frame = f)
         light.get_datas()[0].keyframe_insert(data_path = "color", frame = f)
 
-# makes a day-night-circle
+# makes a day-night-cycle
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
 # all light objects will be deleted
-def day_night_circle(starting_time: int, brightness: float,
+def day_night_cycle(starting_time: int, brightness: float,
                      add_fill_and_rim_light: bool, camera_object: OrbitCam) -> list[Light]:
     # before starting time
     delete_all_lights()
@@ -250,7 +250,7 @@ def day_night_circle(starting_time: int, brightness: float,
     
     # setting per frame
     for f in range(scene.frame_start, scene.frame_end + 1):
-        frame_setting_of_day_night_circle(f, lights, scene, current_angle, day_color, brightnesses, is_day, lightcollection,radius)
+        frame_setting_of_day_night_cycle(f, lights, scene, current_angle, day_color, brightnesses, is_day, lightcollection,radius)
     scene.frame_set(frame_current) 
     
     # postconditions
@@ -275,7 +275,7 @@ def day_night_circle(starting_time: int, brightness: float,
 # delete_lights(night_light(1, 90, True, None))
 # lights = day_light(1, 180, True, None)
 # latern_light(1, 20, True, None)
-# print(day_night_circle(12, 1, True, None))
+# print(day_night_cycle(12, 1, True, None))
 # myCamera.rotate_z(270)
 
 # update scene, if needed
