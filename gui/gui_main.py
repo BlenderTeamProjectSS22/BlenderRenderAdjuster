@@ -20,6 +20,7 @@ import webbrowser
 import requests
 import enum
 from Texture import load_texture
+from Texture import delete_texture
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
@@ -466,10 +467,16 @@ class TextureWidgets(Frame):
     def set_texture(self, *args):
         tex = Textures(args[0])
         if tex == Textures.WOOD:
+            load_texture("assets/pngexample/wood.png", self.control.material.material)
             pass
         elif tex == Textures.BRICKS:
+            load_texture("assets/pngexample/bricks.png", self.control.material.material)
+            pass
+        elif tex == Textures.IRON:
+            load_texture("assets/pngexample/iron.png", self.control.material.material)
             pass
         else: # NONE
+            delete_texture(self.control.material.material)
             pass
         self.control.re_render()
     
@@ -488,6 +495,8 @@ class Textures(enum.Enum):
     NONE = "none"
     WOOD = "wood"
     BRICKS = "bricks"
+    IRON = "iron"
+
 
 class LightingWidgets(Frame):
     def __init__(self, master, control):
