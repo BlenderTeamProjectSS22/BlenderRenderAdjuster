@@ -392,9 +392,9 @@ class MaterialWidgets(Frame):
             case Materials.STONE:
                 self.control.material.stone_material()
             case Materials.EMISSIVE:
-                pass
+                self.control.material.set_emissive(True)
             case _:
-                pass
+                self.default_values()
         self.adjust_sliders()
         self.control.re_render()
     
@@ -461,9 +461,30 @@ class MaterialWidgets(Frame):
         if isReleased:
             print("Setting transmission to " + str(value))
             self.control.re_render()
+    
+    def set_emissive(self, value, isReleased: bool):
+        self.ent_emissive.delete(0, tk.END)
+        self.ent_emissive.insert(tk.END, value)
+        self.slider_emissive.set(value)
+        
+        self.control.material.set_emissive(self.emissive.get(), strength = utils.percent(int(value)))
+        
+        if isReleased:
+                print("Setting emissive strength to " + str(value))
+                self.control.re_render()
+        
+    def toggle_emissive(self):
+        #self.control.material.set_emissive(not self.emissive.get())
+        print("Setting emissive to " + str(self.emissive.get()))
+        self.set_emissive(self.slider_emissive.get(), True) 
+    
+    def toggle_glow(self):
+        # TODO add compositon glow
+        self.control.re_render()
 
 # Enum containing all possible materials
 class Materials(enum.Enum):
+    DEFAULT = "default"
     GLASS = "glass"
     STONE = "stone"
     EMISSIVE = "emissive"
