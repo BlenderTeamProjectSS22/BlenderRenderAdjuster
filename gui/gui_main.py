@@ -23,6 +23,7 @@ from gui.settings import Control
 from gui.properties import *
 
 import utils
+import glob
 
 class ProgramGUI:
     def __init__(self, master):
@@ -43,6 +44,7 @@ class ProgramGUI:
         master.columnconfigure(1, weight=16)
         master.columnconfigure(2, weight=0, minsize=184)
         master.rowconfigure(0, weight=9, minsize=307)
+        master.rowconfigure(1, weight=9)
         
         # Create global control object
         self.preview = RenderPreview(master)
@@ -51,10 +53,12 @@ class ProgramGUI:
         left  = LeftPanel(master, self.control)
         right = RightPanel(master, self.control)
         camcontrols = CameraControls(master, self.control)
+        bg_selector = BackgroundSelector(master, self.control)
         
         left.grid(row=0, column=0, sticky="nw")
         self.preview.grid(row=0, column=1, sticky="nwes")
-        camcontrols.grid(row=1, column=1)
+        camcontrols.grid(row=1, column=0)
+        bg_selector.grid(row=1, column=1, sticky="we")
         right.grid(row=0, column=2, sticky="ne")
         
         
@@ -469,7 +473,7 @@ class LightingWidgets(Frame):
 class RightPanel(Frame):
         
     def __init__(self, master, control):
-        Frame.__init__(self, master) 
+        Frame.__init__(self, master)
         
         self.current_color = (255, 255, 0)
         
@@ -494,3 +498,24 @@ class RightPanel(Frame):
         # Lighting widgets
         frm_light = LightingWidgets(self, control)
         frm_light.grid(row=3, column=0, sticky="we")
+
+
+class BackgroundSelector(Frame):
+    def __init__(self, master, control):
+        Frame.__init__(self, master)
+        self.control = control
+        
+        btn_preview = Button(master=self, text="Preview", command=self.load_images_from_folder("assets/HDRIs"))
+        
+        btn_preview.pack()
+        """
+        for img in images:
+            lbl_image = Label(master=self, image=img)
+            lbl_image.pack(fill=tk.X)
+        """
+    
+    def load_images_from_folder(self, path: str):
+        for filename in glob.glob(path + "/*.hdr"):
+            utils.generate_hdri_thumbnail(filename)
+    
+    
