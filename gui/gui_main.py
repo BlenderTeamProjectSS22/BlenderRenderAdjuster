@@ -438,27 +438,50 @@ class Textures(enum.Enum):
     BRICKS = "bricks"
 
 class LightingWidgets(Frame):
+    # constants
+    TIME_TO_ANGLE_CONSTANT : int = 15
+    HIGH_OF_LATERN_LIGHT : int = 2
+    STARTING_TIME : int = 6
+
     def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
         self.control = control
+
+        # variables
+        self.light_objects : list[Light] = []
+        self.use_light_type : int = 0 # int instead of bool for Modular Continuity reasons
+        self.brightness : float = 4
+        self.daytime : int = 0
+        self.background_strength : float = 1
         
+        # grid
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
+        # labels
         lbl_light = Label(master=self, text="Lighting", font="Arial 10 bold")
         lbl_brightness = Label(master=self, text="Brightness")
         lbl_daytime = Label(master=self, text="Time of day/night")
         lbl_background = Label(master=self, text="Background Strength")
+        # buttons
         btn_use_lights_switch = Button(master=self, text="Lights off", command=self.lights_off)
         btn_day = Button(master=self, text="Day", command=self.set_day)
         btn_night = Button(master=self, text="Night", command=self.set_night)
-        btn_latern = Button(master=self, text="Latern", command=self.set_latern)
+        btn_latern = Button(master=self, text="Lantern", command=self.set_latern)
         btn_day_night = Button(master=self, text="Day Night Circle activate", command=self.set_day_night_circle)
-        slider_brightness = Scale(master=self, to = 31, orient="horizontal", showvalue=False, command=self.set_brightness)
-        slider_daytime = Scale(master=self, from_= 0, to = 12, orient="horizontal", showvalue=True, command=self.set_daytime)
-        slider_background = Scale(master=self, from_= 0, to = 100, orient="horizontal", showvalue=False, command=self.set_background_strength)
+        # slider
+        slider_brightness = Scale(master=self, to = 8.0, orient="horizontal",
+                                  resolution = 0.1, showvalue=False, command=lambda val: self.set_brightness(val, False))
+        slider_daytime = Scale(master=self, from_= 0, to = 12, orient="horizontal", showvalue=True, command=lambda val: self.set_daytime(val, False))
+        slider_background = Scale(master=self, from_= 0, to = 10, orient="horizontal",
+                                  resolution = 0.1, showvalue=False, command=lambda val: self.set_background_strength(val, False))
+        slider_brightness.bind("<ButtonRelease-1>", lambda event : self.set_brightness(self.get_brightness(), True)) 
+        slider_daytime.bind("<ButtonRelease-1>", lambda event : self.set_daytime(self.get_daytime(), True)) 
+        slider_background.bind("<ButtonRelease-1>", lambda event : self.set_background_strength(self.get_background_strength(), True)) 
+
+        # packing
         lbl_light.grid(row=0, column=0, columnspan=2)
         lbl_brightness.grid(row=1, column=0, sticky="w")
         slider_brightness.grid(row=1, column=1,  sticky="we")
@@ -470,20 +493,25 @@ class LightingWidgets(Frame):
         lbl_daytime.grid(row=4, column=0, sticky="w")
         slider_daytime.grid(row=4, column=1,  sticky="we")  
         lbl_background.grid(row=5, column=0,  sticky="w") 
-        slider_background.grid(row=5, column=1,  sticky="we")    
-        slider_brightness.set(4)  
-        slider_background.set(10)  
+        slider_background.grid(row=5, column=1,  sticky="we") 
+
+        # initialization   
+        slider_brightness.set(self.get_brightness())  
+        slider_background.set(self.get_background_strength())
         self.lights_off()
         background_brightness_affects_objects(False)
-        self.light_objects : list[Light] = []
-        self.use_light_type : int = 0 # int instead of bool for Modular Continuity reasons
-        self.brightness : float
-        self.daytime : int = 0
+        
 
     # set the background strength and rerenders
-    def set_background_strength(self, value : int) -> None:
-        set_background_brightness(float(value) / 10)
-        self.control.re_render()
+    def set_background_strength(self, value, is_released : bool) -> None:
+        self.background_strength = value
+        set_background_brightness(float(value))
+        if is_released:
+            self.control.re_render()
+
+    # returns the background strength
+    def get_background_strength(self) -> None:
+        return self.background_strength
 
     # lights will be deleted
     def lights_off(self) -> None:
@@ -491,18 +519,20 @@ class LightingWidgets(Frame):
         self.control.re_render()
 
     # set daytime value to "value"
-    def set_daytime(self, value : int) -> None:
+    def set_daytime(self, value : int, is_released : bool) -> None:
         self.daytime = value
-        self.fit_brightness_to_lights()
+        if is_released:
+            self.fit_brightness_to_lights()
 
     # returns the daytime value
     def get_daytime(self) -> int:
         return int(self.daytime)
 
     # set the brightness
-    def set_brightness(self, value : float) -> None:
+    def set_brightness(self, value, is_released : bool) -> None:
         self.brightness = float(value)
-        self.fit_brightness_to_lights()
+        if is_released:
+            self.fit_brightness_to_lights()
         
     # recreate lights with new brightness
     def fit_brightness_to_lights(self) -> None:
@@ -529,25 +559,25 @@ class LightingWidgets(Frame):
     # set day light
     def set_day(self) -> None:
         self.standard_light_settings(0)
-        self.light_objects = day_light(self.get_brightness()/3, self.get_daytime() * 15, True, self.control.camera)
+        self.light_objects = day_light(self.get_brightness(), self.get_daytime() * self.TIME_TO_ANGLE_CONSTANT, True, self.control.camera)
         self.control.re_render()
     
     # set night light
     def set_night(self) -> None:
         self.standard_light_settings(1)
-        self.light_objects = night_light(self.get_brightness()/3, self.get_daytime() * 15, True, self.control.camera)
+        self.light_objects = night_light(self.get_brightness(), self.get_daytime() * self.TIME_TO_ANGLE_CONSTANT, True, self.control.camera)
         self.control.re_render()
 
     # set latern light
     def set_latern(self) -> None:
         self.standard_light_settings(2)
-        self.light_objects = latern_light(self.get_brightness()/4, 2, True, self.control.camera)
+        self.light_objects = latern_light(self.get_brightness(), self.HIGH_OF_LATERN_LIGHT, True, self.control.camera)
         self.control.re_render()
 
     # needs to be tested
     # creates a day night circle
     def set_day_night_circle(self) -> None:
-        self.light_objects = day_night_circle(6, self.get_brightness()/3, True, self.control.camera)
+        self.light_objects = day_night_circle(self.STARTING_TIME, self.get_brightness(), True, self.control.camera)
         self.control.re_render()
     
 

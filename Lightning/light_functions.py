@@ -146,7 +146,7 @@ def latern_light(brightness: float, height: float,
     # the distance of the lights
     radius_rim = 40
     # the brightness of the lights
-    brightness_main = 4500 * brightness
+    brightness_main = 3500 * brightness
     brightness_rim = 2500
     brightness_fill = 850
     # to fit brightness
