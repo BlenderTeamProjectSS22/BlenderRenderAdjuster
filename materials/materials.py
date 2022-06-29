@@ -31,8 +31,9 @@ class MaterialController:
         obj.active_material_index = 0
     
     def glass_material(self):
-        self.bsdf.set_transmission(1)
-        self.bsdf.set_roughness(0.05)
+        self.set_transmission(1)
+        self.set_roughness(0.05)
+        self.set_metallic(0.1)
     
     def stone_material(self) -> bpy.types.Material:
         self.bump_material(5, 10)

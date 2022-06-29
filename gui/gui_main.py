@@ -364,16 +364,23 @@ class MaterialWidgets(Frame):
             return False
     
     def set_material(self, *args):
-        mat = Materials(args[0])
-        if mat == Materials.GLASS:
-            pass
-        elif mat == Materials.STONE:
-            pass
-        elif mat == Materials.EMISSIVE:
-            pass
-        else: #default
-            pass
+        match Materials(args[0]):
+            case Materials.GLASS:
+                self.control.material.glass_material()
+            case Materials.STONE:
+                self.control.material.stone_material()
+            case Materials.EMISSIVE:
+                pass
+            case _:
+                pass
+        self.adjust_sliders()
         self.control.re_render()
+    
+    # Readjust sliders to fit the active material
+    def adjust_sliders(self):
+        self.set_metallic(self.control.material.metallic*100, False)
+        self.set_roughness(self.control.material.roughness*100, False)
+        self.set_transmission(self.control.material.transmission*100, False)
     
     def set_metallic_input(self, event):
         x = 0
