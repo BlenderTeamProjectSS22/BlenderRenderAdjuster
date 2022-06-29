@@ -73,7 +73,7 @@ class ProgramGUI:
         camcontrols.grid(row=1, column=1, sticky="w")
 
         right.grid(row=0, column=2, sticky="ne")
-        background_ctrl.grid(row=1, column=1)
+        background_ctrl.grid(row=1, column=1, sticky="e")
         
         
 class LeftPanel(Frame):
