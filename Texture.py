@@ -1,13 +1,12 @@
 import bpy
 
 ##make a new materials called 'Tex', and we use this materials for the Object with suitble texture.
-def Objecttomaterial():
+def object_to_material(obj: bpy.types.Object):
   mat = bpy.data.materials.new('Tex')
   mat.use_nodes=True
 
   ##select the object and append with material mat
-  Texobj = bpy.context.collection.objects[self.control.model]
-  Texobj.data.materials.append(mat)
+  obj.data.materials.append(mat)
 
 #import the Texture image
 def load_texture(texture_path: str):
