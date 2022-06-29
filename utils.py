@@ -151,7 +151,7 @@ class Renderer:
         self.scene.render.filepath = output_file_path
         self.animation = animation
         if animation:
-            self.scene.render.image_settings.file_format = 'FFMPEG'
+            self.scene.render.image_settings.file_format = 'AVI_JPEG'
         else:
             self.scene.render.image_settings.file_format = 'PNG'    
     

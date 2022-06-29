@@ -28,11 +28,11 @@ endP = [6,5,0.5]
 rot = [90,0,90]
 
 #path.follow_path(path.pathObj, 50)
-#myCamera.set_mode("track", tower)
+myCamera.set_mode("track", tower)
 path.follow_path(path.pathObj, 50)
 
 myRenderer = Renderer(myCamera.cam)
-myRenderer.set_output_properties(animation=False)    # animation=True would render video
+myRenderer.set_output_properties(animation=True)    # animation=True would render video
 myRenderer.set_eevee()
 
 

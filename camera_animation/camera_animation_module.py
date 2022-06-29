@@ -108,19 +108,10 @@ class CameraPath:
         bpy.ops.object.convert(target="CURVE")
 
         bpy.ops.object.select_all(action="DESELECT")
+        self.cam.select_set(True)
+        bpy.ops.object.constraint_add(type='FOLLOW_PATH')
+        bpy.context.object.constraints["Follow Path"].target = bpy.data.objects["NurbsPath_NurbsPath.001"]
+        bpy.context.object.constraints["Follow Path"].use_curve_follow = True
+        bpy.ops.constraint.followpath_path_animate(constraint="Follow Path", owner='OBJECT')
 
-        camera = bpy.data.objects['Camera']
-        camera.location[0] = 0
-        camera.location[1] = 0
-        camera.location[2] = 0
-        followPath = camera.constraints.new(type='FOLLOW_PATH')
-        followPath.name = 'CameraFollowPath'
-        followPath.target = pathObj
-        followPath.use_curve_follow = True
-        animateContext = bpy.context.copy()
-        animateContext['constraint'] = followPath
-        bpy.ops.constraint.followpath_path_animate(animateContext,
-                                               constraint='CameraFollowPath',
-                                               frame_start=0,
-                                               length=frames)
-        bpy.ops.object.select_all(action='DESELECT')
+        
