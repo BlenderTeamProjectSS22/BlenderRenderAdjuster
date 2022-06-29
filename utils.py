@@ -108,7 +108,7 @@ class Renderer:
         self.scene.render.use_persistent_data = True
         self.scene.cycles.max_bounces = 4
         self.scene.cycles.tile_size = 4096
-        self.scene.cycles.use_fast_gi = True7
+        self.scene.cycles.use_fast_gi = True
         self.scene.cycles.fast_gi_method = "ADD" # refer to issue #10 for why this is set
         self.scene.cycles.time_limit = 0.3
 
@@ -152,6 +152,9 @@ def clear_scene(keepLight: bool = True) -> None:
     for o in bpy.data.objects:
         if not(o.name == "Light" and keepLight):
             bpy.data.objects.remove(o)
+
+def remove_object(obj: bpy.types.Object) -> None:
+   bpy.data.objects.remove(obj)
 
 #import .ply, .stl or .obj file
 def import_mesh(filepath: str) -> bpy.types.Object:

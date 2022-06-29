@@ -50,6 +50,7 @@ class ProgramGUI:
         self.preview = RenderPreview(master)
         self.control = Control(renderer, self.preview, camera)
         self.control.material = MaterialController()
+        self.control.model = None
         
         left  = LeftPanel(master, self.control)
         right = RightPanel(master, self.control)
@@ -106,6 +107,8 @@ class LeftPanel(Frame):
         filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
         if filename == "":
             return
+        if self.control.model != None:
+            utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
         self.control.material.apply_material(self.control.model)
         self.control.re_render()
