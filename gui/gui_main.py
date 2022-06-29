@@ -23,10 +23,9 @@ from gui.settings import Control
 from gui.properties import *
 
 import utils
-import glob
 import os
 
-import HDRI.hdri
+import HDRI.hdri as hdri
 
 
 class ProgramGUI:
@@ -38,7 +37,7 @@ class ProgramGUI:
         renderer = utils.Renderer(camera.camera)
         renderer.set_preview_render()
 
-        HDRI.hdri.initialize_world_texture()
+        hdri.initialize_world_texture()
         
         #generate HDRI previews
         hdri_dir = os.fsencode("assets/HDRIs/")
@@ -523,7 +522,7 @@ class BackgroundControl(Frame):
         btn_import_hdri.grid(row=3, column=4)
 
     def load_hdri(self, path: str):
-        HDRI.hdri.set_background_image(path)
+        hdri.set_background_image(path)
         self.control.re_render()
 
     def import_hdri(self):
@@ -533,11 +532,11 @@ class BackgroundControl(Frame):
         filename = filedialog.askopenfilename(title="Select image to import", filetypes=filetypes)
         if filename == "":
             return
-        HDRI.hdri.set_background_image(filename)
+        hdri.set_background_image(filename)
         self.control.re_render()
     
     def remove_background(self):
-        HDRI.hdri.remove_background_image()
+        hdri.remove_background_image()
         self.control.re_render()
 
 
