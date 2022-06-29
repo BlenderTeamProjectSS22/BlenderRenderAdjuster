@@ -260,7 +260,6 @@ def day_night_circle(starting_time: int, brightness: float,
     assert len(lights) == 3
     lightcollection.append(lights[1])
     lightcollection.append(lights[2])
-    assert len(lightcollection) == 1
     return lightcollection
 
 ### for testing
