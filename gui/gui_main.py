@@ -19,7 +19,7 @@ from PIL import ImageTk, Image
 import webbrowser
 import requests
 import enum
-import Texture
+from Texture import load_texture
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
@@ -478,8 +478,7 @@ class TextureWidgets(Frame):
             ("PNG image", "*.png"),
         ]
         filename = filedialog.askopenfilename(title="Select a texture", filetypes=filetypes)
-        # TODO Apply the texure to the object
-        Objecttomaterial()
+
         load_texture(filename)
         self.control.re_render()
         
