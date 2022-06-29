@@ -17,7 +17,9 @@ import webbrowser
 import threading
 import requests
 import enum
+
 from Texture import load_texture, delete_texture
+from Vertex import import_vertex
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
@@ -430,6 +432,7 @@ class ColorMeshWidgets(Frame):
             self.control.re_render()
     
     def switch_vertex_color(self):
+        import_vertex(self.control.material.material)
         self.control.re_render()
     
     def switch_mesh(self):
