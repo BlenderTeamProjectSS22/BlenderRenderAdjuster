@@ -457,7 +457,7 @@ class TextureWidgets(Frame):
         lbl_textures = Label(master=self, text="Texture selection:", font="Arial 10 bold")
         btn_import_texture = Button(master=self, text="Import", command=self.import_texture)
         lbl_sel_tex    = Label(master=self, text="Select:")
-        textures = (Textures.NONE.value, Textures.WOOD.value, Textures.BRICKS.value)
+        textures = (Textures.NONE.value, Textures.WOOD.value, Textures.BRICKS.value, Textures.IRON.value)
         dropdown_textures = OptionMenu(self, tex_selected, *textures, command=self.set_texture)
         lbl_textures.grid(row=0, column=0, columnspan=2, sticky="we")
         btn_import_texture.grid(row=1, column=0, columnspan=2, sticky="")
@@ -468,16 +468,12 @@ class TextureWidgets(Frame):
         tex = Textures(args[0])
         if tex == Textures.WOOD:
             load_texture("assets/pngexample/wood.png", self.control.material.material)
-            pass
         elif tex == Textures.BRICKS:
-            load_texture("assets/pngexample/bricks.png", self.control.material.material)
-            pass
+            load_texture("assets/pngexample/brick.png", self.control.material.material)
         elif tex == Textures.IRON:
             load_texture("assets/pngexample/iron.png", self.control.material.material)
-            pass
         else: # NONE
             delete_texture(self.control.material.material)
-            pass
         self.control.re_render()
     
     def import_texture(self):
