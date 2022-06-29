@@ -153,6 +153,9 @@ def clear_scene(keepLight: bool = True) -> None:
         if not(o.name == "Light" and keepLight):
             bpy.data.objects.remove(o)
 
+def remove_object(obj: bpy.types.Object) -> None:
+   bpy.data.objects.remove(obj)
+
 #import .ply, .stl or .obj file
 def import_mesh(filepath: str) -> bpy.types.Object:
     if fnmatch.fnmatch(filepath.lower(), '*.ply'):
@@ -174,3 +177,13 @@ def export_blend(filepath: str) -> None:
 def scale_to_unit_cube(obj: bpy.types.Object) -> None:
     obj.dimensions = obj.dimensions / max(obj.dimensions) * 2 #downscaling
     bpy.ops.object.origin_set(type='GEOMETRY_ORIGIN', center='BOUNDS') #align object's bounding box' center and origin
+
+def percent(x: int) -> float:
+    return x / 100
+
+def convert_color_to_bpy(color: (int, int, int)) -> (float, float, float, float):
+    match color:
+        case (r, g, b):
+            return (r / 255, g / 255, b / 255, 1)
+        case _:
+            return None
