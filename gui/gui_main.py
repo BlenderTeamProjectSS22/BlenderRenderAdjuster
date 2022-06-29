@@ -39,7 +39,8 @@ class ProgramGUI:
         renderer.set_preview_render()
 
         HDRI.hdri.initialize_world_texture()
-
+        
+        #generate HDRI previews
         hdri_dir = os.fsencode("assets/HDRIs/")
         for file in os.listdir(hdri_dir):
             filename = os.fsdecode(file)
@@ -65,14 +66,14 @@ class ProgramGUI:
         right = RightPanel(master, self.control)
         camcontrols = CameraControls(master, self.control)
 
-        background = BackgroundControl(master, self.control)
+        background_ctrl = BackgroundControl(master, self.control)
         
         left.grid(row=0, column=0, sticky="nw")
         self.preview.grid(row=0, column=1, sticky="nwes")
         camcontrols.grid(row=1, column=1, sticky="w")
 
         right.grid(row=0, column=2, sticky="ne")
-        background.grid(row=1, column=1, sticky="e")
+        background_ctrl.grid(row=1, column=1)
         
         
 class LeftPanel(Frame):
@@ -491,23 +492,35 @@ class BackgroundControl(Frame):
         self.control = control
         lbl_controls = Label(master=self, text="Background", font="Arial 10 bold")
         lbl_select   = Label(master=self, text="Select HDRI image:")
-        lbl_controls.grid(row=0, column=0, columnspan=4)
-        lbl_select.grid(row=1, column=0, columnspan=4)
+        lbl_controls.grid(row=0, column=0, columnspan=5)
+        lbl_select.grid(row=1, column=0, columnspan=5)
 
         empty_bg_lbl = Label(master=self, text="Empty", font="Arial 10 bold")
         empty_bg_lbl.grid(row=2, column=0)
-        self.empty_bg = PhotoImage(file = "assets/gui/empty_bg.png").subsample(6,6)
+        self.empty_bg = PhotoImage(file = "assets/gui/empty_bg.png").subsample(2,2)
         empty_bg_btn = Button(master=self, image=self.empty_bg, command=self.remove_background)
         empty_bg_btn.grid(row = 3, column=0)
 
         bg1_lbl = Label(master=self, text="Green Park", font="Arial 10 bold")
         bg1_lbl.grid(row=2, column=1)
-        self.bg1 = PhotoImage(file = "assets/gui/empty_bg.png").subsample(6,6)
+        self.bg1 = PhotoImage(file = "assets/hdri_thumbs/green_point_park_2k.hdr.png").subsample(2,2)
         bg1_btn = Button(master=self, image=self.bg1, command=lambda: self.load_hdri("assets/HDRIs/green_point_park_2k.hdr"))
         bg1_btn.grid(row = 3, column=1)
 
+        bg2_lbl = Label(master=self, text="Old Depot", font="Arial 10 bold")
+        bg2_lbl.grid(row=2, column=2)
+        self.bg2 = PhotoImage(file = "assets/hdri_thumbs/old_depot_2k.hdr.png").subsample(2,2)
+        bg2_btn = Button(master=self, image=self.bg2, command=lambda: self.load_hdri("assets/HDRIs/old_depot_2k.hdr"))
+        bg2_btn.grid(row = 3, column=2)
+
+        bg3_lbl = Label(master=self, text="Desert", font="Arial 10 bold")
+        bg3_lbl.grid(row=2, column=3)
+        self.bg3 = PhotoImage(file = "assets/hdri_thumbs/syferfontein_6d_clear_2k.hdr.png").subsample(2,2)
+        bg3_btn = Button(master=self, image=self.bg3, command=lambda: self.load_hdri("assets/HDRIs/syferfontein_6d_clear_2k.hdr"))
+        bg3_btn.grid(row = 3, column=3)
+
         btn_import_hdri = Button(master=self, text="Import custom HDRI", command=self.import_hdri)
-        btn_import_hdri.grid(row=3, column=2)
+        btn_import_hdri.grid(row=3, column=4)
 
     def load_hdri(self, path: str):
         HDRI.hdri.set_background_image(path)
