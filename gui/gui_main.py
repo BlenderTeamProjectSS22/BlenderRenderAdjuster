@@ -491,16 +491,16 @@ class LightingWidgets(Frame):
         # packing
         lbl_light.grid(row=0, column=0, columnspan=2)
         lbl_brightness.grid(row=1, column=0, sticky="w")
-        slider_brightness.grid(row=1, column=1,  sticky="we")
+        slider_brightness.grid(row=1, column=1,  sticky="we", columnspan=2)
         btn_use_lights_switch.grid(row=2, column=0, sticky="we",pady=1)
         check_day_night_circle.grid(row=2, column=1, sticky="we",pady=1)
         btn_day.grid(row=3, column=0, sticky="we",pady=1)
         btn_night.grid(row=3, column=1, sticky="we",pady=1)
         btn_latern.grid(row=3, column=2, sticky="we",pady=1) 
         lbl_daytime.grid(row=4, column=0, sticky="w")
-        slider_daytime.grid(row=4, column=1,  sticky="we")  
+        slider_daytime.grid(row=4, column=1,  sticky="we", columnspan=2)  
         lbl_background.grid(row=5, column=0,  sticky="w") 
-        slider_background.grid(row=5, column=1,  sticky="we") 
+        slider_background.grid(row=5, column=1,  sticky="we", columnspan=2) 
         ## for testing
         # slider_frame_setting.grid(row=6,column=1,sticky="we")
 
