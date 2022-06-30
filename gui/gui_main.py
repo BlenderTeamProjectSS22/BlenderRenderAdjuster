@@ -475,7 +475,7 @@ class LightingWidgets(Frame):
         btn_night = Button(master=self, text="Night", command=self.set_night)
         btn_latern = Button(master=self, text="Lantern", command=self.set_latern)
         # checkboxs
-        check_day_night_circle = Checkbutton(master=self, text="Day_Night", variable=self.is_day_night, anchor="w", command=self.switch_day_night_circle)
+        check_day_night_circle = Checkbutton(master=self, text="Day Night Cycle Animation", variable=self.is_day_night, anchor="w", command=self.switch_day_night_circle)
         # slider
         slider_brightness = Scale(master=self, to = 8.0, orient="horizontal",
                                   resolution = 0.1, showvalue=False, command=lambda val: self.set_brightness(val, False))
@@ -493,16 +493,16 @@ class LightingWidgets(Frame):
         lbl_brightness.grid(row=1, column=0, sticky="w")
         slider_brightness.grid(row=1, column=1,  sticky="we", columnspan=2)
         btn_use_lights_switch.grid(row=2, column=0, sticky="we",pady=1)
-        check_day_night_circle.grid(row=2, column=1, sticky="we",pady=1)
+        btn_latern.grid(row=2, column=1, sticky="we",pady=1, columnspan=2) 
         btn_day.grid(row=3, column=0, sticky="we",pady=1)
         btn_night.grid(row=3, column=1, sticky="we",pady=1)
-        btn_latern.grid(row=3, column=2, sticky="we",pady=1) 
-        lbl_daytime.grid(row=4, column=0, sticky="w")
-        slider_daytime.grid(row=4, column=1,  sticky="we", columnspan=2)  
-        lbl_background.grid(row=5, column=0,  sticky="w") 
-        slider_background.grid(row=5, column=1,  sticky="we", columnspan=2) 
+        check_day_night_circle.grid(row=4, column=0, sticky="", pady=1, columnspan=2)
+        lbl_daytime.grid(row=5, column=0, sticky="w")
+        slider_daytime.grid(row=5, column=1,  sticky="we", columnspan=2)  
+        lbl_background.grid(row=6, column=0,  sticky="w") 
+        slider_background.grid(row=6, column=1,  sticky="we", columnspan=2) 
         ## for testing
-        # slider_frame_setting.grid(row=6,column=1,sticky="we")
+        # slider_frame_setting.grid(row=7,column=1,sticky="we")
 
         # initialization   
         slider_brightness.set(self.get_brightness())  
