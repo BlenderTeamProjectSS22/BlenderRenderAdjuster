@@ -12,6 +12,8 @@ import bpy
 import os
 from math import radians
 import fnmatch
+import sys
+import gui.properties as props
 
 # basic camera capable of orbiting around central cube
 # uses track-to-constraint, limit-distance-constraint
@@ -89,7 +91,24 @@ class Renderer:
 
     # render image to configured output destination 
     def render(self) -> None:
+        
+        # Disable console output if verbose flag is not set
+        # Output redirection adapted from https://blender.stackexchange.com/a/44563
+        if not props.VERBOSE:
+            logfile = "assets/blender_render.log"
+            open(logfile, 'a').close()
+            old = os.dup(sys.stdout.fileno())
+            sys.stdout.flush()
+            os.close(sys.stdout.fileno())
+            fd = os.open(logfile, os.O_WRONLY)
+        
         bpy.ops.render.render(write_still=True, animation=self.animation)
+        
+        # Re-enable console output
+        if not props.VERBOSE:
+            os.close(fd)
+            os.dup(old)
+            os.close(old)
 
     # apply settings for preview rendering
     def set_preview_render(self,

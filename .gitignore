@@ -6,3 +6,4 @@ dist/
 *.zip
 data_samples
 preview.png
+blender_render.log
