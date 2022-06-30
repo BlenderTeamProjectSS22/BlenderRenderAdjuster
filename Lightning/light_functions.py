@@ -138,10 +138,10 @@ def night_light(brightness: float, angle: int, add_fill_and_rim_light: bool, cam
                                     radius_rim, brightness_rim, brightness_fill, camera_object))
     return list
 
-# creating the laternlight (plus rim- and fill-Licht if add_fill_and_rim_light = True)
+# creating the lanternlight (plus rim- and fill-Licht if add_fill_and_rim_light = True)
 # returns an array of all objects
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
-def latern_light(brightness: float, height: float,
+def lantern_light(brightness: float, height: float,
                 add_fill_and_rim_light: bool, camera_object: OrbitCam) -> list[Light]:
     # the distance of the lights
     radius_rim = 40
@@ -284,7 +284,7 @@ def delete_light_animation(lights : list[Light]):
 # night_light(1, 50, True, myCamera)
 # delete_lights(night_light(1, 90, True, None))
 # lights = day_light(1, 180, True, None)
-# latern_light(1, 20, True, None)
+# lantern_light(1, 20, True, None)
 # delete_light_animation(day_night_cycle(12, 1, True, None))
 # myCamera.rotate_z(270)
 

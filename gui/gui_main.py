@@ -22,7 +22,7 @@ from gui.gui_options import SettingsWindow
 from gui.settings import Control
 from gui.properties import *
 
-from Lightning.light_functions import day_light, night_light, delete_lights, latern_light, day_night_cycle, delete_all_lights, delete_light_animation
+from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, day_night_cycle, delete_all_lights, delete_light_animation
 from Lightning.light_class import Light
 from HDRI.hdri import set_background_brightness, background_brightness_affects_objects
 import utils
@@ -473,7 +473,7 @@ class LightingWidgets(Frame):
         btn_use_lights_switch = Button(master=self, text="Lights off", command=self.lights_off)
         btn_day = Button(master=self, text="Day", command=self.set_day)
         btn_night = Button(master=self, text="Night", command=self.set_night)
-        btn_latern = Button(master=self, text="Lantern", command=self.set_latern)
+        btn_lantern = Button(master=self, text="Lantern", command=self.set_lantern)
         # checkboxs
         check_day_night_circle = Checkbutton(master=self, text="Day Night Cycle Animation", variable=self.is_day_night, anchor="w", command=self.switch_day_night_circle)
         # slider
@@ -493,7 +493,7 @@ class LightingWidgets(Frame):
         lbl_brightness.grid(row=1, column=0, sticky="w")
         slider_brightness.grid(row=1, column=1,  sticky="we", columnspan=2)
         btn_use_lights_switch.grid(row=2, column=0, sticky="we",pady=1)
-        btn_latern.grid(row=2, column=1, sticky="we",pady=1, columnspan=2) 
+        btn_lantern.grid(row=2, column=1, sticky="we",pady=1, columnspan=2) 
         btn_day.grid(row=3, column=0, sticky="we",pady=1)
         btn_night.grid(row=3, column=1, sticky="we",pady=1)
         check_day_night_circle.grid(row=4, column=0, sticky="", pady=1, columnspan=2)
@@ -554,7 +554,7 @@ class LightingWidgets(Frame):
                 self.set_night()
                 return
             case _:
-                self.set_latern()
+                self.set_lantern()
               
 
     # returns the brightness
@@ -579,10 +579,10 @@ class LightingWidgets(Frame):
         self.light_objects = night_light(self.get_brightness(), self.get_daytime() * self.TIME_TO_ANGLE_CONSTANT, True, self.control.camera)
         self.control.re_render()
 
-    # set latern light
-    def set_latern(self) -> None:
+    # set lantern light
+    def set_lantern(self) -> None:
         self.standard_light_settings(2)
-        self.light_objects = latern_light(self.get_brightness(), self.HIGH_OF_LATERN_LIGHT, True, self.control.camera)
+        self.light_objects = lantern_light(self.get_brightness(), self.HIGH_OF_LATERN_LIGHT, True, self.control.camera)
         self.control.re_render()
 
     # needs to be tested
