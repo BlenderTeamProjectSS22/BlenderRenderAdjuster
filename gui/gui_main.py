@@ -22,12 +22,13 @@ from gui.gui_options import SettingsWindow
 from gui.settings import Control
 from gui.properties import *
 
-from Lightning.light_functions import day_light, night_light, delete_lights, latern_light, day_night_circle, delete_all_lights, delete_light_animation
+from Lightning.light_functions import day_light, night_light, delete_lights, latern_light, day_night_cycle, delete_all_lights, delete_light_animation
 from Lightning.light_class import Light
 from HDRI.hdri import set_background_brightness, background_brightness_affects_objects
 import utils
 
-import bpy
+## for testing
+# import bpy
 
 class ProgramGUI:
     def __init__(self, master):
@@ -583,20 +584,26 @@ class LightingWidgets(Frame):
         self.standard_light_settings(2)
         self.light_objects = latern_light(self.get_brightness(), self.HIGH_OF_LATERN_LIGHT, True, self.control.camera)
         self.control.re_render()
+
+    # needs to be tested
+    # creates a day night cycle
+    def set_day_night_cycle(self) -> None:
+        self.light_objects = day_night_cycle(self.STARTING_TIME, self.get_brightness(), True, self.control.camera)
+        self.control.re_render()
     
     # creates a day night circle if "self.is_day_night" = true
     # deletes the animations if "self.is_day_night" = false
     def switch_day_night_circle(self):
         if self.is_day_night.get():
             delete_lights(self.light_objects)
-            self.light_objects = day_night_circle(self.STARTING_TIME, self.get_brightness(), True, self.control.camera)
+            self.light_objects = day_night_cycle(self.STARTING_TIME, self.get_brightness(), True, self.control.camera)
         else:
             delete_light_animation(self.light_objects)
         self.control.re_render()
 
     ## test function
     ## set frame to "value"
-    #def set_frame(self, value):
+    # def set_frame(self, value):
     #    bpy.context.scene.frame_current = int(value)
     #    self.control.re_render()
 

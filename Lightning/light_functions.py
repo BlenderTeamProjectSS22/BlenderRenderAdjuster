@@ -169,7 +169,7 @@ def latern_light(brightness: float, height: float,
 # private method
 # set the value for every frame of the day-night circle function
 # function should only be used in day_night_circle()
-def frame_setting_of_day_night_circle(frame_current: int, lights: list[Light], scene, current_angle: int, day_color: list[float],
+def frame_setting_of_day_night_cycle(frame_current: int, lights: list[Light], scene, current_angle: int, day_color: list[float],
                                         brightnesses: list[float], is_day: bool,
                                         lightcollection: list[Light], radius: float, first_element : bool) -> None:
     for f in range(scene.frame_start, scene.frame_end + 1):
@@ -213,10 +213,10 @@ def frame_setting_of_day_night_circle(frame_current: int, lights: list[Light], s
             light.get_datas()[0].keyframe_insert(data_path = "color", frame = f)
     scene.frame_set(frame_current) 
 
-# makes a day-night-circle
+# makes a day-night-cycle
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
 # all light objects will be deleted
-def day_night_circle(starting_time: int, brightness: float,
+def day_night_cycle(starting_time: int, brightness: float,
                      add_fill_and_rim_light: bool, camera_object: OrbitCam) -> list[Light]:
     # before starting time
     delete_all_lights()
@@ -253,7 +253,7 @@ def day_night_circle(starting_time: int, brightness: float,
     frame_current = scene.frame_current
     
     # setting per frame
-    frame_setting_of_day_night_circle(frame_current, lights, scene, current_angle, day_color,
+    frame_setting_of_day_night_cycle(frame_current, lights, scene, current_angle, day_color,
                                     brightnesses, is_day,
                                     lightcollection, radius, first_element)
     
@@ -285,7 +285,7 @@ def delete_light_animation(lights : list[Light]):
 # delete_lights(night_light(1, 90, True, None))
 # lights = day_light(1, 180, True, None)
 # latern_light(1, 20, True, None)
-# delete_light_animation(day_night_circle(12, 1, True, None))
+# delete_light_animation(day_night_cycle(12, 1, True, None))
 # myCamera.rotate_z(270)
 
 # update scene, if needed
