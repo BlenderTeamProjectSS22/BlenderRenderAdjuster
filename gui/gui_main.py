@@ -398,12 +398,12 @@ class MaterialWidgets(Frame):
     
     # Readjust sliders to fit the active material
     def adjust_sliders(self):
-        self.set_metallic(self.control.material.metallic*100, False)
-        self.set_roughness(self.control.material.roughness*100, False)
-        self.set_transmission(self.control.material.transmission*100, False)
-        self.set_emissive(self.control.material.strength*100, False)
-        self.glow.set(self.control.material.compositing.glow)
-        self.emissive.set(self.control.material.emissive)
+        self.set_metallic(int(self.control.material.metallic*100), False)
+        self.set_roughness(int(self.control.material.roughness*100), False)
+        self.set_transmission(int(self.control.material.transmission*100), False)
+        self.set_emissive(int(self.control.material.strength*100), False)
+        self.glow.set(int(self.control.material.compositing.glow))
+        self.emissive.set(int(self.control.material.emissive))
     
     def set_metallic_input(self, event):
         x = 0
