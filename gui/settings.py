@@ -10,6 +10,7 @@ import typing as t
 import yaml
 from utils import Renderer, OrbitCam
 from gui.render_preview import RenderPreview
+from materials.materials import MaterialController
 
 @dataclass
 class AspectRatio:
@@ -48,6 +49,7 @@ class Control:
     preview: RenderPreview
     camera: OrbitCam
     settings: Settings
+    material: MaterialController
     
     def __init__(self, renderer, preview, camera):
         self.renderer = renderer
