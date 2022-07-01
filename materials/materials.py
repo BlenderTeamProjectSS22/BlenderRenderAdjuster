@@ -5,6 +5,7 @@ class CompositeNodes:
     def __init__(self):
         bpy.context.scene.use_nodes = True
         self.tree = bpy.context.scene.node_tree
+        self.glow = False
 
         for node in self.tree.nodes:
             self.tree.nodes.remove(node)
@@ -15,15 +16,17 @@ class CompositeNodes:
         self.tree.links.new(self.rlayer.outputs["Image"], self.output.inputs["Image"])
         
         # Glare properties
-        self.glare.glare_type = 'FOG_GLOW'
+        self.glare.glare_type = "FOG_GLOW"
         self.glare.threshold = 0.5
         self.glare.size = 10
     
     def set_glow(self, is_glowing: bool):
         if is_glowing:
+            self.glow = True
             self.tree.links.new(self.rlayer.outputs["Image"], self.glare.inputs["Image"])
             self.tree.links.new(self.glare.outputs["Image"], self.output.inputs["Image"])
         else:
+            self.glow = False
             self.tree.links.new(self.rlayer.outputs["Image"], self.output.inputs["Image"])
 
 class MaterialController:
@@ -60,15 +63,36 @@ class MaterialController:
         obj.active_material = self.material
         obj.active_material_index = 0
     
-    def glass_material(self):
-        self.set_emissive(False)
-        self.set_transmission(1)
-        self.set_roughness(0.05)
-        self.set_metallic(0.1)
+    # If a value is not set, it will not be changed
+    def material_preset(self, **opts):
+        self.set_metallic(opts.get("metallic", self.metallic))
+        self.set_roughness(opts.get("roughness", self.roughness))
+        self.set_transmission(opts.get("transmission", self.transmission))
+        self.set_emissive(opts.get("emissive", self.emissive))
+        self.set_emissive_strength(opts.get("strength", self.strength))
+        self.compositing.set_glow(opts.get("glow", self.compositing.glow))
+        if not opts.get("bump", False):
+            self.disable_bump()
     
-    def stone_material(self) -> bpy.types.Material:
-        self.set_emissive(False)
-        self.bump_material(5, 10)
+    def glass_material(self):
+        self.material_preset(
+            transmission = 1,
+            roughness     = 0.05,
+            emissive     = False)
+    
+    def stone_material(self):
+        self.material_preset(
+            transmission = 0,
+            emissive     = False,
+            bump         = True)
+        self.bump_material(10, 5)
+    
+    def emissive_material(self):
+        self.material_preset(
+            emissive = True,
+            strength = 1,
+            transmissive = 0.5,
+            glow     = True)
     
     # Create and return a bump material to an object, with adjustable scale and detail level of the noise
     def bump_material(self, scale: float = 5, detail: float = 2) -> bpy.types.Material:
@@ -83,7 +107,6 @@ class MaterialController:
     
     def disable_bump(self):
         links = self.material.node_tree.links
-        print(str(self.bump.inputs["Height"].links))
         if self.bump.inputs["Height"].links:
             links.remove(self.noisel)
         if self.bsdf.inputs["Normal"].links:
@@ -105,42 +128,21 @@ class MaterialController:
         self.transmission = transmission
         self.bsdf.inputs["Transmission"].default_value = transmission
     
-    def set_emissive(self, emissive: bool, strength: float = 4, new_color = None):
+    def set_emissive(self, emissive: bool, new_color = None):
+        print("SET emissive to " + str(emissive))
         self.emissive = emissive
-        if not emissive:
-            self.bsdf.inputs["Emission Strength"].default_value = 0
+        
+        if emissive:
+            self.bsdf.inputs["Emission Strength"].default_value = self.strength
         else:
-            self.bsdf.inputs["Emission Strength"].default_value = strength
+            self.bsdf.inputs["Emission Strength"].default_value = 0
         
         if new_color is None:
             self.bsdf.inputs["Emission"].default_value = self.color
         else:
             self.bsdf.inputs["Emission"].default_value = new_color
     
-    def change_preset(self, obj, material: bpy.types.Material, keep_color):
-        
-        obj.active_material = self.material
-        obj.active_material_index = 0
-        
-        # Keep settings unaffected by the preset
-        if keep_color:
-            self.set_color(self.color)
-        self.set_emissive(self.emissive)
-        self.restore_previous(self.bsdf)
-
-    def restore_previous(self, bsdf):
-        self.bsdf = bsdf
-        self.set_color(self.color)
-        self.set_roughness(self.roughness)
-        self.set_metallic(self.metallic)
-        self.set_transmission(self.tranmission)
-        self.set_emissive(self.emissive, self.strength)
-
-
-"""
-# Minimal example
-obj = bpy.context.active_object
-m = MaterialController(obj)
-m.glass_material()
-m.change_preset(obj)
-"""
+    def set_emissive_strength(self, strength: float = 4):
+        self.strength = strength
+        if self.emissive:
+            self.bsdf.inputs["Emission Strength"].default_value = strength

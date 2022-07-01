@@ -390,7 +390,7 @@ class MaterialWidgets(Frame):
             case Materials.STONE:
                 self.control.material.stone_material()
             case Materials.EMISSIVE:
-                self.control.material.set_emissive(True)
+                self.control.material.emissive_material()
             case _:
                 self.default_values()
         self.adjust_sliders()
@@ -401,6 +401,9 @@ class MaterialWidgets(Frame):
         self.set_metallic(self.control.material.metallic*100, False)
         self.set_roughness(self.control.material.roughness*100, False)
         self.set_transmission(self.control.material.transmission*100, False)
+        self.set_emissive(self.control.material.strength*100, False)
+        self.glow.set(self.control.material.compositing.glow)
+        self.emissive.set(self.control.material.emissive)
     
     def set_metallic_input(self, event):
         x = 0
@@ -465,16 +468,17 @@ class MaterialWidgets(Frame):
         self.ent_emissive.insert(tk.END, value)
         self.slider_emissive.set(value)
         
-        self.control.material.set_emissive(self.emissive.get(), strength = utils.percent(int(value)))
+        self.control.material.set_emissive_strength(utils.percent(int(value)))
         
         if isReleased:
                 print("Setting emissive strength to " + str(value))
                 self.control.re_render()
         
     def toggle_emissive(self):
-        #self.control.material.set_emissive(not self.emissive.get())
-        print("Setting emissive to " + str(self.emissive.get()))
-        self.set_emissive(self.slider_emissive.get(), True) 
+        is_emissive = self.emissive.get()
+        self.control.material.set_emissive(is_emissive)
+        print("Setting emissive to " + str(is_emissive))
+        self.control.re_render()
     
     def toggle_glow(self):
         self.control.material.compositing.set_glow(self.glow.get())
