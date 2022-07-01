@@ -1,6 +1,31 @@
 import bpy
 from abc import ABC, abstractmethod
 
+class CompositeNodes:
+    def __init__(self):
+        bpy.context.scene.use_nodes = True
+        self.tree = bpy.context.scene.node_tree
+
+        for node in self.tree.nodes:
+            self.tree.nodes.remove(node)
+
+        self.rlayer = self.tree.nodes.new("CompositorNodeRLayers")   
+        self.output = self.tree.nodes.new("CompositorNodeComposite")
+        self.glare  = self.tree.nodes.new("CompositorNodeGlare")
+        self.tree.links.new(self.rlayer.outputs["Image"], self.output.inputs["Image"])
+        
+        # Glare properties
+        self.glare.glare_type = 'FOG_GLOW'
+        self.glare.threshold = 0.5
+        self.glare.size = 10
+    
+    def set_glow(self, is_glowing: bool):
+        if is_glowing:
+            self.tree.links.new(self.rlayer.outputs["Image"], self.glare.inputs["Image"])
+            self.tree.links.new(self.glare.outputs["Image"], self.output.inputs["Image"])
+        else:
+            self.tree.links.new(self.rlayer.outputs["Image"], self.output.inputs["Image"])
+
 class MaterialController:
 
     def __init__(self):
@@ -15,6 +40,7 @@ class MaterialController:
         self.tranmission = 0
         self.emissive    = False
         self.strength    = 1
+        self.compositing = CompositeNodes()
         
     
     def init_material(self) -> bpy.types.Material:

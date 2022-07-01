@@ -316,10 +316,8 @@ class MaterialWidgets(Frame):
         lbl_emissive  = Label(master=self, text="Emissive Strength")
         
         self.emissive = BooleanVar(self)
-        print(self.emissive.get())
         self.glow     = BooleanVar(self)
         check_emiss   = Checkbutton(master=self, text="Emissive", variable=self.emissive, anchor="w", command=self.toggle_emissive)
-        print(str(self.emissive.get()))
         check_glow    = Checkbutton(master=self, text="Glow", variable=self.glow, command=self.toggle_glow)
         
         validate_int = self.register(self.validate_integer)
@@ -479,7 +477,7 @@ class MaterialWidgets(Frame):
         self.set_emissive(self.slider_emissive.get(), True) 
     
     def toggle_glow(self):
-        # TODO add compositon glow
+        self.control.material.compositing.set_glow(self.glow.get())
         self.control.re_render()
 
 # Enum containing all possible materials
