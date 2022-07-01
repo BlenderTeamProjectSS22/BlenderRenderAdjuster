@@ -73,15 +73,9 @@ def set_background_brightness(new_strength : float) -> None:
 
 # set if the background light should affect the objects
 # the parameter "is_affecting" decides it
+# Adapted from https://blender.stackexchange.com/questions/154928/use-hdri-without-lighting-the-scene/171096#171096
 def background_brightness_affects_objects(is_affecting : bool) -> None:
     world = bpy.data.worlds["World"]
-    if is_affecting:
-        world.cycles_visibility.diffuse = True
-        world.cycles_visibility.glossy = True
-        world.cycles_visibility.transmission = True
-        world.cycles_visibility.scatter = True
-    else:
-        world.cycles_visibility.diffuse = False
-        world.cycles_visibility.glossy = False
-        world.cycles_visibility.transmission = False
-        world.cycles_visibility.scatter = False
+    world.cycles_visibility.diffuse      = is_affecting
+    world.cycles_visibility.transmission = is_affecting
+    world.cycles_visibility.scatter      = is_affecting
