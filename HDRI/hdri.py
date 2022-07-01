@@ -31,7 +31,7 @@ def set_background_image(hdri_path: str) -> None:
     background_node = world.node_tree.nodes["Background"]
     
     world.node_tree.links.new(environment_texture_node.outputs["Color"], background_node.inputs["Color"])
-    environment_texture_node.image = bpy.data.images.load(hdri_path)
+    environment_texture_node.image = bpy.data.images.load(bpy.path.relpath(hdri_path))
 
 # removes the background image
 def remove_background_image() -> None:

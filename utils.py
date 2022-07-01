@@ -14,6 +14,7 @@ from math import radians
 import fnmatch
 import sys
 import gui.properties as props
+from PIL import Image, ImageOps
 
 # basic camera capable of orbiting around central cube
 # uses track-to-constraint, limit-distance-constraint
@@ -204,3 +205,28 @@ def convert_color_to_bpy(color: (int, int, int)) -> (float, float, float, float)
             return (r / 255, g / 255, b / 255, 1)
         case _:
             return None
+
+def generate_hdri_thumbnail(filepath):
+    filename = os.path.basename(filepath)
+    img = bpy.data.images.load(bpy.path.relpath(filepath))
+    thumb_width, thumb_height = (256, 256)
+    
+    # May be a good idea to use the module "tempfile" here
+    # But haven't figured out how to make blender save to this tempfile yet
+    temp_file = "assets/temp.png"
+    
+    # blender doesn't support saving to buffer, so we write to file and then load it with PIL
+    img.save_render(temp_file, scene=bpy.context.scene)
+    image = Image.open(temp_file)
+
+    w, h = image.size
+    CROP_FACTOR = h / 5
+    area = (0, CROP_FACTOR, h-2*CROP_FACTOR, h-CROP_FACTOR)
+    cropped = image.crop(area)
+
+    thumb = ImageOps.fit(cropped, (256, 256), Image.ANTIALIAS)
+    
+    thumb_folder = "assets/hdri_thumbs/"
+    if not os.path.exists(thumb_folder):
+        os.mkdir(thumb_folder)
+    thumb.save(thumb_folder + filename + ".png", "PNG")
