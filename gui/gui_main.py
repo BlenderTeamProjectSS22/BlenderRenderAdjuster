@@ -60,6 +60,7 @@ class ProgramGUI:
         # Load defaul cube if debug is enabled
         if props.DEBUG:
             self.control.model = utils.import_mesh("assets/STL samples/cube.obj")
+            self.control.material.apply_material(self.control.model)
             self.control.camera.rotate_z(45)
             self.control.camera.rotate_x(-20)
             self.control.camera.set_distance(10)
