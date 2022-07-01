@@ -8,6 +8,7 @@
 import tkinter as tk
 from tkinter import Frame, Canvas
 from PIL import ImageTk, Image
+from gui.properties import *
 
 class RenderPreview(Frame):
         def __init__(self, master):

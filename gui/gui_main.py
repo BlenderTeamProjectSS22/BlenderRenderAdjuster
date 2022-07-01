@@ -20,7 +20,8 @@ import enum
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.settings import Control
-from gui.properties import *
+import gui.properties as props
+from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
 
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, day_night_cycle, delete_all_lights, delete_light_animation
 from Lightning.light_class import Light
@@ -40,7 +41,6 @@ class ProgramGUI:
         renderer = utils.Renderer(camera.camera)
         renderer.set_preview_render()
         
-        
         master.title("Render adjuster")
         master.minsize(107+184+480,307)
         icon = ImageTk.PhotoImage(Image.open("assets/gui/icon.ico"))
@@ -56,6 +56,14 @@ class ProgramGUI:
         self.control = Control(renderer, self.preview, camera)
         self.control.material = MaterialController()
         self.control.model = None
+        
+        # Load defaul cube if debug is enabled
+        if props.DEBUG:
+            self.control.model = utils.import_mesh("assets/STL samples/cube.obj")
+            self.control.camera.rotate_z(45)
+            self.control.camera.rotate_x(-20)
+            self.control.camera.set_distance(10)
+            self.control.re_render()
         
         left  = LeftPanel(master, self.control)
         right = RightPanel(master, self.control)
