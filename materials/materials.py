@@ -84,6 +84,9 @@ class MaterialController:
         self.material_preset(
             transmission = 0,
             emissive     = False,
+            roughness    = 0.5,
+            metallic     = 0.2,
+            glow         = False,
             bump         = True)
         self.bump_material(10, 5)
     
@@ -91,7 +94,7 @@ class MaterialController:
         self.material_preset(
             emissive = True,
             strength = 1,
-            transmissive = 0.5,
+            transmission = 0.5,
             glow     = True)
     
     # Create and return a bump material to an object, with adjustable scale and detail level of the noise

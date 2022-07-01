@@ -433,7 +433,7 @@ class MaterialWidgets(Frame):
         self.set_emissive(x, True)
         self.control.re_render()
         
-    def set_metallic(self, value, isReleased: bool):
+    def set_metallic(self, value: int, isReleased: bool):
         self.ent_metallic.delete(0, tk.END)
         self.ent_metallic.insert(tk.END, value)
         self.slider_metallic.set(value)
