@@ -67,7 +67,15 @@ def pan_background_vertical(angle: float) -> None:
 # new_strength < 1: background will appear darker than normal
 # new_strength > 1: background will appear brighter than normal
 def set_background_brightness(new_strength : float) -> None:
-    assert new_strength != None and new_strength > 0
+    assert new_strength != None and new_strength >= 0
     world = bpy.data.worlds["World"]
     world.node_tree.nodes["Background"].inputs[1].default_value = new_strength
 
+# set if the background light should affect the objects
+# the parameter "is_affecting" decides it
+# Adapted from https://blender.stackexchange.com/questions/154928/use-hdri-without-lighting-the-scene/171096#171096
+def background_brightness_affects_objects(is_affecting : bool) -> None:
+    world = bpy.data.worlds["World"]
+    world.cycles_visibility.diffuse      = is_affecting
+    world.cycles_visibility.transmission = is_affecting
+    world.cycles_visibility.scatter      = is_affecting
