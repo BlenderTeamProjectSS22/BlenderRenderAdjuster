@@ -2,6 +2,7 @@ import bpy
 import math
 from Lightning.light_class import *
 from utils import *
+from HDRI.hdri import background_brightness_affects_objects
 #from camera_animation_module import *
 
 # delete all lights
@@ -11,6 +12,15 @@ def delete_all_lights() -> None:
         if ob.type == 'LIGHT':
             ob.select_set(True)
     bpy.ops.object.delete()
+
+def lights_enabled(is_light: bool) -> None:
+    if is_light:
+        print("Enabling lights, disabling background lighting")
+        background_brightness_affects_objects(False)
+    else:
+        delete_all_lights()
+        print("Deleting all lights, enabling background lighting")
+        background_brightness_affects_objects(True)
            
 # delete the lights in "lights"-array (the elements are objects)
 def delete_lights(lights: list[Light]) -> None:
