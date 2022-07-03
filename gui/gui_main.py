@@ -121,6 +121,7 @@ class LeftPanel(Frame):
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
+        self.control.camera.reset_position()
         self.control.re_render()
         
     

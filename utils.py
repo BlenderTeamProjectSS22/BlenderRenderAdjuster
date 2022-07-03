@@ -20,9 +20,8 @@ import gui.properties as props
 class OrbitCam:
     
     def __init__(self):
-        default_distance = 6 # chosen so that camera frame approx. corresponds to center unit box
-
-        bpy.ops.object.camera_add(location=(default_distance, 0, 0))
+        
+        bpy.ops.object.camera_add(location=(1, 0, 0))
         self.camera = bpy.context.object
         bpy.ops.object.empty_add(type='CUBE', location=(0, 0, 0), scale=(1, 1, 1))
         self.controller = bpy.context.object
@@ -32,7 +31,6 @@ class OrbitCam:
         self.distance_constraint = self.camera.constraints.new(type='LIMIT_DISTANCE')
         self.distance_constraint.target = self.controller
         self.distance_constraint.limit_mode = 'LIMITDIST_ONSURFACE'
-        self.distance_constraint.distance = default_distance
 
         # add track_to_constraint to point camera at center cube
         self.track_constraint = self.camera.constraints.new(type='TRACK_TO')
@@ -43,6 +41,9 @@ class OrbitCam:
         # add parenting to control camera's rotation
         bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
         self.camera.parent = bpy.context.object
+
+        #put camera in default position
+        self.reset_position()
   
     
     # returns cube object which controlls rotation
@@ -79,6 +80,12 @@ class OrbitCam:
         if newDist <= 0:
             newDist = 0.1 
         self.distance_constraint.distance = newDist
+
+    # resets camera to default position
+    def reset_position(self) -> None:
+        self.distance_constraint.distance = 9
+        self.controller.rotation_euler[1] = radians(-30)
+        self.controller.rotation_euler[2] = radians(45)
 
 
 # basic renderer
