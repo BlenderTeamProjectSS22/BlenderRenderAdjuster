@@ -8,7 +8,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('.venv-blender\\Scripts\\3.3', '3.3')],
+    datas=[('.venv-blender\\Scripts\\3.3', '3.3'), ('assets/', 'assets/')],
     hiddenimports=['__future__'],
     hookspath=[],
     hooksconfig={},
