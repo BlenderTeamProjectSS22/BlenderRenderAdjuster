@@ -20,7 +20,8 @@ import enum
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.settings import Control
-from gui.properties import *
+import gui.properties as props
+from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
 
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
 from Lightning.light_class import Light
@@ -44,7 +45,7 @@ class ProgramGUI:
         renderer.set_preview_render()
 
         hdri.initialize_world_texture()
-        
+
         #generate HDRI previews
         hdri_dir = os.fsencode("assets/HDRIs/")
         for file in os.listdir(hdri_dir):
@@ -66,6 +67,14 @@ class ProgramGUI:
         self.preview = RenderPreview(master)
         self.control = Control(renderer, self.preview, camera)
         self.control.model = None
+        
+        # Load defaul cube if debug is enabled
+        if props.DEBUG:
+            self.control.model = utils.import_mesh("assets/STL samples/cube.obj")
+            self.control.camera.rotate_z(45)
+            self.control.camera.rotate_x(-20)
+            self.control.camera.set_distance(10)
+            self.control.re_render()
         
         left  = LeftPanel(master, self.control)
         right = RightPanel(master, self.control)
@@ -123,12 +132,13 @@ class LeftPanel(Frame):
             ("STL file", "*.stl"),
             ("Wavefront OBJ", "*.obj")
         ]
-        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
+        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes, initialdir="assets/model presets/")
         if filename == "":
             return
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
+        self.control.camera.reset_position()
         self.control.re_render()
         
     

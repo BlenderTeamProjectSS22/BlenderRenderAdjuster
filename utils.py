@@ -13,15 +13,16 @@ import os
 from math import radians
 import fnmatch
 from PIL import Image, ImageOps
+import sys
+import gui.properties as props
 
 # basic camera capable of orbiting around central cube
 # uses track-to-constraint, limit-distance-constraint
 class OrbitCam:
     
     def __init__(self):
-        default_distance = 6 # chosen so that camera frame approx. corresponds to center unit box
-
-        bpy.ops.object.camera_add(location=(default_distance, 0, 0))
+        
+        bpy.ops.object.camera_add(location=(1, 0, 0))
         self.camera = bpy.context.object
         bpy.ops.object.empty_add(type='CUBE', location=(0, 0, 0), scale=(1, 1, 1))
         self.controller = bpy.context.object
@@ -31,7 +32,6 @@ class OrbitCam:
         self.distance_constraint = self.camera.constraints.new(type='LIMIT_DISTANCE')
         self.distance_constraint.target = self.controller
         self.distance_constraint.limit_mode = 'LIMITDIST_ONSURFACE'
-        self.distance_constraint.distance = default_distance
 
         # add track_to_constraint to point camera at center cube
         self.track_constraint = self.camera.constraints.new(type='TRACK_TO')
@@ -42,6 +42,9 @@ class OrbitCam:
         # add parenting to control camera's rotation
         bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
         self.camera.parent = bpy.context.object
+
+        #put camera in default position
+        self.reset_position()
   
     
     # returns cube object which controlls rotation
@@ -79,6 +82,12 @@ class OrbitCam:
             newDist = 0.1 
         self.distance_constraint.distance = newDist
 
+    # resets camera to default position
+    def reset_position(self) -> None:
+        self.distance_constraint.distance = 9
+        self.controller.rotation_euler[1] = radians(-30)
+        self.controller.rotation_euler[2] = radians(45)
+
 
 # basic renderer
 class Renderer:
@@ -90,7 +99,24 @@ class Renderer:
 
     # render image to configured output destination 
     def render(self) -> None:
+        
+        # Disable console output if verbose flag is not set
+        # Output redirection adapted from https://blender.stackexchange.com/a/44563
+        if not props.VERBOSE:
+            logfile = "assets/blender_render.log"
+            open(logfile, 'a').close()
+            old = os.dup(sys.stdout.fileno())
+            sys.stdout.flush()
+            os.close(sys.stdout.fileno())
+            fd = os.open(logfile, os.O_WRONLY)
+        
         bpy.ops.render.render(write_still=True, animation=self.animation)
+        
+        # Re-enable console output
+        if not props.VERBOSE:
+            os.close(fd)
+            os.dup(old)
+            os.close(old)
 
     # apply settings for preview rendering
     def set_preview_render(self,
@@ -109,8 +135,6 @@ class Renderer:
         self.scene.render.use_persistent_data = False
         self.scene.cycles.max_bounces = 4
         self.scene.cycles.tile_size = 4096
-        self.scene.cycles.use_fast_gi = True
-        self.scene.cycles.fast_gi_method = "ADD" # refer to issue #10 for why this is set
         self.scene.cycles.time_limit = 0.3
 
     # apply settings for final rendering
