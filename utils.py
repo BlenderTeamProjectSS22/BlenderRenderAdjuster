@@ -12,6 +12,7 @@ import bpy
 import os
 from math import radians
 import fnmatch
+from PIL import Image, ImageOps
 import sys
 import gui.properties as props
 
@@ -131,7 +132,7 @@ class Renderer:
         self.scene.view_layers[0].cycles.use_denoising = False
         self.scene.cycles.use_adaptive_sampling = True
         self.scene.cycles.samples = num_samples
-        self.scene.render.use_persistent_data = True
+        self.scene.render.use_persistent_data = False
         self.scene.cycles.max_bounces = 4
         self.scene.cycles.tile_size = 4096
         self.scene.cycles.time_limit = 0.3
@@ -154,7 +155,7 @@ class Renderer:
         self.scene.view_layers[0].cycles.use_denoising = True
         self.scene.cycles.use_adaptive_sampling = True
         self.scene.cycles.samples = num_samples
-        self.scene.render.use_persistent_data = True
+        self.scene.render.use_persistent_data = False
         self.scene.cycles.max_bounces = 12
         self.scene.cycles.tile_size = 2048
         self.scene.cycles.use_fast_gi = False
@@ -201,3 +202,28 @@ def export_blend(filepath: str) -> None:
 def scale_to_unit_cube(obj: bpy.types.Object) -> None:
     obj.dimensions = obj.dimensions / max(obj.dimensions) * 2 #downscaling
     bpy.ops.object.origin_set(type='GEOMETRY_ORIGIN', center='BOUNDS') #align object's bounding box' center and origin
+
+def generate_hdri_thumbnail(filepath):
+    filename = os.path.basename(filepath)
+    img = bpy.data.images.load(bpy.path.relpath(filepath))
+    thumb_width, thumb_height = (256, 256)
+    
+    # May be a good idea to use the module "tempfile" here
+    # But haven't figured out how to make blender save to this tempfile yet
+    temp_file = "assets/temp.png"
+    
+    # blender doesn't support saving to buffer, so we write to file and then load it with PIL
+    img.save_render(temp_file, scene=bpy.context.scene)
+    image = Image.open(temp_file)
+
+    w, h = image.size
+    CROP_FACTOR = h / 5
+    area = (0, CROP_FACTOR, h-2*CROP_FACTOR, h-CROP_FACTOR)
+    cropped = image.crop(area)
+
+    thumb = ImageOps.fit(cropped, (256, 256), Image.ANTIALIAS)
+    
+    thumb_folder = "assets/hdri_thumbs/"
+    if not os.path.exists(thumb_folder):
+        os.mkdir(thumb_folder)
+    thumb.save(thumb_folder + filename + ".png", "PNG")
