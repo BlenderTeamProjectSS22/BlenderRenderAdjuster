@@ -143,36 +143,36 @@ class LeftPanel(Frame):
         
     
     def export_model(self):
-        filename = filedialog.asksaveasfile(
+        filename = filedialog.asksaveasfilename(
             title="Save model at",
             initialfile = "untitled.blend",
             defaultextension=".blend",
             filetypes=[("Blender project","*.blend")])
-        if filename == None:
+        if filename == "":
             return
-        utils.export_blend(filename.name)
+        utils.export_blend(filename)
     
     def render_image(self):
-        filename = filedialog.asksaveasfile(
+        filename = filedialog.asksaveasfilename(
             title="Save image at",
             initialfile = "render.png",
             defaultextension=".png",
             filetypes=[("Portable Network Graphics","*.png")])
-        if filename == None:
+        if filename == "":
             return
-        self.control.renderer.set_final_render(file_path=filename.name)
+        self.control.renderer.set_final_render(file_path=filename)
         self.control.renderer.render()
         self.control.renderer.set_preview_render()
     
     def render_video(self):
-        filename = filedialog.asksaveasfile(
+        filename = filedialog.asksaveasfilename(
             title="Save video at",
             initialfile = "render.avi",
             defaultextension=".avi",
             filetypes=[("Audio Video Interleave","*.avi")])
-        if filename == None:
+        if filename == "":
             return
-        self.control.renderer.set_final_render(file_path=filename.name, animation=True)
+        self.control.renderer.set_final_render(file_path=filename, animation=True)
         self.control.renderer.render()
         self.control.renderer.set_preview_render()
     
