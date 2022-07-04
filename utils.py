@@ -15,6 +15,7 @@ import fnmatch
 import sys
 import gui.properties as props
 from PIL import Image, ImageOps
+import sys
 
 # basic camera capable of orbiting around central cube
 # uses track-to-constraint, limit-distance-constraint

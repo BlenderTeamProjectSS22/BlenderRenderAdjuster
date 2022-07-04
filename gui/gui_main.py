@@ -54,13 +54,13 @@ class ProgramGUI:
         renderer.set_preview_render()
 
         hdri.initialize_world_texture()
-        
-        # generate HDRI previews
+
+        #generate HDRI previews
         hdri_dir = os.fsencode("assets/HDRIs/")
         for file in os.listdir(hdri_dir):
             filename = os.fsdecode(file)
             utils.generate_hdri_thumbnail("assets/HDRIs/" + filename)
-
+        
         master.title("Render adjuster")
         master.minsize(107+184+480,307)
         icon = ImageTk.PhotoImage(Image.open("assets/gui/icon.ico"))
