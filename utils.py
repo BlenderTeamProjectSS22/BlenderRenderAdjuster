@@ -165,7 +165,29 @@ class Renderer:
     def set_aspect_ratio(self, w: int, h: int) -> None:
         self.scene.render.resolution_y = int(self.scene.render.resolution_x / (w / h))
 
+    def set_output_properties(self,
+                              resolution_percentage: int = 100,
+                              output_file_path: str = os.getcwd() + "/renders/result",
+                              res_x: int = 1920,
+                              res_y: int = 1080,
+                              animation: bool = False) -> None:
+        self.scene.render.resolution_percentage = resolution_percentage
+        self.scene.render.resolution_x = res_x
+        self.scene.render.resolution_y = res_y
+        self.scene.render.filepath = output_file_path
+        self.animation = animation
+        if animation:
+            self.scene.render.image_settings.file_format = 'AVI_JPEG'
+        else:
+            self.scene.render.image_settings.file_format = 'PNG'    
+    
+    def set_eevee(self,
+                  num_samples: int = 32,
+                  use_transparent_bg: bool = False) -> None:
 
+        self.scene.render.engine = 'BLENDER_EEVEE'
+        self.scene.render.film_transparent = use_transparent_bg
+        self.scene.eevee.taa_render_samples = num_samples
 
         
 

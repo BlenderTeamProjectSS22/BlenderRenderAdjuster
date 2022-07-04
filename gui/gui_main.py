@@ -29,6 +29,7 @@ from gui.gui_options import SettingsWindow
 from gui.settings import Control
 import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
+from camera_animation import camera_animation_module as cammod
 
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, day_night_cycle, delete_all_lights, delete_light_animation
 from Lightning.light_class import Light
@@ -105,6 +106,8 @@ class LeftPanel(Frame):
         Frame.__init__(self, master)
         self.master = master
         self.control = control
+        lbl_spacer = Label(master=self, text="")
+
         lbl_fileop = Label(master=self, text="File operations", font="Arial 10 bold")
         btn_import = Button(master=self, text="Import model", command=self.import_model)
         btn_export = Button(master=self, text="Export model", command=self.export_model)
@@ -122,18 +125,34 @@ class LeftPanel(Frame):
         # All general program widgets
         frame_ops    = tk.Frame(master=self)
         lbl_ops      = tk.Label(master=frame_ops, text="Actions", font="Arial 10 bold")
-        btn_undo     = tk.Button(master=frame_ops, text="Undo", command=self.undo)
-        btn_redo     = tk.Button(master=frame_ops, text="Redo", command=self.redo)
         btn_settings = tk.Button(master=frame_ops, text="Settings", command=self.open_settings_window)
         btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)  # The update check may or may not be implemented
         btn_help     = tk.Button(master=frame_ops, text="Help", command=self.open_help_page)
+        lbl_spacer.pack()
+
         lbl_ops.pack(fill=tk.X)
-        btn_undo.pack(fill=tk.X)
-        btn_redo.pack(fill=tk.X)
         btn_settings.pack(fill=tk.X)
         btn_updates.pack(fill=tk.X)
         btn_help.pack(fill=tk.X)
         frame_ops.pack()
+
+
+        lbl_spacer2 = Label(master=self, text="")
+
+        lbl_camerapresets = Label(master=self, text="Camera Presets", font="Arial 10 bold")
+        btn_preset1 = Button(master=self, text="Preset 1", command=self.camera_preset_1())
+        btn_preset2 = Button(master=self, text="Preset 2")
+        btn_preset3 = Button(master=self, text="Preset 3")
+
+        lbl_spacer2.pack()
+        lbl_camerapresets.pack(fill=tk.X)
+        btn_preset1.pack(fill=tk.X)
+        btn_preset2.pack(fill=tk.X)
+        btn_preset3.pack(fill=tk.X)
+        
+
+
+
     
     def import_model(self):
         filetypes = [
@@ -187,12 +206,6 @@ class LeftPanel(Frame):
         self.control.renderer.render()
         self.control.renderer.set_preview_render()
     
-    def undo(self):
-        pass
-    
-    def redo(self):
-        pass
-    
     def open_settings_window(self):
         SettingsWindow(self.master, self.control)
     
@@ -231,6 +244,15 @@ class LeftPanel(Frame):
     
     def open_help_page(self):
         webbrowser.open_new_tab("https://github.com/garvita-tiwari/blender_render/wiki")
+
+
+    def camera_preset_1(self):
+        startp = [-3,-5,0.5]
+        endP = [6,5,0.5]
+        rot = [90,0,90]
+        camera_animation_cam = cammod.Camera("cam1", 6, 0, 0.5)
+        camera_animation_cam.drive_by(100, startp, endP, rot, True, self.control.model)
+        
         
 
 class CameraControls(Frame):
