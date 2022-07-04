@@ -135,13 +135,14 @@ class LeftPanel(Frame):
             ("STL file", "*.stl"),
             ("Wavefront OBJ", "*.obj")
         ]
-        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
+        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes, initialdir="assets/model presets/")
         if filename == "":
             return
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
         self.control.material.apply_material(self.control.model)
+        self.control.camera.reset_position()
         self.control.re_render()
         
     
