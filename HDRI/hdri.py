@@ -42,8 +42,7 @@ def remove_background_image() -> None:
         world.node_tree.links.remove(link)
     
     image = world.node_tree.nodes["Environment Texture"].image
-    image.user_clear()
-    bpy.data.images.remove(image)
+    bpy.data.images.remove(image, do_unlink=True)
 
 # rotates background image around global Z axis
 # angle: degree, image moves to the right if positive
