@@ -5,18 +5,22 @@
 # description:
 # GUI element: Main program, renders the GUI and connects it to other function
 
-from doctest import master
+from asyncio import selector_events
+from select import select
 import tkinter as tk
 from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
+from tkinter.tix import Select
 from PIL import ImageTk, Image
 
 import webbrowser
 import requests
 import enum
+from Texture import load_texture
+from Texture import delete_texture
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
@@ -544,7 +548,7 @@ class TextureWidgets(Frame):
         lbl_textures = Label(master=self, text="Texture selection:", font="Arial 10 bold")
         btn_import_texture = Button(master=self, text="Import", command=self.import_texture)
         lbl_sel_tex    = Label(master=self, text="Select:")
-        textures = (Textures.NONE.value, Textures.WOOD.value, Textures.BRICKS.value)
+        textures = (Textures.NONE.value, Textures.WOOD.value, Textures.BRICKS.value, Textures.IRON.value)
         dropdown_textures = OptionMenu(self, tex_selected, *textures, command=self.set_texture)
         lbl_textures.grid(row=0, column=0, columnspan=2, sticky="we")
         btn_import_texture.grid(row=1, column=0, columnspan=2, sticky="")
@@ -554,11 +558,13 @@ class TextureWidgets(Frame):
     def set_texture(self, *args):
         tex = Textures(args[0])
         if tex == Textures.WOOD:
-            pass
+            load_texture("assets/pngexample/wood.png", self.control.material.material)
         elif tex == Textures.BRICKS:
-            pass
+            load_texture("assets/pngexample/brick.png", self.control.material.material)
+        elif tex == Textures.IRON:
+            load_texture("assets/pngexample/iron.png", self.control.material.material)
         else: # NONE
-            pass
+            delete_texture(self.control.material.material)
         self.control.re_render()
     
     def import_texture(self):
@@ -566,7 +572,8 @@ class TextureWidgets(Frame):
             ("PNG image", "*.png"),
         ]
         filename = filedialog.askopenfilename(title="Select a texture", filetypes=filetypes)
-        # TODO Apply the texure to the object
+
+        load_texture(filename, self.control.material.material)
         self.control.re_render()
         
         
@@ -575,6 +582,8 @@ class Textures(enum.Enum):
     NONE = "none"
     WOOD = "wood"
     BRICKS = "bricks"
+    IRON = "iron"
+
 
 class LightingWidgets(Frame):
     # constants
