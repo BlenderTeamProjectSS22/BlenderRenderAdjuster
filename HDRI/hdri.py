@@ -37,8 +37,9 @@ def set_background_image(hdri_path: str) -> None:
 def remove_background_image() -> None:
     world = bpy.data.worlds["World"]
     environment_texture_node = world.node_tree.nodes["Environment Texture"]
-    link = environment_texture_node.outputs["Color"].links[0]
-    world.node_tree.links.remove(link)
+    if environment_texture_node.outputs["Color"].links:
+        link = environment_texture_node.outputs["Color"].links[0]
+        world.node_tree.links.remove(link)
     
     image = world.node_tree.nodes["Environment Texture"].image
     image.user_clear()
