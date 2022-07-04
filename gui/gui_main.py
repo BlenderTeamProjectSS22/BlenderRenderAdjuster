@@ -5,6 +5,7 @@
 # description:
 # GUI element: Main program, renders the GUI and connects it to other function
 
+from doctest import master
 import tkinter as tk
 from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
 from tkinter import ttk
@@ -798,6 +799,78 @@ class BackgroundControl(Frame):
         self.control.re_render()
         
 
+class PointCloudWidgets(Frame):
+    def __init__(self, master, control):
+        Frame.__init__(self, master, borderwidth=2, relief="groove")
+        self.control = control
+        self.random  = BooleanVar()
+        self.vertices = BooleanVar()
+        obj_selected = StringVar(self)
+        obj_selected.set("default")
+
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        lbl_pointcloudsettings =  Label(master=self, text="Pointcloud Object:", font="Arial 10 bold")
+        check_vertices  = Checkbutton(master=self, text="vertices", variable=self.vertices, anchor="w", command=self.switch_vertex)
+        check_random = Checkbutton(master=self, text="random", variable=self.random, anchor="w", command=self.switch_random)
+        pointcloudobjects = (PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value)
+        lbl_pointcloudobjects =  Label(master=self, text="Select Object:") 
+        pointcloudobjects = ("default", PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value )
+        dropdown_objects = OptionMenu(self, obj_selected, *pointcloudobjects, command=self.set_object)
+       
+       
+        
+        lbl_size = Label(master=self, text="Point Size")
+        slider_size = Scale(master=self, orient="horizontal", showvalue=False, command=self.DoNothing())
+        lbl_size.grid(row=1, column=0, sticky="w")
+        slider_size.grid(row=1, column=1,  sticky="we")
+        lbl_pointcloudsettings.grid(row=0, column=0, columnspan=2)
+        check_vertices.grid(row=2, column=1, sticky="w")
+        check_random.grid(row=2, column=0, sticky="w")
+        lbl_pointcloudobjects.grid(row=3, column=0,  sticky="we")
+        dropdown_objects.grid(row=3, column=1, sticky="w")
+
+    def set_object(self, *args):
+        tex = PointCloudObjects(args[0])
+        if tex == PointCloudObjects.SPHERE:
+            pass
+        elif tex == PointCloudObjects.CUBE:
+            pass
+        elif tex == PointCloudObjects.DISK:
+            pass
+        else: # NONE
+            pass
+        self.control.re_render()
+
+    def DoNothing(self):
+        return
+
+
+    def switch_random(self):
+        if self.random.get():
+            self.vertices.set(False)
+        else:
+            self.vertices.set(True)
+        self.control.re_render()
+
+    def switch_vertex(self):
+        if self.vertices.get():
+            self.random.set(False)
+        else:
+            self.random.set(True)
+        self.control.re_render()
+
+
+# Enum containing all possibe point cloud objects
+class PointCloudObjects(enum.Enum):
+    SPHERE = "sphere"
+    CUBE = "cube"
+    DISK = "disk"
+
+
 class RightPanel(Frame):
         
     def __init__(self, master, control):
@@ -826,3 +899,7 @@ class RightPanel(Frame):
         # Lighting widgets
         frm_light = LightingWidgets(self, control)
         frm_light.grid(row=3, column=0, sticky="we")
+
+        # Pointcloud widgets
+        frm_light = PointCloudWidgets(self, control)
+        frm_light.grid(row=4, column=0, sticky="we")
