@@ -132,7 +132,7 @@ class Renderer:
         self.scene.view_layers[0].cycles.use_denoising = False
         self.scene.cycles.use_adaptive_sampling = True
         self.scene.cycles.samples = num_samples
-        self.scene.render.use_persistent_data = True
+        self.scene.render.use_persistent_data = False
         self.scene.cycles.max_bounces = 4
         self.scene.cycles.tile_size = 4096
         self.scene.cycles.time_limit = 0.3
@@ -155,7 +155,7 @@ class Renderer:
         self.scene.view_layers[0].cycles.use_denoising = True
         self.scene.cycles.use_adaptive_sampling = True
         self.scene.cycles.samples = num_samples
-        self.scene.render.use_persistent_data = True
+        self.scene.render.use_persistent_data = False
         self.scene.cycles.max_bounces = 12
         self.scene.cycles.tile_size = 2048
         self.scene.cycles.use_fast_gi = False

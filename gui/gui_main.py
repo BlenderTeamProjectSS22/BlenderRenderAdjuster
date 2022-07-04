@@ -31,7 +31,7 @@ import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
 from camera_animation import camera_animation_module as cammod
 
-from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, day_night_cycle, delete_all_lights, delete_light_animation
+from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
 from Lightning.light_class import Light
 from HDRI.hdri import set_background_brightness, background_brightness_affects_objects
 from materials.materials import *
@@ -694,8 +694,7 @@ class LightingWidgets(Frame):
 
     # lights will be deleted
     def lights_off(self) -> None:
-        delete_all_lights() 
-        self.is_day_night.set(False)  
+        lights_enabled(False)
         self.control.re_render()
 
     # set daytime value to "value"
@@ -725,7 +724,6 @@ class LightingWidgets(Frame):
                 return
             case _:
                 self.set_lantern()
-              
 
     # returns the brightness
     def get_brightness(self) -> float:
@@ -733,6 +731,7 @@ class LightingWidgets(Frame):
         
     # some setting that should be made before creating new lights
     def standard_light_settings(self, use_light_type: int) -> None:
+        lights_enabled(True)
         self.use_light_type = use_light_type
         self.is_day_night.set(False)
         delete_lights(self.light_objects)
@@ -748,7 +747,7 @@ class LightingWidgets(Frame):
         self.standard_light_settings(1)
         self.light_objects = night_light(self.get_brightness(), self.get_daytime() * self.TIME_TO_ANGLE_CONSTANT, True, self.control.camera)
         self.control.re_render()
-
+        
     # set lantern light
     def set_lantern(self) -> None:
         self.standard_light_settings(2)
@@ -776,7 +775,8 @@ class LightingWidgets(Frame):
     # def set_frame(self, value):
     #    bpy.context.scene.frame_current = int(value)
     #    self.control.re_render()
-
+    
+    
 class BackgroundControl(Frame):
     def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
@@ -903,7 +903,6 @@ class PointCloudObjects(enum.Enum):
     SPHERE = "sphere"
     CUBE = "cube"
     DISK = "disk"
-
 
 class RightPanel(Frame):
         
