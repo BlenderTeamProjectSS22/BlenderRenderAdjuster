@@ -394,19 +394,20 @@ class MaterialWidgets(Frame):
         lbl_scale      = Label(master=self.frm_bump, text="Noise scale")
         lbl_detail     = Label(master=self.frm_bump, text="Noise detail")
         lbl_distortion = Label(master=self.frm_bump, text="Distortion")
-        self.bump = BooleanVar()
-        check_bump = Checkbutton(master=self, text="Enable bumpiness", variable=self.bump, command=self.toogle_bumpiness)
-        self.toogle_bumpiness()
         
         lbl_scale.grid(row=0, column=0)
         lbl_detail.grid(row=0, column=1)
         lbl_distortion.grid(row=0, column=2)
-        slider_scale      = Scale(master=self.frm_bump, from_=1, to=10, resolution=0.1, relief=tk.SOLID)
-        slider_detail     = Scale(master=self.frm_bump, from_=1, to=10, resolution=0.1, relief=tk.SOLID)
-        slider_distortion = Scale(master=self.frm_bump, from_=0, to=5,  resolution=0.1, relief=tk.SOLID)
-        slider_scale.grid(row=1, column=0)
-        slider_detail.grid(row=1, column=1)
-        slider_distortion.grid(row=1, column=2)
+        self.slider_scale      = Scale(master=self.frm_bump, from_=1, to=10, resolution=0.1, command=lambda val: self.set_noise_scale(val, False), relief=tk.SOLID)
+        self.slider_detail     = Scale(master=self.frm_bump, from_=1, to=10, resolution=0.1, command=lambda val: self.set_noise_detail(val, False), relief=tk.SOLID)
+        self.slider_distortion = Scale(master=self.frm_bump, from_=0, to=5,  resolution=0.1, command=lambda val: self.set_noise_distortion(val, False), relief=tk.SOLID)
+        self.slider_scale.grid(row=1, column=0)
+        self.slider_detail.grid(row=1, column=1)
+        self.slider_distortion.grid(row=1, column=2)
+        
+        self.bump = BooleanVar()
+        check_bump = Checkbutton(master=self, text="Enable bumpiness", variable=self.bump, command=self.toogle_bumpiness)
+        self.toogle_bumpiness()
         
         lbl_materials.grid(row=0, column=0, columnspan=2, sticky="we")
         lbl_metallic.grid(row=1, column=0, sticky="we")
@@ -443,7 +444,7 @@ class MaterialWidgets(Frame):
         self.set_roughness(50, False)
         self.set_transmission(0, False)
         self.set_emissive(0, False)
-        self.control.material.disable_bump()
+        self.control.material.noise.disable()
         
     def validate_integer(self, P):
         # TODO This prevents deleting e.g. '5', because field can't be empty
@@ -474,6 +475,9 @@ class MaterialWidgets(Frame):
         self.set_emissive(int(self.control.material.strength*100), False)
         self.glow.set(int(self.control.material.compositing.glow))
         self.emissive.set(int(self.control.material.emissive))
+        self.slider_scale.set(int(self.control.material.noise.scale))
+        self.slider_detail.set(int(self.control.material.noise.detail))
+        self.slider_distortion.set(int(self.control.material.noise.distortion))
     
     def set_metallic_input(self, event):
         x = 0
@@ -557,11 +561,38 @@ class MaterialWidgets(Frame):
     def toogle_bumpiness(self):
         if self.bump.get():
             widget_set_enabled(self.frm_bump, True)
-            # TODO Apply bump material based on sliders
-            # self.control.material
+            self.slider_scale.bind("<ButtonRelease-1>",  lambda event: self.set_noise_scale(self.slider_scale.get(), True))
+            self.slider_detail.bind("<ButtonRelease-1>",  lambda event: self.set_noise_detail(self.slider_detail.get(), True))
+            self.slider_distortion.bind("<ButtonRelease-1>",  lambda event: self.set_noise_distortion(self.slider_distortion.get(), True))
+            self.control.material.bump_material(
+                self.slider_scale.get(),
+                self.slider_detail.get(),
+                self.slider_distortion.get())
         else:
             widget_set_enabled(self.frm_bump, False)
-            # TODO Disable bump material
+            self.slider_scale.unbind("<ButtonRelease-1>")
+            self.slider_detail.unbind("<ButtonRelease-1>")
+            self.slider_distortion.unbind("<ButtonRelease-1>")
+            self.control.material.noise.disable()
+        self.control.re_render()
+    
+    def set_noise_scale(self, value, isReleased: bool):
+        self.control.material.noise.set_scale(float(value))
+        if isReleased:
+            print("Setting noise scale to " + str(value))
+            self.control.re_render()
+    
+    def set_noise_detail(self, value, isReleased: bool):
+        self.control.material.noise.set_detail(float(value))
+        if isReleased:
+            print("Setting noise detail to " + str(value))
+            self.control.re_render()
+    
+    def set_noise_distortion(self, value, isReleased: bool):
+        self.control.material.noise.set_distortion(float(value))
+        if isReleased:
+            print("Setting noise distortion to " + str(value))
+            self.control.re_render()
 
 # Enum containing all possible materials
 class Materials(enum.Enum):
