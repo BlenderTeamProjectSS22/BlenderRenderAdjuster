@@ -203,8 +203,13 @@ def scale_to_unit_cube(obj: bpy.types.Object) -> None:
     obj.dimensions = obj.dimensions / max(obj.dimensions) * 2 #downscaling
     bpy.ops.object.origin_set(type='GEOMETRY_ORIGIN', center='BOUNDS') #align object's bounding box' center and origin
 
+# Calculates percentage of a number x in [0, 100]
 def percent(x: int) -> float:
     return x / 100
+
+# Clamps a value to the range of mimimum to maximum
+def clamp(val, minimum, maximum):
+    return min(max(val, minimum), maximum)
 
 def convert_color_to_bpy(color: (int, int, int)) -> (float, float, float, float):
     match color:
