@@ -159,6 +159,7 @@ class MaterialController:
     def set_color(self, color):
         self.color = color
         self.bsdf.inputs["Base Color"].default_value = color
+        self.bsdf.inputs["Emission"].default_value   = color
     
     def set_roughness(self, roughness):
         self.roughness = roughness
