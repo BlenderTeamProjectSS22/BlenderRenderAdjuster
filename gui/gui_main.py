@@ -445,8 +445,6 @@ class LightingWidgets(Frame):
         # initialization   
         slider_brightness.set(self.get_brightness())  
         slider_background.set(self.get_background_strength())
-        self.lights_off()
-        background_brightness_affects_objects(False)
         
 
     # set the background strength and rerenders
