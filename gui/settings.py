@@ -11,6 +11,7 @@ import yaml
 from utils import Renderer, OrbitCam
 from gui.render_preview import RenderPreview
 from materials.materials import MaterialController
+from gui.properties import *
 
 @dataclass
 class AspectRatio:
