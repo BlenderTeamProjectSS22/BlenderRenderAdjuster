@@ -22,7 +22,7 @@ from gui.gui_options import SettingsWindow
 from gui.settings import Control
 from gui.properties import *
 
-from materials.materials import *
+from materials.materials import MaterialController
 
 import utils
 
@@ -62,6 +62,22 @@ class ProgramGUI:
         right.grid(row=0, column=2, sticky="ne")
         
         
+# Two functions to enable/disable widgets
+def widget_set_enabled(frame, is_enabled: bool):
+    if is_enabled:
+        for widget in frame.winfo_children():
+            widget.configure(state="active")
+    else:
+        for widget in frame.winfo_children():
+            #print(widget)
+            if isinstance(widget, OptionMenu):
+                widget.configure(state="disable")
+            elif widget.winfo_children():
+                widget_disable(widget)
+            else:
+                widget.configure(state="disable")
+
+
 class LeftPanel(Frame):
     def __init__(self, master, control):
         Frame.__init__(self, master)
@@ -343,6 +359,24 @@ class MaterialWidgets(Frame):
         materials = ("default", Materials.GLASS.value, Materials.EMISSIVE.value, Materials.STONE.value)
         dropdown_materials = OptionMenu(self, mat_selected, *materials, command=self.set_material)
         
+        self.frm_bump   = Frame(master=self, borderwidth=3)
+        lbl_scale      = Label(master=self.frm_bump, text="Noise scale")
+        lbl_detail     = Label(master=self.frm_bump, text="Noise detail")
+        lbl_distortion = Label(master=self.frm_bump, text="Distortion")
+        self.bump = BooleanVar()
+        check_bump = Checkbutton(master=self, text="Enable bumpiness", variable=self.bump, command=self.toogle_bumpiness)
+        self.toogle_bumpiness()
+        
+        lbl_scale.grid(row=0, column=0)
+        lbl_detail.grid(row=0, column=1)
+        lbl_distortion.grid(row=0, column=2)
+        slider_scale      = Scale(master=self.frm_bump, from_=1, to=10, resolution=0.1, relief=tk.SOLID)
+        slider_detail     = Scale(master=self.frm_bump, from_=1, to=10, resolution=0.1, relief=tk.SOLID)
+        slider_distortion = Scale(master=self.frm_bump, from_=0, to=5,  resolution=0.1, relief=tk.SOLID)
+        slider_scale.grid(row=1, column=0)
+        slider_detail.grid(row=1, column=1)
+        slider_distortion.grid(row=1, column=2)
+        
         lbl_materials.grid(row=0, column=0, columnspan=2, sticky="we")
         lbl_metallic.grid(row=1, column=0, sticky="we")
         self.ent_metallic.grid(row=1, column=1, sticky="w")
@@ -364,6 +398,11 @@ class MaterialWidgets(Frame):
         
         lbl_sel_mat.grid(row=10, column=0, sticky="w")
         dropdown_materials.grid(row=10, column=1, sticky="w")
+        
+        sep = ttk.Separator(self,orient="horizontal")
+        sep.grid(row=11, column=0, columnspan=2, sticky="nesw", pady=5, padx=5)
+        check_bump.grid(row=12, column=0, columnspan=2)
+        self.frm_bump.grid(row=13, column=0, columnspan=2)
         
         self.default_values()
         
@@ -483,6 +522,15 @@ class MaterialWidgets(Frame):
     def toggle_glow(self):
         self.control.material.compositing.set_glow(self.glow.get())
         self.control.re_render()
+        
+    def toogle_bumpiness(self):
+        if self.bump.get():
+            widget_set_enabled(self.frm_bump, True)
+            # TODO Apply bump material based on sliders
+            # self.control.material
+        else:
+            widget_set_enabled(self.frm_bump, False)
+            # TODO Disable bump material
 
 # Enum containing all possible materials
 class Materials(enum.Enum):
