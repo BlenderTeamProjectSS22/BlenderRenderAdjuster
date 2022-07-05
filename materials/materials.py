@@ -5,6 +5,7 @@ class Noise:
     def __init__(self, mat_control):
         
         self.mat_control = mat_control
+        self.is_enabled  = False
         nodes = mat_control.material.node_tree.nodes
         self.links = mat_control.material.node_tree.links
         self.noise  = nodes.new(type="ShaderNodeTexNoise")
@@ -35,9 +36,11 @@ class Noise:
         self.set_distortion(distortion)
     
     def enable(self):
+        self.is_enabled = True
         self.bumplink = self.links.new(self.bump.outputs["Normal"], self.mat_control.bsdf.inputs["Normal"])
         
     def disable(self):
+        self.is_enabled = False
         if self.mat_control.bsdf.inputs["Normal"].links:
             self.links.remove(self.bumplink)
 
@@ -111,7 +114,7 @@ class MaterialController:
         self.set_emissive_strength(opts.get("strength", self.strength))
         self.compositing.set_glow(opts.get("glow", self.compositing.glow))
         if not opts.get("bump", False):
-            self.disable_bump()
+            self.noise.disable()
     
     def glass_material(self):
         self.material_preset(

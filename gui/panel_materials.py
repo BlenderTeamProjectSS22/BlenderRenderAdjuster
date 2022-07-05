@@ -137,6 +137,7 @@ class MaterialWidgets(Frame):
         self.slider_scale.set(int(self.control.material.noise.scale))
         self.slider_detail.set(int(self.control.material.noise.detail))
         self.slider_distortion.set(int(self.control.material.noise.distortion))
+        self.bump.set(self.control.material.noise.is_enabled)
     
     def set_metallic_input(self, event):
         x = 0
