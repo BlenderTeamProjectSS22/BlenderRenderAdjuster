@@ -139,6 +139,18 @@ class MaterialController:
             transmission = 0.5,
             glow     = True)
     
+    def water_material(self):
+        self.material_preset(
+            transmission = 1,
+            roughness    = 0.1,
+            metallic     = 0.1,
+            emissive     = False,
+            glow         = True,
+            bump         = True)
+        self.bump_material(3, 2.5, 0.2)
+        watercolor = (0.5725490196078431, 0.7725490196078432, 0.9725490196078431, 1)
+        self.set_color(watercolor)
+    
     # Create and return a bump material to an object, with adjustable scale and detail level of the noise
     def bump_material(self, scale: float = 5, detail: float = 2, distortion: float = 0) -> None:
         self.noise.enable()

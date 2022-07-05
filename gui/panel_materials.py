@@ -46,7 +46,7 @@ class MaterialWidgets(Frame):
         self.slider_emissive.bind("<ButtonRelease-1>", lambda event: self.set_emissive(self.slider_emissive.get(), True)) 
         
         lbl_sel_mat   = Label(master=self, text="Select:")
-        materials = ("default", Materials.GLASS.value, Materials.EMISSIVE.value, Materials.STONE.value)
+        materials = ("default", Materials.GLASS.value, Materials.WATER.value, Materials.STONE.value, Materials.EMISSIVE.value)
         dropdown_materials = OptionMenu(self, mat_selected, *materials, command=self.set_material)
         
         self.frm_bump   = Frame(master=self, borderwidth=3)
@@ -121,6 +121,8 @@ class MaterialWidgets(Frame):
                 self.control.material.stone_material()
             case Materials.EMISSIVE:
                 self.control.material.emissive_material()
+            case Materials.WATER:
+                self.control.material.water_material()
             case _:
                 self.default_values()
         self.adjust_sliders()
@@ -260,6 +262,7 @@ class Materials(enum.Enum):
     GLASS = "glass"
     STONE = "stone"
     EMISSIVE = "emissive"
+    WATER = "water"
 
 # Two functions to enable/disable widgets
 def widget_set_enabled(frame, is_enabled: bool):
