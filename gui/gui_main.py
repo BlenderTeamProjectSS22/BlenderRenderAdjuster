@@ -80,12 +80,14 @@ class ProgramGUI:
         left  = LeftPanel(master, self.control)
         right = RightPanel(master, self.control)
         camcontrols = CameraControls(master, self.control)
+        modelcontrols = ModelControls(master, self.control)
 
         background_ctrl = BackgroundControl(master, self.control)
         
         left.grid(row=0, column=0, sticky="nw")
         self.preview.grid(row=0, column=1, sticky="nwes")
-        camcontrols.grid(row=1, column=1, sticky="w")
+        camcontrols.grid(row=1, column=1, sticky="nw")
+        modelcontrols.grid(row=1, column=1, sticky="sw")
 
         right.grid(row=0, column=2, sticky="ne")
         background_ctrl.grid(row=1, column=1, sticky="e")
@@ -275,6 +277,30 @@ class CameraControls(Frame):
         self.control.camera.change_distance(1)
         self.control.re_render()
         
+    
+class ModelControls(Frame):
+    def __init__(self, master, control):
+        Frame.__init__(self, master, borderwidth=2, relief="groove")
+        
+        self.control = control
+        lbl_controls = Label(master=self, text="Model Controls", font="Arial 10 bold")
+        lbl_rot   = Label(master=self, text="Rotation:")
+        lbl_controls.grid(row=0, column=0, columnspan=3)
+        lbl_rot.grid(row=1, column=0)
+
+        btn_right = Button(master=self, text="→", command=self.rotate_right)
+        btn_left = Button(master=self, text="←", command=self.rotate_left)
+
+        btn_left.grid(row=1, column=1, sticky="e")
+        btn_right.grid(row=1, column=2, sticky="w")
+
+    def rotate_right(self):
+        utils.rotate_object(self.control.model, 10)
+        self.control.re_render()
+
+    def rotate_left(self):
+        utils.rotate_object(self.control.model, -10)
+        self.control.re_render()
         
 class ColorMeshWidgets(Frame):
     def __init__(self, master, control):

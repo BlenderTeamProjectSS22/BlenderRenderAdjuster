@@ -227,3 +227,7 @@ def generate_hdri_thumbnail(filepath):
     if not os.path.exists(thumb_folder):
         os.mkdir(thumb_folder)
     thumb.save(thumb_folder + filename + ".png", "PNG")
+
+# rotate obj around Z axis and angle
+def rotate_object(obj: bpy.types.Object, angle: float) -> None:
+    obj.rotation_euler[2] += radians(angle)
