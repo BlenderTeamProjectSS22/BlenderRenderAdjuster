@@ -20,6 +20,7 @@ import enum
 
 from Texture import load_texture, delete_texture
 from Vertex import import_vertex
+import Vertex1
 import bpy
 import random
 
@@ -434,7 +435,9 @@ class ColorMeshWidgets(Frame):
             self.control.re_render()
     
     def switch_vertex_color(self):
-        import_vertex(self.control.model)
+        set_scene_objects()
+        utils.set_output_properties(scene, resolution_percentage, output_file_path)
+        utils.set_cycles_renderer(scene, camera_object, num_samples, use_transparent_bg=True)
         self.control.re_render()
     
     def switch_mesh(self):
