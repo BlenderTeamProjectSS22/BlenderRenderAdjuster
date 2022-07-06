@@ -5,6 +5,7 @@
 # description:
 # GUI element: Main program, renders the GUI and connects it to other function
 
+from cgi import print_directory
 import tkinter as tk
 from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
 from tkinter import ttk
@@ -232,49 +233,83 @@ class CameraControls(Frame):
         self.control = control
         lbl_controls = Label(master=self, text="Camera Controls", font="Arial 10 bold")
         lbl_rot   = Label(master=self, text="Rotation")
-        lbl_controls.grid(row=0, column=0, columnspan=4)
+        lbl_pan   = Label(master=self, text="Panning")
+        lbl_controls.grid(row=0, column=0, columnspan=7)
         lbl_rot.grid(row=1, column=0, columnspan=3)
+        lbl_pan.grid(row=1, column=3, columnspan=3)
 
-        btn_up = Button(master=self, text="↑", command=self.move_up)
-        btn_down = Button(master=self, text="↓", command=self.move_down)
-        btn_right = Button(master=self, text="→", command=self.move_right)
-        btn_left = Button(master=self, text="←", command=self.move_left)
+        btn_up_rot = Button(master=self, text="↑", command=self.rotate_up)
+        btn_down_rot = Button(master=self, text="↓", command=self.rotate_down)
+        btn_right_rot = Button(master=self, text="→", command=self.rotate_right)
+        btn_left_rot = Button(master=self, text="←", command=self.rotate_left)
 
-        btn_up.grid(row=2, column=1)
-        btn_left.grid(row=3, column=0, sticky="w")
-        btn_right.grid(row=3, column=2, sticky="e")
-        btn_down.grid(row=4, column=1)
+        btn_up_rot.grid(row=2, column=1)
+        btn_left_rot.grid(row=3, column=0, sticky="w")
+        btn_right_rot.grid(row=3, column=2, sticky="e")
+        btn_down_rot.grid(row=4, column=1)
+
+        btn_up_pan = Button(master=self, text="↑", command=self.move_up)
+        btn_down_pan = Button(master=self, text="↓", command=self.move_down)
+        btn_right_pan = Button(master=self, text="→", command=self.move_right)
+        btn_left_pan = Button(master=self, text="←", command=self.move_left)
+
+        btn_up_pan.grid(row=2, column=4)
+        btn_left_pan.grid(row=3, column=3, sticky="w")
+        btn_right_pan.grid(row=3, column=5, sticky="e")
+        btn_down_pan.grid(row=4, column=4)
 
         lbl_dist   = Label(master=self, text="Distance")
         btn_in = Button(master=self, text="Pan in", command=self.pan_in)
         btn_out = Button(master=self, text="Pan out", command=self.pan_out)
 
-        lbl_dist.grid(row = 1, column=3)
-        btn_in.grid(row=2, column=3, padx=8)
-        btn_out.grid(row=4, column=3, padx=8)
+        lbl_dist.grid(row = 1, column=6)
+        btn_in.grid(row=2, column=6, padx=8)
+        btn_out.grid(row=4, column=6, padx=8)
 
-    def move_up(self):
+    def rotate_up(self):
         self.control.camera.rotate_x(-10)
         self.control.re_render()
     
-    def move_down(self):
+    def rotate_down(self):
         self.control.camera.rotate_x(10)
         self.control.re_render()
 
-    def move_right(self):
+    def rotate_right(self):
         self.control.camera.rotate_z(10)
         self.control.re_render()
 
-    def move_left(self):
+    def rotate_left(self):
         self.control.camera.rotate_z(-10)
         self.control.re_render()
 
+    global step_size # relative size of panning steps 
+    step_size = 1 / 5
+
+    def move_up(self):
+        self.control.camera.pan_vertical(self.control.camera.get_distance() * step_size)
+        self.control.re_render()
+    
+    def move_down(self):
+        self.control.camera.pan_vertical(self.control.camera.get_distance() * -step_size)
+        self.control.re_render()
+
+    def move_right(self):
+        self.control.camera.pan_horizontal(self.control.camera.get_distance() * step_size)
+        self.control.re_render()
+
+    def move_left(self):
+        self.control.camera.pan_horizontal(self.control.camera.get_distance() * -step_size)
+        self.control.re_render()
+
+    global zoom_factor # relative size of panning in / out steps
+    zoom_factor = 1.5
+
     def pan_in(self):
-        self.control.camera.set_distance(self.control.camera.get_distance() / 1.5)
+        self.control.camera.set_distance(self.control.camera.get_distance() / zoom_factor)
         self.control.re_render()
 
     def pan_out(self):
-        self.control.camera.set_distance(self.control.camera.get_distance() * 1.5)
+        self.control.camera.set_distance(self.control.camera.get_distance() * zoom_factor)
         self.control.re_render()
         
     
