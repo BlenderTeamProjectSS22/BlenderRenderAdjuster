@@ -24,6 +24,7 @@ class OrbitCam:
         
         bpy.ops.object.camera_add(location=(1, 0, 0))
         self.camera = bpy.context.object
+        self.camera.data.lens = 25
         bpy.ops.object.empty_add(type='CUBE', location=(0, 0, 0), scale=(1, 1, 1))
         self.controller = bpy.context.object
         self.controller.name = self.camera.name + "_controller"
