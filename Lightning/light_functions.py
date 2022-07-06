@@ -302,6 +302,11 @@ def delete_light_animation(lights : list[Light]):
         light.get_datas()[0].animation_data_clear()
         light.get_datas()[1].animation_data_clear()
 
+# creating a default light source
+def create_default_light() -> list[Light]:
+    default_light = Light("light", "POINT", 4.0762, 1.0055, 5.9039, 1000)
+    return [default_light]
+
 ### for testing
 
 ## create camera
