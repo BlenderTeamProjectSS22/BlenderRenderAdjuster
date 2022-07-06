@@ -35,7 +35,8 @@ import HDRI.hdri as hdri
 
 
 ## for testing
-# import bpy
+if props.DEBUG:
+    import bpy
 
 class ProgramGUI:
     def __init__(self, master):
@@ -424,7 +425,8 @@ class LightingWidgets(Frame):
         slider_daytime.bind("<ButtonRelease-1>", lambda event : self.set_daytime(self.get_daytime(), True)) 
         slider_background.bind("<ButtonRelease-1>", lambda event : self.set_background_strength(self.get_background_strength(), True)) 
         ## for testing
-        # slider_frame_setting = Scale(master=self, from_= 0, to = 360, orient="horizontal", showvalue=True, command=self.set_frame)
+        if props.DEBUG:
+            slider_frame_setting = Scale(master=self, from_= 0, to = 360, orient="horizontal", showvalue=True, command=self.set_frame)
 
         # packing
         lbl_light.grid(row=0, column=0, columnspan=2)
@@ -440,7 +442,8 @@ class LightingWidgets(Frame):
         lbl_background.grid(row=6, column=0,  sticky="w") 
         slider_background.grid(row=6, column=1,  sticky="we", columnspan=2) 
         ## for testing
-        # slider_frame_setting.grid(row=7,column=1,sticky="we")
+        if props.DEBUG:
+            slider_frame_setting.grid(row=7,column=1,sticky="we")
 
         # initialization   
         slider_brightness.set(self.get_brightness())  
@@ -538,9 +541,9 @@ class LightingWidgets(Frame):
 
     ## test function
     ## set frame to "value"
-    # def set_frame(self, value):
-    #    bpy.context.scene.frame_current = int(value)
-    #    self.control.re_render()
+    def set_frame(self, value):
+        bpy.context.scene.frame_current = int(value)
+        self.control.re_render()
     
     
 class BackgroundControl(Frame):
