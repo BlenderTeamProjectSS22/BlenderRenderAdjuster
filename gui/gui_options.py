@@ -9,6 +9,7 @@ import tkinter as tk
 from tkinter import Frame, Toplevel, Label, Button, Entry
 from PIL import ImageTk, Image
 from gui.properties import *
+from gui.gui_utils import validate_integer, validate_float
 
 class SettingsWindow(Toplevel):
         def __init__(self, master, control):
@@ -32,13 +33,14 @@ class SettingsContent(Frame):
         Frame.__init__(self, master)
         self.master = master
         self.control = control
+        validate_int = self.register(validate_integer)
         
         lbl_aspect = Label(master=self, text="Aspect ratio")
-        self.ent_width  = Entry(master=self)
-        self.ent_height = Entry(master=self)
+        self.ent_width  = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'))
+        self.ent_height = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'))
         
         lbl_limit = Label(master=self, text="Time limit")
-        self.ent_limit = Entry(master=self)
+        self.ent_limit = Entry(master=self, validate="key", validatecommand=(self.register(validate_float), '%P'))
         
         lbl_settings = Label(master=self, text="Settings")
         btn_ok = Button(master=self, text="Ok", command=self.accept)
