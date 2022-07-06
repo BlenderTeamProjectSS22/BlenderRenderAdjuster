@@ -100,7 +100,7 @@ class LeftPanel(Frame):
         lbl_spacer2 = Label(master=self, text="")
 
         lbl_camerapresets = Label(master=self, text="Camera Presets", font="Arial 10 bold")
-        btn_preset1 = Button(master=self, text="Preset 1", command=self.camera_preset_1())
+        btn_preset1 = Button(master=self, text="Preset 1", command=self.camera_preset_1)
         btn_preset2 = Button(master=self, text="Preset 2")
         btn_preset3 = Button(master=self, text="Preset 3")
 

@@ -27,7 +27,6 @@ startp = [-3,-5,0.5]
 endP = [6,5,0.5]
 rot = [90,0,90]
 
-#path.follow_path(path.pathObj, 50)
 myCamera.set_mode("track", tower)
 path.follow_path(path.pathObj, 50)
 
