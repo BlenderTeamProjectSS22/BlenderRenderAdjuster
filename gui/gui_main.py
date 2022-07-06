@@ -270,11 +270,11 @@ class CameraControls(Frame):
         self.control.re_render()
 
     def pan_in(self):
-        self.control.camera.change_distance(-1)
+        self.control.camera.set_distance(self.control.camera.get_distance() / 1.5)
         self.control.re_render()
 
     def pan_out(self):
-        self.control.camera.change_distance(1)
+        self.control.camera.set_distance(self.control.camera.get_distance() * 1.5)
         self.control.re_render()
         
     

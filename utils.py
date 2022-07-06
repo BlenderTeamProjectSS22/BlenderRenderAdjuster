@@ -85,7 +85,7 @@ class OrbitCam:
 
     # resets camera to default position
     def reset_position(self) -> None:
-        self.distance_constraint.distance = 9
+        self.distance_constraint.distance = 5
         self.controller.rotation_euler[1] = radians(-30)
         self.controller.rotation_euler[2] = radians(45)
 
