@@ -10,6 +10,7 @@ import typing as t
 import yaml
 from utils import Renderer, OrbitCam
 from gui.render_preview import RenderPreview
+from gui.properties import *
 
 @dataclass
 class AspectRatio:
