@@ -59,6 +59,7 @@ class SettingsContent(Frame):
         limit = int(self.ent_limit.get())
         self.control.settings.set_aspect_ratio(w, h)
         self.control.settings.set_time_limit(limit)
+        self.control.save_settings(self.control.settings)
         self.control.re_render()
         self.close_window()
         print("New settings: " + str(self.control.settings))

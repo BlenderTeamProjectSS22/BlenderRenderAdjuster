@@ -5,6 +5,7 @@ dist/
 .venv-blender
 *.zip
 data_samples
+settings.yaml
 preview.png
 hdri_thumbs/
 temp.png

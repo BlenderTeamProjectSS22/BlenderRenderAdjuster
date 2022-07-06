@@ -8,6 +8,7 @@
 from dataclasses import dataclass
 import typing as t
 import yaml
+import os, shutil
 from utils import Renderer, OrbitCam
 from gui.render_preview import RenderPreview
 from gui.properties import *
@@ -20,6 +21,12 @@ class AspectRatio:
     @classmethod
     def from_dict(cls: t.Type["AspectRatio"], dic: dict):
         return cls(width=dic["width"], height=dic["height"])
+    
+    def to_dict(self):
+        dic = dict()
+        dic["width"]  = self.width
+        dic["height"] = self.height
+        return dic
 
 @dataclass
 class Settings():
@@ -38,6 +45,13 @@ class Settings():
             timelimit = dic["timelimit"]
         )
     
+    def to_dict(self):
+        dic = dict()
+        dic["auto_updatecheck"] = self.auto_updatecheck
+        dic["aspect"]           = self.aspect.to_dict()
+        dic["timelimit"]        = self.timelimit
+        return dic
+    
     def set_aspect_ratio(self, width: int, height: int) -> None:
         self.aspect.width  = width
         self.aspect.height = height
@@ -49,6 +63,8 @@ class Settings():
         self.timelimit = limit
         self.renderer.set_time_limit(limit)
     
+DEFAULT_CONFIG_PATH = "assets/default_settings.yaml"
+CONFIG_PATH         = "assets/settings.yaml"
     
 class Control:
     renderer: Renderer
@@ -73,7 +89,11 @@ class Control:
     # Parses and returns a Settings object
     # May return NoneType, please check outside
     def load_settings(self) -> Settings:
-        with open("assets/settings.yaml", "r") as f:
+        
+        if not os.path.exists(CONFIG_PATH):
+            shutil.copyfile(DEFAULT_CONFIG_PATH, CONFIG_PATH)
+            
+        with open(CONFIG_PATH, "r") as f:
             config = yaml.safe_load(f)
             print(config)
         try:
@@ -84,4 +104,6 @@ class Control:
        
     def save_settings(self, settings: Settings) -> None:
         print("Saving configuration")
-        pass
+        dic = self.settings.to_dict()
+        with open(CONFIG_PATH, "w") as settingsfile:
+            yaml.dump(dic, settingsfile)
