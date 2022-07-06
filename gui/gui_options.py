@@ -37,6 +37,9 @@ class SettingsContent(Frame):
         self.ent_width  = Entry(master=self)
         self.ent_height = Entry(master=self)
         
+        lbl_limit = Label(master=self, text="Time limit")
+        self.ent_limit = Entry(master=self)
+        
         lbl_settings = Label(master=self, text="Settings")
         btn_ok = Button(master=self, text="Ok", command=self.accept)
         btn_cancel = Button(master=self, text="Cancel", command=self.cancel)
@@ -45,13 +48,17 @@ class SettingsContent(Frame):
         lbl_aspect.grid(row=1, column=0)
         self.ent_width.grid(row=1, column=1)
         self.ent_height.grid(row=1, column=2)
-        btn_cancel.grid(row=2, column=0)
-        btn_ok.grid(row=2, column=1)
+        lbl_limit.grid(row=2, column=0)
+        self.ent_limit.grid(row=2, column=1)
+        btn_cancel.grid(row=3, column=1)
+        btn_ok.grid(row=3, column=2)
         
     def accept(self):
         w = int(self.ent_width.get())
         h = int(self.ent_height.get())
+        limit = int(self.ent_limit.get())
         self.control.settings.set_aspect_ratio(w, h)
+        self.control.settings.set_time_limit(limit)
         self.control.re_render()
         self.close_window()
         print("New settings: " + str(self.control.settings))

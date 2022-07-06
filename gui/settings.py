@@ -27,13 +27,15 @@ class Settings():
     renderer: Renderer
     auto_updatecheck: bool
     aspect: AspectRatio
+    timelimit: float
     
     @classmethod
     def from_dict(cls: t.Type["Settings"], renderer, dic: dict):
         return cls(
             renderer=renderer,
             auto_updatecheck=dic["auto_updatecheck"],
-            aspect = AspectRatio.from_dict(dic["aspect"])
+            aspect = AspectRatio.from_dict(dic["aspect"]),
+            timelimit = dic["timelimit"]
         )
     
     def set_aspect_ratio(self, width: int, height: int) -> None:
@@ -42,7 +44,11 @@ class Settings():
         # TODO Change the aspect ratio of the camera in here as well
         self.renderer.set_aspect_ratio(width, height)
 
-
+    def set_time_limit(self, limit: float):
+        assert limit >= 0
+        self.timelimit = limit
+        self.renderer.set_time_limit(limit)
+    
     
 class Control:
     renderer: Renderer
