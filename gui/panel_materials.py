@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter.ttk import Separator
 import enum
 import utils
+from gui.gui_utils import widget_set_enabled
 
 class MaterialWidgets(Frame):
     def __init__(self, master, control):
@@ -263,18 +264,3 @@ class Materials(enum.Enum):
     STONE = "stone"
     EMISSIVE = "emissive"
     WATER = "water"
-
-# Two functions to enable/disable widgets
-def widget_set_enabled(frame, is_enabled: bool):
-    if is_enabled:
-        for widget in frame.winfo_children():
-            widget.configure(state="active")
-    else:
-        for widget in frame.winfo_children():
-            #print(widget)
-            if isinstance(widget, OptionMenu):
-                widget.configure(state="disable")
-            elif widget.winfo_children():
-                widget_disable(widget)
-            else:
-                widget.configure(state="disable")
