@@ -93,7 +93,7 @@ class ProgramGUI:
         modelcontrols.grid(row=2, column=1, sticky="sw")
 
         right.grid(row=0, column=2, sticky="ne")
-        background_ctrl.grid(row=3, column=1, sticky="e")
+        background_ctrl.grid(row=2, column=1, sticky="e")
         
         
 class LeftPanel(Frame):
