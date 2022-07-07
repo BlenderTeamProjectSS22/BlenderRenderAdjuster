@@ -87,6 +87,7 @@ class MaterialController:
         self.strength    = 1
         self.compositing = CompositeNodes()
         self.noise       = Noise(self)
+        self.solidify    = None
     
     def init_material(self) -> bpy.types.Material:
     
@@ -121,6 +122,10 @@ class MaterialController:
             transmission = 1,
             roughness     = 0.05,
             emissive     = False)
+    
+    def thick_glass(self, obj):
+        glass_material()
+        self.solidify_enabled(True)
     
     def stone_material(self):
         self.material_preset(
@@ -190,3 +195,10 @@ class MaterialController:
         self.strength = strength
         if self.emissive:
             self.bsdf.inputs["Emission Strength"].default_value = strength
+    
+    def set_solidified(self, obj, solidify_enabled: bool):
+        if solidify_enabled:
+            self.solidify = obj.modifiers.new("Solidify", "SOLIDIFY")
+        else:
+            if self.solidify is not None:
+                bpy.ops.object.modifier_remove(modifier="Solidify")
