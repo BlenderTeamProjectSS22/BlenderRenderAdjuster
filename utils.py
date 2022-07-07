@@ -67,7 +67,7 @@ class OrbitCam:
 
     # pan camera along global Z axis, changing its position by distance
     def pan_vertical(self, distance: float) -> None:
-        bpy.context.object.location[2] += distance
+        self.controller.location[2] += distance
 
     # pan camera along local Y axis, chaning its position by distance
     # relies on bpy.ops.tranform because of the use of local axis
