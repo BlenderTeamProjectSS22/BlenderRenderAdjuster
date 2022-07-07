@@ -86,7 +86,7 @@ class ProgramGUI:
         
         left.grid(row=0, column=0, sticky="nw")
         self.preview.grid(row=0, column=1, sticky="nwes")
-        under.grid(row=1, column=1, sticky="w")
+        under.grid(row=1, column=1, sticky="nwe")
         camcontrols.grid(row=2, column=1, sticky="w")
 
         right.grid(row=0, column=2, sticky="ne")
@@ -715,20 +715,38 @@ class UnderPanel(Frame):
         
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
-        self.rowconfigure(2, weight=1)
-        self.rowconfigure(3, weight=1)
         self.columnconfigure(0, weight=1)
 
         self.control = control
-        self.frame : int = 0
-        self.frame_end : int = 360
+        
+        # Frame setting widgets
+        frm_frame = FrameWidgets(self, control)
+        frm_frame.grid(row=0, sticky="enw")
 
-        lbl_frame_setting = Label(master=self, text="Frame")
+
+class FrameWidgets(Frame):
+
+    def __init__(self, master, control):
+        Frame.__init__(self, master, borderwidth=2, relief="groove")
+        self.control = control
+        
+        # variables
+        self.frame : int = 0
+        self.frame_end : int = control.renderer.scene.frame_end
+
+        # grid
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+
+        # labels and sliders
+        lbl_frame_setting = Label(master=self, text="Frame", font="Arial 10 bold")
         slider_frame_setting = Scale(master=self, from_= 0, to = self.frame_end, orient="horizontal", showvalue=True, command=lambda val: self.set_frame(val, False))
         slider_frame_setting.bind("<ButtonRelease-1>", lambda event : self.set_frame(self.get_frame(), True)) 
 
-        lbl_frame_setting.grid(row=0, column=0)
-        slider_frame_setting.grid(row=0,column=1,sticky="we")
+        # packing
+        lbl_frame_setting.grid(row=0)
+        slider_frame_setting.grid(row=1,sticky="wne")
 
     # returns the frame value
     def get_frame(self) -> int:
