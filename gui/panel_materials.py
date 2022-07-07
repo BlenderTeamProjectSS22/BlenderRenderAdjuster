@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter.ttk import Separator
 import enum
 import utils
-from gui.gui_utils import widget_set_enabled
+from gui.gui_utils import frame_set_enabled, widget_set_enabled
 
 class MaterialWidgets(Frame):
     def __init__(self, master, control):
@@ -45,6 +45,7 @@ class MaterialWidgets(Frame):
         self.slider_roughness.bind("<ButtonRelease-1>", lambda event: self.set_roughness(self.slider_roughness.get(), True))
         self.slider_transmiss.bind("<ButtonRelease-1>", lambda event: self.set_transmission(self.slider_transmiss.get(), True)) 
         self.slider_emissive.bind("<ButtonRelease-1>", lambda event: self.set_emissive(self.slider_emissive.get(), True)) 
+        self.toggle_emissive()
         
         lbl_sel_mat   = Label(master=self, text="Select:")
         materials = ("default", Materials.GLASS.value, Materials.WATER.value, Materials.STONE.value, Materials.EMISSIVE.value)
@@ -213,17 +214,25 @@ class MaterialWidgets(Frame):
         
     def toggle_emissive(self):
         is_emissive = self.emissive.get()
+        
+        widget_set_enabled(self.slider_emissive, is_emissive)
+        if is_emissive:
+            self.slider_emissive.bind("<ButtonRelease-1>",  lambda event: self.set_emissive(self.slider_emissive.get(), True))
+        else:
+            self.slider_emissive.unbind("<ButtonRelease-1>")
+            
         self.control.material.set_emissive(is_emissive)
         print("Setting emissive to " + str(is_emissive))
         self.control.re_render()
     
     def toggle_glow(self):
+        frame_set_enabled(self.slider_emissive, self.glow.get())
         self.control.material.compositing.set_glow(self.glow.get())
         self.control.re_render()
         
     def toogle_bumpiness(self):
         if self.bump.get():
-            widget_set_enabled(self.frm_bump, True)
+            frame_set_enabled(self.frm_bump, True)
             self.slider_scale.bind("<ButtonRelease-1>",  lambda event: self.set_noise_scale(self.slider_scale.get(), True))
             self.slider_detail.bind("<ButtonRelease-1>",  lambda event: self.set_noise_detail(self.slider_detail.get(), True))
             self.slider_distortion.bind("<ButtonRelease-1>",  lambda event: self.set_noise_distortion(self.slider_distortion.get(), True))
@@ -232,7 +241,7 @@ class MaterialWidgets(Frame):
                 self.slider_detail.get(),
                 self.slider_distortion.get())
         else:
-            widget_set_enabled(self.frm_bump, False)
+            frame_set_enabled(self.frm_bump, False)
             self.slider_scale.unbind("<ButtonRelease-1>")
             self.slider_detail.unbind("<ButtonRelease-1>")
             self.slider_distortion.unbind("<ButtonRelease-1>")

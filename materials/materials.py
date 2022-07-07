@@ -174,7 +174,6 @@ class MaterialController:
         self.bsdf.inputs["Transmission"].default_value = transmission
     
     def set_emissive(self, emissive: bool, new_color = None):
-        print("SET emissive to " + str(emissive))
         self.emissive = emissive
         
         if emissive:
