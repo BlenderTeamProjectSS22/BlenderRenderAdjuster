@@ -20,8 +20,9 @@ class MaterialWidgets(Frame):
         lbl_metallic  = Label(master=self, text="Metallic")
         lbl_roughness = Label(master=self, text="Roughness")
         lbl_transmiss = Label(master=self, text="Transmission")
-        lbl_emissive  = Label(master=self, text="Emissive Strength")
         
+        self.frm_emissive = Frame(master=self)
+        lbl_emissive  = Label(master=self.frm_emissive, text="Emissive Strength")
         self.emissive = BooleanVar(self)
         self.glow     = BooleanVar(self)
         check_emiss   = Checkbutton(master=self, text="Emissive", variable=self.emissive, anchor="w", command=self.toggle_emissive)
@@ -31,7 +32,7 @@ class MaterialWidgets(Frame):
         self.ent_metallic  = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
         self.ent_roughness = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
         self.ent_transmiss = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
-        self.ent_emissive  = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
+        self.ent_emissive  = Entry(master=self.frm_emissive, validate="key", validatecommand=(validate_int, '%P'), width=10)
         self.ent_metallic.bind("<Return>",  self.set_metallic_input)
         self.ent_roughness.bind("<Return>", self.set_roughness_input)
         self.ent_transmiss.bind("<Return>", self.set_transmiss_input)
@@ -40,12 +41,12 @@ class MaterialWidgets(Frame):
         self.slider_metallic  = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_metallic(val, False))
         self.slider_roughness = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_roughness(val, False))
         self.slider_transmiss = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_transmission(val, False))
-        self.slider_emissive  = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_emissive(val, False))
+        self.slider_emissive  = Scale(master=self.frm_emissive, orient="horizontal", showvalue=False, command=lambda val: self.set_emissive(val, False))
         self.slider_metallic.bind("<ButtonRelease-1>",  lambda event: self.set_metallic(self.slider_metallic.get(), True))
         self.slider_roughness.bind("<ButtonRelease-1>", lambda event: self.set_roughness(self.slider_roughness.get(), True))
         self.slider_transmiss.bind("<ButtonRelease-1>", lambda event: self.set_transmission(self.slider_transmiss.get(), True)) 
         self.slider_emissive.bind("<ButtonRelease-1>", lambda event: self.set_emissive(self.slider_emissive.get(), True)) 
-        self.toggle_emissive()
+        
         
         lbl_sel_mat   = Label(master=self, text="Select:")
         materials = ("default", Materials.GLASS.value, Materials.WATER.value, Materials.STONE.value, Materials.EMISSIVE.value, Materials.THICK_GLASS.value)
@@ -68,7 +69,6 @@ class MaterialWidgets(Frame):
         
         self.bump = BooleanVar()
         check_bump = Checkbutton(master=self, text="Enable bumpiness", variable=self.bump, command=self.toogle_bumpiness)
-        self.toogle_bumpiness()
         
         lbl_materials.grid(row=0, column=0, columnspan=2, sticky="we")
         lbl_metallic.grid(row=1, column=0, sticky="we")
@@ -85,9 +85,14 @@ class MaterialWidgets(Frame):
         
         check_emiss.grid(row=7, column=0, sticky="w")
         check_glow.grid(row=7, column=1, sticky="w")
-        lbl_emissive.grid(row=8, column=0, sticky="we")
-        self.ent_emissive.grid(row=8, column=1, sticky="we")
-        self.slider_emissive.grid(row=9, column=0, sticky="we", columnspan=2)
+        
+        self.frm_emissive.columnconfigure(0, weight=1)
+        self.frm_emissive.columnconfigure(1, weight=1)
+        lbl_emissive.grid(row=1, column=0, sticky="we")
+        self.ent_emissive.grid(row=1, column=1)
+        self.slider_emissive.grid(row=2, column=0, sticky="we", columnspan=2)
+        
+        self.frm_emissive.grid(row=8, column=0, columnspan=4, sticky="we")
         
         lbl_sel_mat.grid(row=10, column=0, sticky="w")
         dropdown_materials.grid(row=10, column=1, sticky="w")
@@ -98,6 +103,8 @@ class MaterialWidgets(Frame):
         self.frm_bump.grid(row=13, column=0, columnspan=2)
         
         self.default_values()
+        self.toogle_bumpiness()
+        self.toggle_emissive()
         
         
     def default_values(self):
@@ -220,7 +227,8 @@ class MaterialWidgets(Frame):
     def toggle_emissive(self):
         is_emissive = self.emissive.get()
         
-        widget_set_enabled(self.slider_emissive, is_emissive)
+        frame_set_enabled(self.frm_emissive, is_emissive)
+        
         if is_emissive:
             self.slider_emissive.bind("<ButtonRelease-1>",  lambda event: self.set_emissive(self.slider_emissive.get(), True))
         else:

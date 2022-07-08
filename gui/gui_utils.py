@@ -1,4 +1,4 @@
-from tkinter import OptionMenu, Frame
+from tkinter import Entry, OptionMenu, Frame
 
 # Enable/disable frame, recursively applied to all widgets contained in the frame
 def frame_set_enabled(frame, is_enabled: bool):
@@ -14,4 +14,8 @@ def frame_set_enabled(frame, is_enabled: bool):
 # Enable/disable a single widget
 def widget_set_enabled(widget, is_enabled: bool):
     state = "active" if is_enabled else "disabled"
-    widget.configure(state=state)
+    state_ent = "normal" if is_enabled else "readonly"
+    if isinstance(widget, Entry):
+        widget.configure(state=state_ent)
+    else:
+        widget.configure(state=state)
