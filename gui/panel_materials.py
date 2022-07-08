@@ -101,11 +101,10 @@ class MaterialWidgets(Frame):
         
         
     def default_values(self):
-        self.set_metallic(0, False)
-        self.set_roughness(50, False)
-        self.set_transmission(0, False)
-        self.set_emissive(0, False)
-        self.control.material.noise.disable()
+        self.control.material.default_material()
+        if self.control.model is not None:
+            self.control.material.set_solidified(self.control.model, False)
+        self.adjust_sliders()
         
     def validate_integer(self, P):
         # TODO This prevents deleting e.g. '5', because field can't be empty
@@ -130,7 +129,7 @@ class MaterialWidgets(Frame):
                 self.control.material.water_material()
             case Materials.THICK_GLASS:
                 if self.control.model is not None:
-                    self.control.material.set_solidified(self.control.model, True)
+                    self.control.material.thick_glass(self.control.model)
             case _:
                 self.default_values()
         self.adjust_sliders()

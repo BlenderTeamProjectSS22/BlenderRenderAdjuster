@@ -1,6 +1,8 @@
 import bpy
 from abc import ABC, abstractmethod
 
+DEFAULT_COLOR = (0, 0, 0.8, 1)
+
 class Noise:
     def __init__(self, mat_control):
         
@@ -76,18 +78,18 @@ class CompositeNodes:
 class MaterialController:
 
     def __init__(self):
-        self.material    = self.init_material()
-        nodes            = self.material.node_tree.nodes
-        self.bsdf        = nodes.get("Principled BSDF")
-        self.color       = self.bsdf.inputs["Base Color"].default_value
-        self.metallic    = 0
-        self.roughness   = 0.5
-        self.tranmission = 0
-        self.emissive    = False
-        self.strength    = 1
-        self.compositing = CompositeNodes()
-        self.noise       = Noise(self)
-        self.solidify    = None
+        self.material     = self.init_material()
+        nodes             = self.material.node_tree.nodes
+        self.bsdf         = nodes.get("Principled BSDF")
+        self.color        = self.bsdf.inputs["Base Color"].default_value
+        self.metallic     = 0
+        self.roughness    = 0.5
+        self.transmission = 0
+        self.emissive     = False
+        self.strength     = 1
+        self.compositing  = CompositeNodes()
+        self.noise        = Noise(self)
+        self.solidify     = None
     
     def init_material(self) -> bpy.types.Material:
     
@@ -105,6 +107,8 @@ class MaterialController:
     def apply_material(self, obj):
         obj.active_material = self.material
         obj.active_material_index = 0
+        if self.solidify is not None:
+            self.set_solidified(obj, True)
     
     # If a value is not set, it will not be changed
     def material_preset(self, **opts):
@@ -116,16 +120,29 @@ class MaterialController:
         self.compositing.set_glow(opts.get("glow", self.compositing.glow))
         if not opts.get("bump", False):
             self.noise.disable()
+        if not opts.get("preserve_color", True):
+            self.set_base_color(DEFAULT_COLOR)
+    
+    def default_material(self):
+        self.material_preset(
+            transmission = 0,
+            roughness    = 0.5,
+            metallic     = 0,
+            emissive     = False,
+            glow         = False,
+            bump         = False
+        )
     
     def glass_material(self):
         self.material_preset(
             transmission = 1,
-            roughness     = 0.05,
+            roughness    = 0.05,
+            metallic     = 0,
             emissive     = False)
     
     def thick_glass(self, obj):
-        glass_material()
-        self.solidify_enabled(True)
+        self.glass_material()
+        self.set_solidified(obj, True)
     
     def stone_material(self):
         self.material_preset(
@@ -139,10 +156,10 @@ class MaterialController:
     
     def emissive_material(self):
         self.material_preset(
-            emissive = True,
-            strength = 1,
+            strength     = 1,
             transmission = 0.5,
-            glow     = True)
+            emissive     = True,
+            glow         = True)
     
     def water_material(self):
         self.material_preset(
@@ -202,3 +219,4 @@ class MaterialController:
         else:
             if self.solidify is not None:
                 bpy.ops.object.modifier_remove(modifier="Solidify")
+                self.solidify = None
