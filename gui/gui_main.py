@@ -21,6 +21,7 @@ import enum
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.settings import Control
+from gui.loading_screen import LoadingScreen
 import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
 
@@ -31,7 +32,6 @@ import utils
 import os
 
 import HDRI.hdri as hdri
-
 
 ## for testing
 if props.DEBUG:
@@ -176,8 +176,25 @@ class LeftPanel(Frame):
             filetypes=[("Audio Video Interleave","*.avi")])
         if filename == "":
             return
-        self.control.renderer.set_final_render(file_path=filename, animation=True)
-        self.control.renderer.render()
+        #self.control.renderer.set_final_render(file_path=filename)
+        
+        self.frames_to_do = 0
+        self.loading = LoadingScreen(self, 250)
+        self.update_idletasks()
+        
+        def render_per_frame(scene):
+            self.frames_to_do = self.frames_to_do + 1
+            self.loading.set_frame(self.frames_to_do)
+            self.update_idletasks()
+            self.loading.update_idletasks()
+        
+        def render_finished(scene):
+            self.loading.render_finished()
+        
+        utils.register_renderoutput_handler(render_per_frame)
+        utils.register_renderfinished_handler(render_finished)
+        
+        self.control.renderer.render(animation=True)
         self.control.renderer.set_preview_render()
     
     def undo(self):
