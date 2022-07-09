@@ -15,15 +15,15 @@ import fnmatch
 import sys
 import gui.properties as props
 from PIL import Image, ImageOps
+import sys
 
 # basic camera capable of orbiting around central cube
 # uses track-to-constraint, limit-distance-constraint
 class OrbitCam:
     
     def __init__(self):
-        default_distance = 6 # chosen so that camera frame approx. corresponds to center unit box
-
-        bpy.ops.object.camera_add(location=(default_distance, 0, 0))
+        
+        bpy.ops.object.camera_add(location=(1, 0, 0))
         self.camera = bpy.context.object
         bpy.ops.object.empty_add(type='CUBE', location=(0, 0, 0), scale=(1, 1, 1))
         self.controller = bpy.context.object
@@ -33,7 +33,6 @@ class OrbitCam:
         self.distance_constraint = self.camera.constraints.new(type='LIMIT_DISTANCE')
         self.distance_constraint.target = self.controller
         self.distance_constraint.limit_mode = 'LIMITDIST_ONSURFACE'
-        self.distance_constraint.distance = default_distance
 
         # add track_to_constraint to point camera at center cube
         self.track_constraint = self.camera.constraints.new(type='TRACK_TO')
@@ -44,6 +43,9 @@ class OrbitCam:
         # add parenting to control camera's rotation
         bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
         self.camera.parent = bpy.context.object
+
+        #put camera in default position
+        self.reset_position()
   
     
     # returns cube object which controlls rotation
@@ -80,6 +82,12 @@ class OrbitCam:
         if newDist <= 0:
             newDist = 0.1 
         self.distance_constraint.distance = newDist
+
+    # resets camera to default position
+    def reset_position(self) -> None:
+        self.distance_constraint.distance = 9
+        self.controller.rotation_euler[1] = radians(-30)
+        self.controller.rotation_euler[2] = radians(45)
 
 
 # basic renderer
@@ -125,7 +133,7 @@ class Renderer:
         self.scene.view_layers[0].cycles.use_denoising = False
         self.scene.cycles.use_adaptive_sampling = True
         self.scene.cycles.samples = num_samples
-        self.scene.render.use_persistent_data = True
+        self.scene.render.use_persistent_data = False
         self.scene.cycles.max_bounces = 4
         self.scene.cycles.tile_size = 4096
         self.scene.cycles.time_limit = 0.3
@@ -148,7 +156,7 @@ class Renderer:
         self.scene.view_layers[0].cycles.use_denoising = True
         self.scene.cycles.use_adaptive_sampling = True
         self.scene.cycles.samples = num_samples
-        self.scene.render.use_persistent_data = True
+        self.scene.render.use_persistent_data = False
         self.scene.cycles.max_bounces = 12
         self.scene.cycles.tile_size = 2048
         self.scene.cycles.use_fast_gi = False
@@ -158,7 +166,29 @@ class Renderer:
     def set_aspect_ratio(self, w: int, h: int) -> None:
         self.scene.render.resolution_y = int(self.scene.render.resolution_x / (w / h))
 
+    def set_output_properties(self,
+                              resolution_percentage: int = 100,
+                              output_file_path: str = os.getcwd() + "/renders/result",
+                              res_x: int = 1920,
+                              res_y: int = 1080,
+                              animation: bool = False) -> None:
+        self.scene.render.resolution_percentage = resolution_percentage
+        self.scene.render.resolution_x = res_x
+        self.scene.render.resolution_y = res_y
+        self.scene.render.filepath = output_file_path
+        self.animation = animation
+        if animation:
+            self.scene.render.image_settings.file_format = 'AVI_JPEG'
+        else:
+            self.scene.render.image_settings.file_format = 'PNG'    
+    
+    def set_eevee(self,
+                  num_samples: int = 32,
+                  use_transparent_bg: bool = False) -> None:
 
+        self.scene.render.engine = 'BLENDER_EEVEE'
+        self.scene.render.film_transparent = use_transparent_bg
+        self.scene.eevee.taa_render_samples = num_samples
 
         
 

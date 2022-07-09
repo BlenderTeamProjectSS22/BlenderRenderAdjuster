@@ -21,14 +21,17 @@ import requests
 import enum
 from Texture import load_texture
 from Texture import delete_texture
+from Vertex import import_vertex
+import bpy
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.settings import Control
 import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
+from camera_animation import camera_animation_module as cammod
 
-from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, day_night_cycle, delete_all_lights, delete_light_animation
+from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
 from Lightning.light_class import Light
 from HDRI.hdri import set_background_brightness, background_brightness_affects_objects
 from materials.materials import *
@@ -51,13 +54,13 @@ class ProgramGUI:
         renderer.set_preview_render()
 
         hdri.initialize_world_texture()
-        
-        # generate HDRI previews
+
+        #generate HDRI previews
         hdri_dir = os.fsencode("assets/HDRIs/")
         for file in os.listdir(hdri_dir):
             filename = os.fsdecode(file)
             utils.generate_hdri_thumbnail("assets/HDRIs/" + filename)
-
+        
         master.title("Render adjuster")
         master.minsize(107+184+480,307)
         icon = ImageTk.PhotoImage(Image.open("assets/gui/icon.ico"))
@@ -103,6 +106,8 @@ class LeftPanel(Frame):
         Frame.__init__(self, master)
         self.master = master
         self.control = control
+        lbl_spacer = Label(master=self, text="")
+
         lbl_fileop = Label(master=self, text="File operations", font="Arial 10 bold")
         btn_import = Button(master=self, text="Import model", command=self.import_model)
         btn_export = Button(master=self, text="Export model", command=self.export_model)
@@ -120,18 +125,34 @@ class LeftPanel(Frame):
         # All general program widgets
         frame_ops    = tk.Frame(master=self)
         lbl_ops      = tk.Label(master=frame_ops, text="Actions", font="Arial 10 bold")
-        btn_undo     = tk.Button(master=frame_ops, text="Undo", command=self.undo)
-        btn_redo     = tk.Button(master=frame_ops, text="Redo", command=self.redo)
         btn_settings = tk.Button(master=frame_ops, text="Settings", command=self.open_settings_window)
         btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)  # The update check may or may not be implemented
         btn_help     = tk.Button(master=frame_ops, text="Help", command=self.open_help_page)
+        lbl_spacer.pack()
+
         lbl_ops.pack(fill=tk.X)
-        btn_undo.pack(fill=tk.X)
-        btn_redo.pack(fill=tk.X)
         btn_settings.pack(fill=tk.X)
         btn_updates.pack(fill=tk.X)
         btn_help.pack(fill=tk.X)
         frame_ops.pack()
+
+
+        lbl_spacer2 = Label(master=self, text="")
+
+        lbl_camerapresets = Label(master=self, text="Camera Presets", font="Arial 10 bold")
+        btn_preset1 = Button(master=self, text="Preset 1", command=self.camera_preset_1())
+        btn_preset2 = Button(master=self, text="Preset 2")
+        btn_preset3 = Button(master=self, text="Preset 3")
+
+        lbl_spacer2.pack()
+        lbl_camerapresets.pack(fill=tk.X)
+        btn_preset1.pack(fill=tk.X)
+        btn_preset2.pack(fill=tk.X)
+        btn_preset3.pack(fill=tk.X)
+        
+
+
+
     
     def import_model(self):
         filetypes = [
@@ -140,13 +161,14 @@ class LeftPanel(Frame):
             ("STL file", "*.stl"),
             ("Wavefront OBJ", "*.obj")
         ]
-        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes)
+        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes, initialdir="assets/model presets/")
         if filename == "":
             return
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
         self.control.material.apply_material(self.control.model)
+        self.control.camera.reset_position()
         self.control.re_render()
         
     
@@ -183,12 +205,6 @@ class LeftPanel(Frame):
         self.control.renderer.set_final_render(file_path=filename.name, animation=True)
         self.control.renderer.render()
         self.control.renderer.set_preview_render()
-    
-    def undo(self):
-        pass
-    
-    def redo(self):
-        pass
     
     def open_settings_window(self):
         SettingsWindow(self.master, self.control)
@@ -228,6 +244,15 @@ class LeftPanel(Frame):
     
     def open_help_page(self):
         webbrowser.open_new_tab("https://github.com/garvita-tiwari/blender_render/wiki")
+
+
+    def camera_preset_1(self):
+        startp = [-3,-5,0.5]
+        endP = [6,5,0.5]
+        rot = [90,0,90]
+        camera_animation_cam = cammod.Camera("cam1", 6, 0, 0.5)
+        camera_animation_cam.drive_by(100, startp, endP, rot, True, self.control.model)
+        
         
 
 class CameraControls(Frame):
@@ -318,6 +343,7 @@ class ColorMeshWidgets(Frame):
             self.control.re_render()
     
     def switch_vertex_color(self):
+        import_vertex(self.control.model)
         self.control.re_render()
     
     def switch_mesh(self):
@@ -668,8 +694,7 @@ class LightingWidgets(Frame):
 
     # lights will be deleted
     def lights_off(self) -> None:
-        delete_all_lights() 
-        self.is_day_night.set(False)  
+        lights_enabled(False)
         self.control.re_render()
 
     # set daytime value to "value"
@@ -699,7 +724,6 @@ class LightingWidgets(Frame):
                 return
             case _:
                 self.set_lantern()
-              
 
     # returns the brightness
     def get_brightness(self) -> float:
@@ -707,6 +731,7 @@ class LightingWidgets(Frame):
         
     # some setting that should be made before creating new lights
     def standard_light_settings(self, use_light_type: int) -> None:
+        lights_enabled(True)
         self.use_light_type = use_light_type
         self.is_day_night.set(False)
         delete_lights(self.light_objects)
@@ -722,7 +747,7 @@ class LightingWidgets(Frame):
         self.standard_light_settings(1)
         self.light_objects = night_light(self.get_brightness(), self.get_daytime() * self.TIME_TO_ANGLE_CONSTANT, True, self.control.camera)
         self.control.re_render()
-
+        
     # set lantern light
     def set_lantern(self) -> None:
         self.standard_light_settings(2)
@@ -750,7 +775,8 @@ class LightingWidgets(Frame):
     # def set_frame(self, value):
     #    bpy.context.scene.frame_current = int(value)
     #    self.control.re_render()
-
+    
+    
 class BackgroundControl(Frame):
     def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
@@ -807,6 +833,77 @@ class BackgroundControl(Frame):
         self.control.re_render()
         
 
+class PointCloudWidgets(Frame):
+    def __init__(self, master, control):
+        Frame.__init__(self, master, borderwidth=2, relief="groove")
+        self.control = control
+        self.random  = BooleanVar()
+        self.vertices = BooleanVar()
+        obj_selected = StringVar(self)
+        obj_selected.set("default")
+
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        lbl_pointcloudsettings =  Label(master=self, text="Pointcloud Object:", font="Arial 10 bold")
+        check_vertices  = Checkbutton(master=self, text="vertices", variable=self.vertices, anchor="w", command=self.switch_vertex)
+        check_random = Checkbutton(master=self, text="random", variable=self.random, anchor="w", command=self.switch_random)
+        pointcloudobjects = (PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value)
+        lbl_pointcloudobjects =  Label(master=self, text="Select Object:") 
+        pointcloudobjects = ("default", PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value )
+        dropdown_objects = OptionMenu(self, obj_selected, *pointcloudobjects, command=self.set_object)
+       
+       
+        
+        lbl_size = Label(master=self, text="Point Size")
+        slider_size = Scale(master=self, orient="horizontal", showvalue=False, command=self.DoNothing())
+        lbl_size.grid(row=1, column=0, sticky="w")
+        slider_size.grid(row=1, column=1,  sticky="we")
+        lbl_pointcloudsettings.grid(row=0, column=0, columnspan=2)
+        check_vertices.grid(row=2, column=1, sticky="w")
+        check_random.grid(row=2, column=0, sticky="w")
+        lbl_pointcloudobjects.grid(row=3, column=0,  sticky="we")
+        dropdown_objects.grid(row=3, column=1, sticky="w")
+
+    def set_object(self, *args):
+        tex = PointCloudObjects(args[0])
+        if tex == PointCloudObjects.SPHERE:
+            pass
+        elif tex == PointCloudObjects.CUBE:
+            pass
+        elif tex == PointCloudObjects.DISK:
+            pass
+        else: # NONE
+            pass
+        self.control.re_render()
+
+    def DoNothing(self):
+        return
+
+
+    def switch_random(self):
+        if self.random.get():
+            self.vertices.set(False)
+        else:
+            self.vertices.set(True)
+        self.control.re_render()
+
+    def switch_vertex(self):
+        if self.vertices.get():
+            self.random.set(False)
+        else:
+            self.random.set(True)
+        self.control.re_render()
+
+
+# Enum containing all possibe point cloud objects
+class PointCloudObjects(enum.Enum):
+    SPHERE = "sphere"
+    CUBE = "cube"
+    DISK = "disk"
+
 class RightPanel(Frame):
         
     def __init__(self, master, control):
@@ -835,3 +932,7 @@ class RightPanel(Frame):
         # Lighting widgets
         frm_light = LightingWidgets(self, control)
         frm_light.grid(row=3, column=0, sticky="we")
+
+        # Pointcloud widgets
+        frm_light = PointCloudWidgets(self, control)
+        frm_light.grid(row=4, column=0, sticky="we")
