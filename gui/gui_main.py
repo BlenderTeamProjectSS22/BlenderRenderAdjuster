@@ -116,14 +116,10 @@ class LeftPanel(Frame):
         # All general program widgets
         frame_ops    = tk.Frame(master=self)
         lbl_ops      = tk.Label(master=frame_ops, text="Actions", font="Arial 10 bold")
-        btn_undo     = tk.Button(master=frame_ops, text="Undo", command=self.undo)
-        btn_redo     = tk.Button(master=frame_ops, text="Redo", command=self.redo)
         btn_settings = tk.Button(master=frame_ops, text="Settings", command=self.open_settings_window)
-        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)  # The update check may or may not be implemented
+        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)
         btn_help     = tk.Button(master=frame_ops, text="Help", command=self.open_help_page)
         lbl_ops.pack(fill=tk.X)
-        btn_undo.pack(fill=tk.X)
-        btn_redo.pack(fill=tk.X)
         btn_settings.pack(fill=tk.X)
         btn_updates.pack(fill=tk.X)
         btn_help.pack(fill=tk.X)
@@ -196,12 +192,6 @@ class LeftPanel(Frame):
         
         self.control.renderer.render(animation=True)
         self.control.renderer.set_preview_render()
-    
-    def undo(self):
-        pass
-    
-    def redo(self):
-        pass
     
     def open_settings_window(self):
         SettingsWindow(self.master, self.control)
