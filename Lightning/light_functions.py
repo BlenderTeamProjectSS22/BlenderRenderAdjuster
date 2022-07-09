@@ -13,6 +13,8 @@ def delete_all_lights() -> None:
             ob.select_set(True)
     bpy.ops.object.delete()
 
+# if "is_light" is active, enabling lights and disabling background lightning
+# else deleting all lights and enabling background lightning
 def lights_enabled(is_light: bool) -> None:
     if is_light:
         print("Enabling lights, disabling background lighting")
@@ -36,6 +38,15 @@ def radius_of_light_object(object: Light) -> float:
     for position in object.get_position():
         result += math.pow(position, 2)
     return math.sqrt(result)
+
+# returns the angle-value between 0 and 180 degrees
+def precondition_angle_check(angle : int) -> int:
+    if angle >= 180:
+        return 180
+    elif angle < 0:
+        return 0
+    else:
+        return angle
 
 # creating fill- and rim-light
 # - radius_rim = the distance of the rim light
@@ -75,18 +86,21 @@ def creating_fill_and_rim_light(radius_rim: float, brightness_rim: float,
 # returns an array of all objects
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
 def day_light(brightness: float, angle: int, add_fill_and_rim_light: bool, camera_object: OrbitCam) -> list[Light]:
+    # constants
+    BRIGHTNESS_OF_MAIN = 3
+    BRIGHTNESS_OF_RIM = 6500
+    BRIGHTNESS_OF_FILL = 1500
+    RADIUS_OF_RIM = 50
+    RADIUS_OF_MAIN = 20
     # precondition
-    if angle >= 180:
-        angle = 180
-    elif angle < 0:
-        angle = 0
+    angle = precondition_angle_check(angle)
     # the distance of the lights
-    radius_main = 20
-    radius_rim = 50
+    radius_main = RADIUS_OF_MAIN
+    radius_rim = RADIUS_OF_RIM
     # the brightness of the lights
-    brightness_main = 3 * brightness
-    brightness_rim = 6500
-    brightness_fill = 1500
+    brightness_main = BRIGHTNESS_OF_MAIN * brightness
+    brightness_rim = BRIGHTNESS_OF_RIM
+    brightness_fill = BRIGHTNESS_OF_FILL
     # to fit brightness
     if brightness < 1:
         brightness_rim *= brightness
@@ -116,31 +130,33 @@ def day_light(brightness: float, angle: int, add_fill_and_rim_light: bool, camer
 # returns an array of all objects
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
 def night_light(brightness: float, angle: int, add_fill_and_rim_light: bool, camera_object: OrbitCam) -> list[Light]:
+    # constants
+    BRIGHTNESS_OF_MAIN = 6
+    BRIGHTNESS_OF_RIM = 2000
+    BRIGHTNESS_OF_FILL = 700
+    RADIUS_OF_RIM = 30
+    RADIUS_OF_MAIN = 40
+    RGB_COLOR_OF_MOON_LIGHT = [0.001, 0.044, 0.107]
     # precondition
-    if angle > 180:
-        angle = 180
-    elif angle < 0:
-        angle = 0
+    angle = precondition_angle_check(angle)
     # the distance of the lights
-    radius_main = 40
-    radius_rim = 30
+    radius_main = RADIUS_OF_MAIN
+    radius_rim = RADIUS_OF_RIM
     # the brightness of the lights
-    brightness_main = 6 * brightness
-    brightness_rim = 2000
-    brightness_fill = 700
+    brightness_main = BRIGHTNESS_OF_MAIN * brightness
+    brightness_rim = BRIGHTNESS_OF_RIM
+    brightness_fill = BRIGHTNESS_OF_FILL
     # to fit brightness
     if brightness < 1:
         brightness_rim *= brightness
         brightness_fill *= brightness
-    # color of the moon
-    color = [0.001, 0.044, 0.107]
     # creating the light
     mond = RotateLight("Mond", "SUN", radius_main * math.sin(math.radians(10)),
                       radius_main * math.cos(math.radians(angle)),
                       radius_main * math.sin(math.radians(angle)),
                       -math.cos(math.radians(angle)), math.sin(math.radians(10)), 0,
                       brightness_main)
-    mond.set_color(color[0], color[1], color[2])
+    mond.set_color(RGB_COLOR_OF_MOON_LIGHT[0], RGB_COLOR_OF_MOON_LIGHT[1], RGB_COLOR_OF_MOON_LIGHT[2])
     list = [mond]
     # if adding fill and rim light
     if add_fill_and_rim_light:
@@ -153,21 +169,25 @@ def night_light(brightness: float, angle: int, add_fill_and_rim_light: bool, cam
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
 def lantern_light(brightness: float, height: float,
                 add_fill_and_rim_light: bool, camera_object: OrbitCam) -> list[Light]:
+    # constants
+    BRIGHTNESS_OF_MAIN = 3500
+    BRIGHTNESS_OF_RIM = 2500
+    BRIGHTNESS_OF_FILL = 850
+    RADIUS_OF_RIM = 40
+    RGB_COLOR_OF_LANTERN_LIGHT = [1, 0.35, 0]
     # the distance of the lights
-    radius_rim = 40
+    radius_rim = RADIUS_OF_RIM
     # the brightness of the lights
-    brightness_main = 3500 * brightness
-    brightness_rim = 2500
-    brightness_fill = 850
+    brightness_main = BRIGHTNESS_OF_MAIN * brightness
+    brightness_rim = BRIGHTNESS_OF_RIM
+    brightness_fill = BRIGHTNESS_OF_FILL
     # to fit brightness
     if brightness < 1:
         brightness_rim *= brightness
         brightness_fill *= brightness
-    # color of the spot light
-    color = [1, 0.35, 0]
     # creating the lights
     spot = Light("Laterne", "SPOT", 0, 0, height, brightness_main)
-    spot.set_color(color[0], color[1], color[2])
+    spot.set_color(RGB_COLOR_OF_LANTERN_LIGHT[0], RGB_COLOR_OF_LANTERN_LIGHT[1], RGB_COLOR_OF_LANTERN_LIGHT[2])
     if add_fill_and_rim_light:
         list = [spot]
         list.extend(creating_fill_and_rim_light(
@@ -239,7 +259,7 @@ def day_night_cycle(starting_time: int, brightness: float,
     else:
         current_time = starting_time
     # setting starting values
-    current_angle = ((current_time % 12) * 15 + 89) % 180
+    current_angle = ((current_time % 12) * 15 + 89) % 180 # transforming time to angle
     current_time *= 10
     if current_time > 60 and starting_time <= 180:
         is_day = True

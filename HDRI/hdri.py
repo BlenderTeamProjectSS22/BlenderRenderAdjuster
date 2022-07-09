@@ -37,12 +37,12 @@ def set_background_image(hdri_path: str) -> None:
 def remove_background_image() -> None:
     world = bpy.data.worlds["World"]
     environment_texture_node = world.node_tree.nodes["Environment Texture"]
-    link = environment_texture_node.outputs["Color"].links[0]
-    world.node_tree.links.remove(link)
+    if environment_texture_node.outputs["Color"].links:
+        link = environment_texture_node.outputs["Color"].links[0]
+        world.node_tree.links.remove(link)
     
     image = world.node_tree.nodes["Environment Texture"].image
-    image.user_clear()
-    bpy.data.images.remove(image)
+    bpy.data.images.remove(image, do_unlink=True)
 
 # rotates background image around global Z axis
 # angle: degree, image moves to the right if positive

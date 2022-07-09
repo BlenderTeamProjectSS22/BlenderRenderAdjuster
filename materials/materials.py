@@ -1,6 +1,52 @@
 import bpy
 from abc import ABC, abstractmethod
 
+DEFAULT_COLOR = (0, 0, 0.8, 1)
+
+class Noise:
+    def __init__(self, mat_control):
+        
+        self.mat_control = mat_control
+        self.is_enabled  = False
+        nodes = mat_control.material.node_tree.nodes
+        self.links = mat_control.material.node_tree.links
+        self.noise  = nodes.new(type="ShaderNodeTexNoise")
+        self.bump   = nodes.new(type="ShaderNodeBump")
+        
+        self.links.new(self.noise.outputs["Color"], self.bump.inputs["Height"])
+        self.bumplink  = self.links.new(self.bump.outputs["Normal"], mat_control.bsdf.inputs["Normal"])
+        
+        self.scale      = self.noise.inputs["Scale"].default_value
+        self.detail     = self.noise.inputs["Detail"].default_value
+        self.distortion = self.noise.inputs["Distortion"].default_value
+        
+    def set_scale(self, scale: float):
+        self.scale = scale
+        self.noise.inputs["Scale"].default_value = scale
+        
+    def set_detail(self, detail: float):
+        self.detail = detail
+        self.noise.inputs["Detail"].default_value = detail
+        
+    def set_distortion(self, distortion: float):
+        self.distortion = distortion
+        self.noise.inputs["Distortion"].default_value = distortion
+        
+    def set_params(self, scale: float, detail: float, distortion: float):
+        self.set_scale(scale)
+        self.set_detail(detail)
+        self.set_distortion(distortion)
+    
+    def enable(self):
+        self.is_enabled = True
+        self.bumplink = self.links.new(self.bump.outputs["Normal"], self.mat_control.bsdf.inputs["Normal"])
+        
+    def disable(self):
+        self.is_enabled = False
+        if self.mat_control.bsdf.inputs["Normal"].links:
+            self.links.remove(self.bumplink)
+
+
 class CompositeNodes:
     def __init__(self):
         bpy.context.scene.use_nodes = True
@@ -32,19 +78,18 @@ class CompositeNodes:
 class MaterialController:
 
     def __init__(self):
-        self.material    = self.init_material()
-        nodes            = self.material.node_tree.nodes
-        self.bsdf        = nodes.get("Principled BSDF")
-        self.noise       = nodes.new(type="ShaderNodeTexNoise")
-        self.bump        = nodes.new(type="ShaderNodeBump")
-        self.color       = self.bsdf.inputs["Base Color"].default_value
-        self.metallic    = 0
-        self.roughness   = 0.5
-        self.tranmission = 0
-        self.emissive    = False
-        self.strength    = 1
-        self.compositing = CompositeNodes()
-        
+        self.material     = self.init_material()
+        nodes             = self.material.node_tree.nodes
+        self.bsdf         = nodes.get("Principled BSDF")
+        self.color        = self.bsdf.inputs["Base Color"].default_value
+        self.metallic     = 0
+        self.roughness    = 0.5
+        self.transmission = 0
+        self.emissive     = False
+        self.strength     = 1
+        self.compositing  = CompositeNodes()
+        self.noise        = Noise(self)
+        self.solidify     = None
     
     def init_material(self) -> bpy.types.Material:
     
@@ -62,6 +107,8 @@ class MaterialController:
     def apply_material(self, obj):
         obj.active_material = self.material
         obj.active_material_index = 0
+        if self.solidify is not None:
+            self.set_solidified(obj, True)
     
     # If a value is not set, it will not be changed
     def material_preset(self, **opts):
@@ -72,13 +119,30 @@ class MaterialController:
         self.set_emissive_strength(opts.get("strength", self.strength))
         self.compositing.set_glow(opts.get("glow", self.compositing.glow))
         if not opts.get("bump", False):
-            self.disable_bump()
+            self.noise.disable()
+        if not opts.get("preserve_color", True):
+            self.set_base_color(DEFAULT_COLOR)
+    
+    def default_material(self):
+        self.material_preset(
+            transmission = 0,
+            roughness    = 0.5,
+            metallic     = 0,
+            emissive     = False,
+            glow         = False,
+            bump         = False
+        )
     
     def glass_material(self):
         self.material_preset(
             transmission = 1,
-            roughness     = 0.05,
+            roughness    = 0.05,
+            metallic     = 0,
             emissive     = False)
+    
+    def thick_glass(self, obj):
+        self.glass_material()
+        self.set_solidified(obj, True)
     
     def stone_material(self):
         self.material_preset(
@@ -92,32 +156,32 @@ class MaterialController:
     
     def emissive_material(self):
         self.material_preset(
-            emissive = True,
-            strength = 1,
+            strength     = 1,
             transmission = 0.5,
-            glow     = True)
+            emissive     = True,
+            glow         = True)
+    
+    def water_material(self):
+        self.material_preset(
+            transmission = 1,
+            roughness    = 0.1,
+            metallic     = 0.1,
+            emissive     = False,
+            glow         = True,
+            bump         = True)
+        self.bump_material(3, 2.5, 0.2)
+        watercolor = (0.5725490196078431, 0.7725490196078432, 0.9725490196078431, 1)
+        self.set_color(watercolor)
     
     # Create and return a bump material to an object, with adjustable scale and detail level of the noise
-    def bump_material(self, scale: float = 5, detail: float = 2) -> bpy.types.Material:
-
-        links = self.material.node_tree.links
-        self.noisel = links.new(self.noise.outputs["Color"], self.bump.inputs["Height"])
-        self.bumpl  = links.new(self.bump.outputs["Normal"], self.bsdf.inputs["Normal"])
-    
-        # Set scale and detail properties of the noise
-        self.noise.inputs["Scale"].default_value  = scale
-        self.noise.inputs["Detail"].default_value = detail
-    
-    def disable_bump(self):
-        links = self.material.node_tree.links
-        if self.bump.inputs["Height"].links:
-            links.remove(self.noisel)
-        if self.bsdf.inputs["Normal"].links:
-            links.remove(self.bumpl)
-    
+    def bump_material(self, scale: float = 5, detail: float = 2, distortion: float = 0) -> None:
+        self.noise.enable()
+        self.noise.set_params(scale, detail, distortion)
+        
     def set_color(self, color):
         self.color = color
         self.bsdf.inputs["Base Color"].default_value = color
+        self.bsdf.inputs["Emission"].default_value   = color
     
     def set_roughness(self, roughness):
         self.roughness = roughness
@@ -132,7 +196,6 @@ class MaterialController:
         self.bsdf.inputs["Transmission"].default_value = transmission
     
     def set_emissive(self, emissive: bool, new_color = None):
-        print("SET emissive to " + str(emissive))
         self.emissive = emissive
         
         if emissive:
@@ -149,3 +212,11 @@ class MaterialController:
         self.strength = strength
         if self.emissive:
             self.bsdf.inputs["Emission Strength"].default_value = strength
+    
+    def set_solidified(self, obj, solidify_enabled: bool):
+        if solidify_enabled:
+            self.solidify = obj.modifiers.new("Solidify", "SOLIDIFY")
+        else:
+            if self.solidify is not None:
+                bpy.ops.object.modifier_remove(modifier="Solidify")
+                self.solidify = None
