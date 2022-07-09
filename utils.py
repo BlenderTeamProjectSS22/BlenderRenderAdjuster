@@ -112,6 +112,9 @@ class Renderer:
         self.camera = camera
         self.scene.camera = self.camera
 
+        # init states
+        self.scene.frame_end = 360
+
     # render image to configured output destination 
     def render(self) -> None:
         
