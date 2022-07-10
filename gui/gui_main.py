@@ -21,6 +21,7 @@ import enum
 from Texture import load_texture, delete_texture
 from Vertex import import_vertex
 import bpy
+import random
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
