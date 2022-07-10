@@ -162,12 +162,13 @@ class LeftPanel(Frame):
         if filename == "":
             return
         
-        self.loading = ImageLoadingScreen(self)
+        self.loading_image = ImageLoadingScreen(self)
         self.update_idletasks()
         
         def render_finished(scene):
-            self.loading.close_window()
-        utils.register_renderfinished_handler(render_finished)
+            self.loading_image.close_window()
+            utils.unregister_handler(render_finished, utils.Handler.FINISHED)
+        utils.register_handler(render_finished, utils.Handler.FINISHED)
         
         def render():
             self.control.renderer.set_final_render(file_path=filename)
@@ -188,23 +189,29 @@ class LeftPanel(Frame):
         #self.control.renderer.set_final_render(file_path=filename)
         
         self.frames_to_do = 0
-        self.loading = VideoLoadingScreen(self, 250)
+        self.loading_video = VideoLoadingScreen(self, 250)
         self.update_idletasks()
         
         def render_per_frame(scene):
             self.frames_to_do = self.frames_to_do + 1
-            self.loading.set_frame(self.frames_to_do)
+            self.loading_video.set_frame(self.frames_to_do)
             self.update_idletasks()
-            self.loading.update_idletasks()
+            self.loading_video.update_idletasks()
         
         def render_finished(scene):
-            self.loading.render_finished()
+            self.loading_video.render_finished()
+            utils.unregister_handler(render_per_frame, utils.Handler.PER_FRAME)
+            utils.unregister_handler(render_finished,  utils.Handler.FINISHED)
         
-        utils.register_renderoutput_handler(render_per_frame)
-        utils.register_renderfinished_handler(render_finished)
+        utils.register_handler(render_per_frame, utils.Handler.PER_FRAME)
+        utils.register_handler(render_finished, utils.Handler.FINISHED)
         
-        self.control.renderer.render(animation=True)
+        def render_anim():
+            self.control.renderer.render(animation=True)
         self.control.renderer.set_preview_render()
+        
+        renderthread = threading.Thread(target=render_anim)
+        renderthread.start()
     
     def open_settings_window(self):
         SettingsWindow(self.master, self.control)

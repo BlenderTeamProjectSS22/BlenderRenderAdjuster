@@ -16,6 +16,7 @@ from PIL import Image, ImageOps
 import sys
 import gui.properties as props
 from contextlib import contextmanager, redirect_stdout
+import enum
 
 
 # Disable console output if verbose flag is not set
@@ -175,6 +176,11 @@ class Renderer:
     # set aspect ratio
     def set_aspect_ratio(self, w: int, h: int) -> None:
         self.scene.render.resolution_y = int(self.scene.render.resolution_x / (w / h))
+    
+    # Set the amount of frames from 1 to frame_count
+    def set_frame_count(self, frame_count: int) -> None:
+        self.frame_count = frame_count
+        self.scene.frame_end = frame_count
 
 
 #some other useful functions:
@@ -240,8 +246,19 @@ def generate_hdri_thumbnail(filepath):
 def rotate_object(obj: bpy.types.Object, angle: float) -> None:
     obj.rotation_euler[2] += radians(angle)
 
-def register_renderoutput_handler(render_handler):
-    bpy.app.handlers.frame_change_pre.append(render_handler)
+# Enum containing all possible textures
+class Handler(enum.Enum):
+    PER_FRAME = enum.auto()
+    FINISHED  = enum.auto()
 
-def register_renderfinished_handler(render_handler):
-    bpy.app.handlers.render_post.append(render_handler)
+def unregister_handler(render_handler, handlertype: Handler):
+    if handlertype == Handler.PER_FRAME:
+        bpy.app.handlers.frame_change_pre.remove(render_handler)
+    elif handlertype == Handler.FINISHED:
+        bpy.app.handlers.render_complete.remove(render_handler)
+
+def register_handler(render_handler, handlertype: Handler):
+    if handlertype == Handler.PER_FRAME:
+        bpy.app.handlers.frame_change_pre.append(render_handler)
+    elif handlertype == Handler.FINISHED:
+        bpy.app.handlers.render_complete.append(render_handler)

@@ -25,9 +25,10 @@ class VideoLoadingScreen(tk.Toplevel):
             self.focus_set()
             self.grab_set()
             center(self)
+            self.update()
     
     def set_frame(self, frame):
-        print("Setting loading screen frame to " + str(frame - 1))
+        #print("Setting loading screen frame to " + str(frame - 1))
         self.content.lbl_frames_to_do["text"] = f"Rendering frame {frame - 1} / {self.FRAME_MAX}"
         self.content.pg["value"] = frame - 1
         self.update()
@@ -41,7 +42,7 @@ class VideoLoadingScreen(tk.Toplevel):
     
     def close_window(self):
         self.master.focus_set()
-        self.master.destroy()
+        self.destroy()
     
 class VideoLoadingContent(tk.Frame):
     def __init__(self, master):
@@ -89,6 +90,7 @@ class ImageLoadingScreen(tk.Toplevel):
         self.focus_set()
         self.grab_set()
         center(self)
+        self.update()
         
     def prevent_close(self):
         if self.finished:
