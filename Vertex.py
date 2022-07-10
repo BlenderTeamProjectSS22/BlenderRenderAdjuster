@@ -2,7 +2,8 @@ import bpy
  
 # start in object mode
 def import_vertex(material: bpy.types.Material):
-  mesh = material.data
+  obj = bpy.data.objects[material]
+  mesh = obj.data
 
   if not mesh.vertex_colors:
       mesh.vertex_colors.new()
@@ -15,7 +16,8 @@ def import_vertex(material: bpy.types.Material):
   i = 0
   for poly in mesh.polygons:
       for idx in poly.loop_indices:
-          color_layer.data[i].color = (1, 1, 1, 1.0)
+          obj = bpy.data.objects[material]
+          mesh = obj.data
           i += 1
 
 # set to vertex paint mode to see the result
