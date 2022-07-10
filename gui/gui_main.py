@@ -15,13 +15,14 @@ from tkinter import filedialog
 from PIL import ImageTk, Image
 
 import webbrowser
+import threading
 import requests
 import enum
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.settings import Control
-from gui.loading_screen import LoadingScreen
+from gui.loading_screen import VideoLoadingScreen, ImageLoadingScreen
 import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
 
@@ -160,9 +161,21 @@ class LeftPanel(Frame):
             filetypes=[("Portable Network Graphics","*.png")])
         if filename == "":
             return
-        self.control.renderer.set_final_render(file_path=filename)
-        self.control.renderer.render()
-        self.control.renderer.set_preview_render()
+        
+        self.loading = ImageLoadingScreen(self)
+        self.update_idletasks()
+        
+        def render_finished(scene):
+            self.loading.close_window()
+        utils.register_renderfinished_handler(render_finished)
+        
+        def render():
+            self.control.renderer.set_final_render(file_path=filename)
+            self.control.renderer.render(animation=False)
+            self.control.renderer.set_preview_render()
+        
+        renderthread = threading.Thread(target=render)
+        renderthread.start()
     
     def render_video(self):
         filename = filedialog.asksaveasfilename(
@@ -175,7 +188,7 @@ class LeftPanel(Frame):
         #self.control.renderer.set_final_render(file_path=filename)
         
         self.frames_to_do = 0
-        self.loading = LoadingScreen(self, 250)
+        self.loading = VideoLoadingScreen(self, 250)
         self.update_idletasks()
         
         def render_per_frame(scene):
