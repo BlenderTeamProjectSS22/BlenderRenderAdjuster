@@ -128,6 +128,7 @@ class Renderer:
         self.scene = bpy.context.scene
         self.camera = camera
         self.scene.camera = self.camera
+        self.frame_count  = self.scene.frame_end
 
     # render image/video to configured output destination 
     def render(self, animation: bool) -> None:

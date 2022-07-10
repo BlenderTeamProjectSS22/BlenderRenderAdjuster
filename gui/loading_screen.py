@@ -1,25 +1,46 @@
 import tkinter as tk
 from tkinter.ttk import Progressbar
-from tkinter import Frame, Toplevel, Label, Button, Entry
+from tkinter import Frame, Toplevel, Label, Button, Entry, Checkbutton, BooleanVar
+import utils
 
+import threading
 import sys
 import os
 
 class VideoLoadingScreen(tk.Toplevel):
-    def __init__(self, master, frame_max: int):
+    def __init__(self, master, control, filepath):
             Toplevel.__init__(self)
-            self.master = master
+            self.master  = master
+            self.control = control
+            self.filepath = filepath
+            
             self.title("Rendering video")
             self.resizable(width=False, height=False)
-            self.finished = False
+            self.finished = True
             self.protocol("WM_DELETE_WINDOW", self.prevent_close)
             
             self.LENGTH = 1000
-            self.FRAME_MAX = frame_max
+            self.FRAME_MAX = control.renderer.frame_count
             self.DELTA  = self.LENGTH / self.FRAME_MAX
             
-            self.content = VideoLoadingContent(self)
-            self.initial_focus = self.content
+            self.content = Frame(self)
+            lbl_title = Label(master=self.content, text="Video render progress", font="Arial 15 bold")
+            btn_start = Button(master=self.content, text="Start rendering", command=self.start_render)
+            self.previewrender = BooleanVar()
+            check_preview = Checkbutton(master=self.content, variable = self.previewrender, text="Only render preview (low quality, but faster)")
+            self.pg = Progressbar(
+                master=self.content,
+                orient=tk.HORIZONTAL,
+                mode="determinate",
+                length=self.LENGTH,
+                maximum=self.FRAME_MAX)
+            self.lbl_frames_to_do = Label(master=self.content, text="Rendering frame 0 / " + str(self.FRAME_MAX))
+        
+            lbl_title.grid(row=0, column=0, pady=10)
+            check_preview.grid(row=1, column=0, pady=5)
+            btn_start.grid(row=2, column=0, pady=5)
+            self.lbl_frames_to_do.grid(row=3, column=0, pady=5)
+            self.pg.grid(row=4, column=0, pady=5, padx=5)
             self.content.grid(row=0, column=0, padx=5, pady=5)
             
             self.focus_set()
@@ -27,14 +48,39 @@ class VideoLoadingScreen(tk.Toplevel):
             center(self)
             self.update()
     
+    def start_render(self):
+        self.frames_to_do = 0
+        self.finished = False
+        
+        def render_per_frame(scene):
+            self.frames_to_do = self.frames_to_do
+            self.set_frame(self.frames_to_do)
+            self.update_idletasks()
+        
+        def render_finished(scene):
+            self.finished = True
+            utils.unregister_handler(render_per_frame, utils.Handler.PER_FRAME)
+            utils.unregister_handler(render_finished,  utils.Handler.FINISHED)
+        
+        utils.register_handler(render_per_frame, utils.Handler.PER_FRAME)
+        utils.register_handler(render_finished, utils.Handler.FINISHED)
+        
+        def render_anim():
+            if self.previewrender.get():
+                self.control.renderer.set_preview_render()
+            else:
+                self.control.renderer.set_final_render(self.filepath)
+            self.control.renderer.render(animation=True)
+            self.control.renderer.set_preview_render()
+        
+        renderthread = threading.Thread(target=render_anim)
+        renderthread.start()
+    
     def set_frame(self, frame):
         #print("Setting loading screen frame to " + str(frame - 1))
-        self.content.lbl_frames_to_do["text"] = f"Rendering frame {frame - 1} / {self.FRAME_MAX}"
-        self.content.pg["value"] = frame - 1
+        self.lbl_frames_to_do["text"] = f"Rendering frame {frame-1} / {self.FRAME_MAX}"
+        self.pg["value"] = frame - 1
         self.update()
-    
-    def render_finished(self):
-        self.finished = True
     
     def prevent_close(self):
         if self.finished:
@@ -43,25 +89,6 @@ class VideoLoadingScreen(tk.Toplevel):
     def close_window(self):
         self.master.focus_set()
         self.destroy()
-    
-class VideoLoadingContent(tk.Frame):
-    def __init__(self, master):
-        Frame.__init__(self, master)
-        self.master = master
-        
-        lbl_title = Label(self, text="Video render progress", font="Arial 15 bold")
-        self.pg = Progressbar(
-            master=self,
-            orient=tk.HORIZONTAL,
-            mode="determinate",
-            length=master.LENGTH,
-            maximum=master.FRAME_MAX)
-        self.lbl_frames_to_do = Label(master=self, text="Rendering frame 0 / " + str(master.FRAME_MAX))
-        
-        lbl_title.grid(row=0, column=0, pady=10)
-        self.lbl_frames_to_do.grid(row=1, column=0, pady=5)
-        self.pg.grid(row=2, column=0, pady=5, padx=5)
-
 
 class ImageLoadingScreen(tk.Toplevel):
     def __init__(self, master):

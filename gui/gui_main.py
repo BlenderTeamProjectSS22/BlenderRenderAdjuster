@@ -186,33 +186,8 @@ class LeftPanel(Frame):
             filetypes=[("Audio Video Interleave","*.avi")])
         if filename == "":
             return
-        #self.control.renderer.set_final_render(file_path=filename)
+        self.loading_video = VideoLoadingScreen(self, self.control, filename)
         
-        self.frames_to_do = 0
-        self.loading_video = VideoLoadingScreen(self, 250)
-        self.update_idletasks()
-        
-        def render_per_frame(scene):
-            self.frames_to_do = self.frames_to_do + 1
-            self.loading_video.set_frame(self.frames_to_do)
-            self.update_idletasks()
-            self.loading_video.update_idletasks()
-        
-        def render_finished(scene):
-            self.loading_video.render_finished()
-            utils.unregister_handler(render_per_frame, utils.Handler.PER_FRAME)
-            utils.unregister_handler(render_finished,  utils.Handler.FINISHED)
-        
-        utils.register_handler(render_per_frame, utils.Handler.PER_FRAME)
-        utils.register_handler(render_finished, utils.Handler.FINISHED)
-        
-        def render_anim():
-            self.control.renderer.render(animation=True)
-        self.control.renderer.set_preview_render()
-        
-        renderthread = threading.Thread(target=render_anim)
-        renderthread.start()
-    
     def open_settings_window(self):
         SettingsWindow(self.master, self.control)
     
