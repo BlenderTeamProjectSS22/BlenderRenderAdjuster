@@ -155,6 +155,7 @@ class LeftPanel(Frame):
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
+        print("Import")
         self.control.material.apply_material(self.control.model)
         self.control.camera.reset_position()
         self.control.re_render()
@@ -304,11 +305,14 @@ class CameraControls(Frame):
         lbl_dist.grid(row=0, column=0, sticky="news")
         btn_in.grid(row=1, column=0, padx=8, sticky="ew")
         btn_out.grid(row=2, column=0, padx=8, sticky="ew")
+
+        btn_reset = Button(master=self, text="Reset camera angle", command=self.reset_camera)
         
         lbl_controls.grid(row=0, column=0, columnspan=3)
         frm_rot.grid(row=1, column=0, padx=10, pady=10, sticky="news")
         frm_pan.grid(row=1, column=1, padx=10, pady=10, sticky="news")
         frm_dist.grid(row=1, column=2, padx=10, sticky="news")
+        btn_reset.grid(row=2, column=0, columnspan=3)
 
     def rotate_up(self):
         self.control.camera.rotate_x(-10)
@@ -354,6 +358,10 @@ class CameraControls(Frame):
 
     def pan_out(self):
         self.control.camera.set_distance(self.control.camera.get_distance() * zoom_factor)
+        self.control.re_render()
+    
+    def reset_camera(self):
+        self.control.camera.reset_position()
         self.control.re_render()
         
     
