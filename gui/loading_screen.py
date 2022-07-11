@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter.ttk import Progressbar
 from tkinter import Frame, Toplevel, Label, Button, Entry, Checkbutton, BooleanVar
+from gui.gui_utils import frame_set_enabled
 import utils
 
 import threading
@@ -26,7 +27,7 @@ class VideoLoadingScreen(tk.Toplevel):
             
             self.content = Frame(self)
             lbl_title = Label(master=self.content, text="Video render progress", font="Arial 15 bold")
-            btn_start = Button(master=self.content, text="Start rendering", command=self.start_render)
+            self.btn_start = Button(master=self.content, text="Start rendering", command=self.start_render)
             self.previewrender = BooleanVar()
             check_preview = Checkbutton(master=self.content, variable = self.previewrender, text="Only render preview (low quality, but faster)")
             self.pg = Progressbar(
@@ -39,7 +40,7 @@ class VideoLoadingScreen(tk.Toplevel):
         
             lbl_title.grid(row=0, column=0, pady=10)
             check_preview.grid(row=1, column=0, pady=5)
-            btn_start.grid(row=2, column=0, pady=5)
+            self.btn_start.grid(row=2, column=0, pady=5)
             self.lbl_current_frame.grid(row=3, column=0, pady=5)
             self.pg.grid(row=4, column=0, pady=5, padx=5)
             self.content.grid(row=0, column=0, padx=5, pady=5)
@@ -50,6 +51,7 @@ class VideoLoadingScreen(tk.Toplevel):
             self.update()
     
     def start_render(self):
+        frame_set_enabled(self.content, False)
         self.current_frame = 1
         self.finished = False
         
@@ -62,6 +64,7 @@ class VideoLoadingScreen(tk.Toplevel):
             self.finished = True
             utils.unregister_handler(render_per_frame, utils.Handler.PER_FRAME)
             utils.unregister_handler(render_finished,  utils.Handler.FINISHED)
+            frame_set_enabled(self.content, True)
         
         utils.register_handler(render_per_frame, utils.Handler.PER_FRAME)
         utils.register_handler(render_finished, utils.Handler.FINISHED)
