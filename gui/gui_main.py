@@ -20,7 +20,6 @@ import enum
 
 from Texture import load_texture, delete_texture
 from Vertex import import_vertex
-import Vertex1
 import bpy
 import random
 

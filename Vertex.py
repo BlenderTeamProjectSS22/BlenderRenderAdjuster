@@ -21,7 +21,6 @@ def import_vertex(obj: object, material: bpy.types.Material):
       color_layer.data[i].color = (r, g, b, 1.0)
       i += 1
   
-  bpy.data.materials["Material"].node_tree.nodes["Color Attribute.001"].layer_name = "Col"
   disp=material.node_tree.nodes["Principled BSDF"].inputs['Base Color']
   material.node_tree.links.new(disp,Color_Attribute.outputs[0])
 
