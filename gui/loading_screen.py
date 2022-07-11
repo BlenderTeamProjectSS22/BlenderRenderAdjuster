@@ -34,12 +34,12 @@ class VideoLoadingScreen(tk.Toplevel):
                 mode="determinate",
                 length=self.LENGTH,
                 maximum=self.FRAME_MAX)
-            self.lbl_frames_to_do = Label(master=self.content, text="Rendering frame 0 / " + str(self.FRAME_MAX))
+            self.lbl_current_frame = Label(master=self.content, text="Rendering frame 0 / " + str(self.FRAME_MAX))
         
             lbl_title.grid(row=0, column=0, pady=10)
             check_preview.grid(row=1, column=0, pady=5)
             btn_start.grid(row=2, column=0, pady=5)
-            self.lbl_frames_to_do.grid(row=3, column=0, pady=5)
+            self.lbl_current_frame.grid(row=3, column=0, pady=5)
             self.pg.grid(row=4, column=0, pady=5, padx=5)
             self.content.grid(row=0, column=0, padx=5, pady=5)
             
@@ -49,13 +49,13 @@ class VideoLoadingScreen(tk.Toplevel):
             self.update()
     
     def start_render(self):
-        self.frames_to_do = 0
+        self.current_frame = 1
         self.finished = False
         
         def render_per_frame(scene):
-            self.frames_to_do = self.frames_to_do + 1
-            self.set_frame(self.frames_to_do)
+            self.set_frame(self.current_frame)
             self.update_idletasks()
+            self.current_frame = self.current_frame + 1
         
         def render_finished(scene):
             self.finished = True
@@ -77,9 +77,9 @@ class VideoLoadingScreen(tk.Toplevel):
         renderthread.start()
     
     def set_frame(self, frame):
-        #print("Setting loading screen frame to " + str(frame - 1))
-        self.lbl_frames_to_do["text"] = f"Rendering frame {frame-1} / {self.FRAME_MAX}"
-        self.pg["value"] = frame - 1
+        #print("Setting loading screen frame to " + str(frame))
+        self.lbl_current_frame["text"] = f"Rendering frame {frame} / {self.FRAME_MAX}"
+        self.pg["value"] = frame
         self.update()
     
     def prevent_close(self):
