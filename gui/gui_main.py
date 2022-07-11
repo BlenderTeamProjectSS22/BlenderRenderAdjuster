@@ -108,6 +108,7 @@ class LeftPanel(Frame):
         Frame.__init__(self, master)
         self.master = master
         self.control = control
+        self.camera_animation_cam = cammod.Camera("cam1", 6, 0, 0.5)
         lbl_spacer = Label(master=self, text="")
 
         lbl_fileop = Label(master=self, text="File operations", font="Arial 10 bold")
@@ -255,9 +256,8 @@ class LeftPanel(Frame):
         startp = [-3,-5,0.5]
         endP = [6,5,0.5]
         rot = [90,0,90]
-        camera_animation_cam = cammod.Camera("cam1", 6, 0, 0.5)
-        camera_animation_cam.drive_by(100, startp, endP, rot, True, self.control.model)
-        
+        self.camera_animation_cam.drive_by(100, startp, endP, rot, True, self.control.model)
+        self.camera_animation_cam.cam.select_set(True)
         
 
 class CameraControls(Frame):
