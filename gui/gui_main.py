@@ -20,10 +20,12 @@ import enum
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
+from gui.panel_materials import MaterialWidgets
 from gui.settings import Control
 import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
 
+from materials.materials import MaterialController
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
 from Lightning.light_class import Light
 from HDRI.hdri import set_background_brightness, background_brightness_affects_objects
@@ -69,6 +71,7 @@ class ProgramGUI:
         mid = Frame(master=master)
         self.preview = RenderPreview(master)
         self.control = Control(renderer, self.preview, camera)
+        self.control.material = MaterialController()
         self.control.model = None
         
         # Load defaul cube if debug is enabled
@@ -152,6 +155,7 @@ class LeftPanel(Frame):
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
+        self.control.material.apply_material(self.control.model)
         self.control.camera.reset_position()
         self.control.re_render()
         
@@ -403,11 +407,13 @@ class ColorMeshWidgets(Frame):
         check_point.grid(row=3, column=1, sticky="w")
     
     def pick_color(self):
-        self.current_color = askcolor(self.current_color)[0]
-        print(self.current_color)
-        # FIX Keep old color if no color is selected (current_color can be None)
-        # TODO Change the color of the object
-        self.control.re_render()
+    
+        color = askcolor(self.current_color)[0]
+        
+        if color is not None:
+            self.current_color = color
+            self.control.material.set_color(utils.convert_color_to_bpy(self.current_color))
+            self.control.re_render()
     
     def switch_vertex_color(self):
         self.control.re_render()
@@ -426,103 +432,6 @@ class ColorMeshWidgets(Frame):
             self.mesh.set(True)
         self.control.re_render()
 
-class MaterialWidgets(Frame):
-    def __init__(self, master, control):
-        Frame.__init__(self, master, borderwidth=2, relief="groove")
-        self.control = control
-        
-        self.columnconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
-        mat_selected = StringVar(self)
-        mat_selected.set("default")
-        lbl_materials = Label(master=self, text="Material selection", font="Arial 10 bold")
-        lbl_metallic = Label(master=self, text="Metallic")
-        lbl_roughness = Label(master=self, text="Roughness")
-        
-        validate_int = self.register(self.validate_integer)
-        self.ent_metallic = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
-        self.ent_metallic.bind('<Return>', self.set_metallic_input)
-        self.ent_roughness = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'), width=10)
-        self.ent_roughness.bind('<Return>', self.set_roughness_input)
-        
-        self.slider_metallic = Scale(master=self, orient="horizontal", showvalue=False, command=self.set_metallic)
-        self.slider_roughness  = Scale(master=self, orient="horizontal", showvalue=False, command=self.set_roughness)
-        
-        lbl_sel_mat   = Label(master=self, text="Select:")
-        materials = ("default", Materials.GLASS.value, Materials.EMISSIVE.value, Materials.STONE.value)
-        dropdown_materials = OptionMenu(self, mat_selected, *materials, command=self.set_material)
-        #TODO: material_picker = MaterialPicker(self)
-        lbl_materials.grid(row=0, column=0, columnspan=2, sticky="we")
-        lbl_metallic.grid(row=1, column=0, sticky="we")
-        self.ent_metallic.grid(row=1, column=1, sticky="w")
-        self.slider_metallic.grid(row=2, column=0, sticky="we", columnspan=2)
-        lbl_roughness.grid(row=3, column=0, sticky="we")
-        self.ent_roughness.grid(row=3, column=1, sticky="w")
-        self.slider_roughness.grid(row=4, column=0, sticky="we", columnspan=2)
-        lbl_sel_mat.grid(row=5, column=0, sticky="w")
-        dropdown_materials.grid(row=5, column=1, sticky="w")
-        
-        # default starting value
-        self.set_metallic(0)
-        self.set_roughness(50)
-    
-    def validate_integer(self, P):
-        # TODO This prevents deleting e.g. '5', because field can't be empty
-        # Implement that it sets it to 0 automatically if last digit is deleted
-        if str.isdigit(P) or P == "":
-            return True
-        else:
-            return False
-    
-    def set_material(self, *args):
-        mat = Materials(args[0])
-        if mat == Materials.GLASS:
-            pass
-        elif mat == Materials.STONE:
-            pass
-        elif mat == Materials.EMISSIVE:
-            pass
-        else: #default
-            pass
-        self.control.re_render()
-    
-    def set_metallic_input(self, event):
-        x = 0
-        if self.ent_metallic.get() != "":
-            x = clamp(int(self.ent_metallic.get()), 0, 100)
-        self.set_metallic(x)
-        self.control.re_render()
-        
-    def set_roughness_input(self, event):
-        x = 0
-        if self.ent_roughness.get() != "":
-            x = clamp(int(self.ent_roughness.get()), 0, 100)
-        self.set_roughness(x)
-        self.control.re_render()
-    
-    def set_metallic(self, value):
-        self.ent_metallic.delete(0, tk.END)
-        self.ent_metallic.insert(tk.END, value)
-        self.slider_metallic.set(value)
-        self.control.re_render()
-    
-    def set_roughness(self, value):
-        self.ent_roughness.delete(0, tk.END)
-        self.ent_roughness.insert(tk.END, value)
-        self.slider_roughness.set(value)
-        self.control.re_render()
-
-# Enum containing all possible materials
-class Materials(enum.Enum):
-    GLASS = "glass"
-    STONE = "stone"
-    EMISSIVE = "emissive"
-
-# Clamps a value to the range of mimimum to maximum
-# TODO Move to other module?
-def clamp(val, minimum, maximum):
-    return min(max(val, minimum), maximum)
 
 class TextureWidgets(Frame):
     def __init__(self, master, control):
@@ -640,8 +549,6 @@ class LightingWidgets(Frame):
         # initialization   
         slider_brightness.set(self.get_brightness())  
         slider_background.set(self.get_background_strength())
-        self.lights_off()
-        background_brightness_affects_objects(False)
         
 
     # set the background strength and rerenders
