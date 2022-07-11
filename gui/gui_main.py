@@ -435,9 +435,7 @@ class ColorMeshWidgets(Frame):
             self.control.re_render()
     
     def switch_vertex_color(self):
-        set_scene_objects()
-        utils.set_output_properties(scene, resolution_percentage, output_file_path)
-        utils.set_cycles_renderer(scene, camera_object, num_samples, use_transparent_bg=True)
+        import_vertex(self.control.model,self.control.material.material)
         self.control.re_render()
     
     def switch_mesh(self):
