@@ -24,6 +24,7 @@ class OrbitCam:
         
         bpy.ops.object.camera_add(location=(1, 0, 0))
         self.camera = bpy.context.object
+        self.camera.data.lens = 25
         bpy.ops.object.empty_add(type='CUBE', location=(0, 0, 0), scale=(1, 1, 1))
         self.controller = bpy.context.object
         self.controller.name = self.camera.name + "_controller"
@@ -63,6 +64,19 @@ class OrbitCam:
     # angle: degrees
     def rotate_x(self, angle: float) -> None:
         self.controller.rotation_euler[1] += radians(angle)
+
+    # pan camera along global Z axis, changing its position by distance
+    def pan_vertical(self, distance: float) -> None:
+        self.controller.location[2] += distance
+
+    # pan camera along local Y axis, chaning its position by distance
+    # relies on bpy.ops.tranform because of the use of local axis
+    def pan_horizontal(self, distance: float) -> None:
+        bpy.ops.object.select_all(action = 'DESELECT')
+        self.controller.select_set(True)
+        bpy.context.view_layer.objects.active = self.controller
+        bpy.ops.transform.translate(value=(0, distance, 0), orient_axis_ortho='X', orient_type='LOCAL')
+
     
     def get_distance(self) -> float:
         return self.distance_constraint.distance
@@ -84,7 +98,7 @@ class OrbitCam:
 
     # resets camera to default position
     def reset_position(self) -> None:
-        self.distance_constraint.distance = 9
+        self.distance_constraint.distance = 5
         self.controller.rotation_euler[1] = radians(-30)
         self.controller.rotation_euler[2] = radians(45)
 
@@ -242,3 +256,7 @@ def generate_hdri_thumbnail(filepath):
     if not os.path.exists(thumb_folder):
         os.mkdir(thumb_folder)
     thumb.save(thumb_folder + filename + ".png", "PNG")
+
+# rotate obj around Z axis and angle
+def rotate_object(obj: bpy.types.Object, angle: float) -> None:
+    obj.rotation_euler[2] += radians(angle)
