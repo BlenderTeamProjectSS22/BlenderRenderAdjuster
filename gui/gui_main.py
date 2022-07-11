@@ -15,6 +15,7 @@ from tkinter import filedialog
 from PIL import ImageTk, Image
 
 import webbrowser
+import threading
 import requests
 import enum
 
@@ -25,6 +26,7 @@ from gui.settings import Control
 
 from camera_animation import camera_animation_module as cammod
 
+from gui.loading_screen import VideoLoadingScreen, ImageLoadingScreen
 import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
 
@@ -36,7 +38,6 @@ import utils
 import os
 
 import HDRI.hdri as hdri
-
 
 ## for testing
 if props.DEBUG:
@@ -129,7 +130,7 @@ class LeftPanel(Frame):
         frame_ops    = tk.Frame(master=self)
         lbl_ops      = tk.Label(master=frame_ops, text="Actions", font="Arial 10 bold")
         btn_settings = tk.Button(master=frame_ops, text="Settings", command=self.open_settings_window)
-        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)  # The update check may or may not be implemented
+        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)
         btn_help     = tk.Button(master=frame_ops, text="Help", command=self.open_help_page)
         lbl_spacer.pack()
 
@@ -173,6 +174,7 @@ class LeftPanel(Frame):
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
+        print("Import")
         self.control.material.apply_material(self.control.model)
         self.control.camera.reset_position()
         self.control.re_render()
@@ -196,9 +198,22 @@ class LeftPanel(Frame):
             filetypes=[("Portable Network Graphics","*.png")])
         if filename == "":
             return
-        self.control.renderer.set_final_render(file_path=filename)
-        self.control.renderer.render()
-        self.control.renderer.set_preview_render()
+        
+        self.loading_image = ImageLoadingScreen(self)
+        self.update_idletasks()
+        
+        def render_finished(scene):
+            self.loading_image.close_window()
+            utils.unregister_handler(render_finished, utils.Handler.FINISHED)
+        utils.register_handler(render_finished, utils.Handler.FINISHED)
+        
+        def render():
+            self.control.renderer.set_final_render(file_path=filename)
+            self.control.renderer.render(animation=False)
+            self.control.renderer.set_preview_render()
+        
+        renderthread = threading.Thread(target=render)
+        renderthread.start()
     
     def render_video(self):
         filename = filedialog.asksaveasfilename(
@@ -208,10 +223,8 @@ class LeftPanel(Frame):
             filetypes=[("Audio Video Interleave","*.avi")])
         if filename == "":
             return
-        self.control.renderer.set_final_render(file_path=filename, animation=True)
-        self.control.renderer.render()
-        self.control.renderer.set_preview_render()
-    
+        self.loading_video = VideoLoadingScreen(self, self.control, filename)
+        
     def open_settings_window(self):
         SettingsWindow(self.master, self.control)
     
@@ -324,11 +337,14 @@ class CameraControls(Frame):
         lbl_dist.grid(row=0, column=0, sticky="news")
         btn_in.grid(row=1, column=0, padx=8, sticky="ew")
         btn_out.grid(row=2, column=0, padx=8, sticky="ew")
+
+        btn_reset = Button(master=self, text="Reset camera angle", command=self.reset_camera)
         
         lbl_controls.grid(row=0, column=0, columnspan=3)
         frm_rot.grid(row=1, column=0, padx=10, pady=10, sticky="news")
         frm_pan.grid(row=1, column=1, padx=10, pady=10, sticky="news")
         frm_dist.grid(row=1, column=2, padx=10, sticky="news")
+        btn_reset.grid(row=2, column=0, columnspan=3)
 
     def rotate_up(self):
         self.control.camera.rotate_x(-10)
@@ -374,6 +390,10 @@ class CameraControls(Frame):
 
     def pan_out(self):
         self.control.camera.set_distance(self.control.camera.get_distance() * zoom_factor)
+        self.control.re_render()
+    
+    def reset_camera(self):
+        self.control.camera.reset_position()
         self.control.re_render()
         
     

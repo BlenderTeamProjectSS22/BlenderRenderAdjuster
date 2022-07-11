@@ -7,7 +7,6 @@
 
 import tkinter as tk
 from tkinter import Frame, Toplevel, Label, Button, Entry
-from PIL import ImageTk, Image
 from gui.properties import *
 
 class SettingsWindow(Toplevel):
