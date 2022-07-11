@@ -537,7 +537,7 @@ class LightingWidgets(Frame):
     # constants
     TIME_TO_ANGLE_CONSTANT : int = 15
     HIGH_OF_LATERN_LIGHT : int = 2
-    STARTING_TIME : int = 6
+    STARTING_TIME_OF_DAY : int = 6
 
     def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
@@ -705,7 +705,7 @@ class LightingWidgets(Frame):
         if self.is_day_night.get():
             self.activate_brightness_slider(False)
             delete_lights(self.light_objects)
-            self.light_objects = day_night_cycle(self.STARTING_TIME, self.get_brightness(), True, self.control.camera)
+            self.light_objects = day_night_cycle(self.daytime + self.STARTING_TIME_OF_DAY, self.get_brightness(), True, self.control.camera)
         else:
             delete_light_animation(self.light_objects)
             self.use_light_type = 0
