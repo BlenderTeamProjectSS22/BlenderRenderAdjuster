@@ -101,6 +101,7 @@ class OrbitCam:
         self.distance_constraint.distance = 5
         self.controller.rotation_euler[1] = radians(-30)
         self.controller.rotation_euler[2] = radians(45)
+        self.controller.location = (0,0,0)
 
 
 # basic renderer
