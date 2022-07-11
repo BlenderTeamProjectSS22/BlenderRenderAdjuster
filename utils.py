@@ -67,7 +67,7 @@ class OrbitCam:
 
     # pan camera along global Z axis, changing its position by distance
     def pan_vertical(self, distance: float) -> None:
-        bpy.context.object.location[2] += distance
+        self.controller.location[2] += distance
 
     # pan camera along local Y axis, chaning its position by distance
     # relies on bpy.ops.tranform because of the use of local axis
@@ -238,6 +238,21 @@ def export_blend(filepath: str) -> None:
 def scale_to_unit_cube(obj: bpy.types.Object) -> None:
     obj.dimensions = obj.dimensions / max(obj.dimensions) * 2 #downscaling
     bpy.ops.object.origin_set(type='GEOMETRY_ORIGIN', center='BOUNDS') #align object's bounding box' center and origin
+
+# Calculates percentage of a number x in [0, 100]
+def percent(x: int) -> float:
+    return x / 100
+
+# Clamps a value to the range of mimimum to maximum
+def clamp(val, minimum, maximum):
+    return min(max(val, minimum), maximum)
+
+def convert_color_to_bpy(color: (int, int, int)) -> (float, float, float, float):
+    match color:
+        case (r, g, b):
+            return (r / 255, g / 255, b / 255, 1)
+        case _:
+            return None
 
 def generate_hdri_thumbnail(filepath):
     filename = os.path.basename(filepath)
