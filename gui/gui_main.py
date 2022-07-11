@@ -64,8 +64,8 @@ class ProgramGUI:
         master.columnconfigure(0, weight=0, minsize=107)
         master.columnconfigure(1, weight=16, minsize=1135)
         master.columnconfigure(2, weight=0, minsize=184)
-        master.rowconfigure(0, weight=9, minsize=307)
-        master.rowconfigure(1, weight=9)
+        master.rowconfigure(0, weight=15, minsize=307)
+        master.rowconfigure(1, weight=1)
         
         # Create global control object
         mid = Frame(master=master)
@@ -88,14 +88,12 @@ class ProgramGUI:
         background_ctrl = BackgroundControl(mid, self.control)
         frm_frame = FrameWidgets(mid, self.control)
         
-        
-        mid.columnconfigure(0, weight=1)
-        mid.rowconfigure(0, weight=1)
+        mid.rowconfigure(1, weight=1)
         mid.columnconfigure(0, weight=1)
         mid.columnconfigure(1, weight=1)
         camcontrols.grid(row=1, column=0, sticky="nsew")
         background_ctrl.grid(row=1, column=1, sticky="nwse")
-        frm_frame.grid(row=0, columnspan= 2, sticky="enw")
+        frm_frame.grid(row=0, columnspan=2, sticky="esw")
         
         left.grid(row=0, column=0, sticky="nw", rowspan=2)
         self.preview.grid(row=0, column=1, sticky="nwes")
@@ -744,17 +742,15 @@ class FrameWidgets(Frame):
 
         # grid
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
 
         # labels and sliders
         lbl_frame_setting = Label(master=self, text="Frame", font="Arial 10 bold")
-        slider_frame_setting = Scale(master=self, from_= 0, to = self.frame_end, orient="horizontal", showvalue=True, command=lambda val: self.set_frame(val, False))
+        slider_frame_setting = Scale(master=self, from_= 0, to = self.frame_end, orient="horizontal", command=lambda val: self.set_frame(val, False))
         slider_frame_setting.bind("<ButtonRelease-1>", lambda event : self.set_frame(self.get_frame(), True)) 
 
         # packing
         lbl_frame_setting.grid(row=0)
-        slider_frame_setting.grid(row=1,sticky="wne")
+        slider_frame_setting.grid(row=1,sticky="wse")
 
     # returns the frame value
     def get_frame(self) -> int:
