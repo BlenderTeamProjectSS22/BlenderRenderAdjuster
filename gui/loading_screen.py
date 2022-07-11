@@ -53,7 +53,7 @@ class VideoLoadingScreen(tk.Toplevel):
         self.finished = False
         
         def render_per_frame(scene):
-            self.frames_to_do = self.frames_to_do
+            self.frames_to_do = self.frames_to_do + 1
             self.set_frame(self.frames_to_do)
             self.update_idletasks()
         
