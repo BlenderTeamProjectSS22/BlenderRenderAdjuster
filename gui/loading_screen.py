@@ -18,6 +18,7 @@ class VideoLoadingScreen(tk.Toplevel):
             self.resizable(width=False, height=False)
             self.finished = True
             self.protocol("WM_DELETE_WINDOW", self.prevent_close)
+            self.control.renderer.set_frame_count(5)
             
             self.LENGTH = 1000
             self.FRAME_MAX = control.renderer.frame_count
@@ -67,7 +68,7 @@ class VideoLoadingScreen(tk.Toplevel):
         
         def render_anim():
             if self.previewrender.get():
-                self.control.renderer.set_preview_render()
+                self.control.renderer.set_preview_render(file_path=self.filepath)
             else:
                 self.control.renderer.set_final_render(self.filepath)
             self.control.renderer.render(animation=True)

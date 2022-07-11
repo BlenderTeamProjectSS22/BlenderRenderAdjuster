@@ -262,7 +262,8 @@ def generate_hdri_thumbnail(filepath):
 def rotate_object(obj: bpy.types.Object, angle: float) -> None:
     obj.rotation_euler[2] += radians(angle)
 
-# Enum containing all possible textures
+# Enum containing Blender application handlers we use
+# See: https://docs.blender.org/api/current/bpy.app.handlers.html
 class Handler(enum.Enum):
     PER_FRAME = enum.auto()
     FINISHED  = enum.auto()
