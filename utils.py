@@ -1,7 +1,7 @@
 """
 author: Romain Carl
 created on: 20/05/2022
-edited by:
+edited by: Alexander Ritter
 
 description:
 Some basic functionalities common to all tasks.
@@ -15,6 +15,25 @@ import fnmatch
 from PIL import Image, ImageOps
 import sys
 import gui.properties as props
+from contextlib import contextmanager, redirect_stdout
+import enum
+
+
+# Disable console output if verbose flag is not set
+# Output redirection adapted from https://blender.stackexchange.com/a/44563
+@contextmanager
+def hide_output():
+    logfile = "assets/blender_render.log"
+    open(logfile, "a").close()
+    old = os.dup(sys.stdout.fileno())
+    sys.stdout.flush()
+    os.close(sys.stdout.fileno())
+    fd = os.open(logfile, os.O_WRONLY)
+    yield
+    os.close(fd)
+    os.dup(old)
+    os.close(old)
+
 
 # basic camera capable of orbiting around central cube
 # uses track-to-constraint, limit-distance-constraint
@@ -46,7 +65,6 @@ class OrbitCam:
 
         #put camera in default position
         self.reset_position()
-  
     
     # returns cube object which controlls rotation
     def get_controller(self) -> bpy.types.Object:
@@ -111,28 +129,17 @@ class Renderer:
         self.scene = bpy.context.scene
         self.camera = camera
         self.scene.camera = self.camera
+        self.frame_count  = self.scene.frame_end
 
-    # render image to configured output destination 
-    def render(self) -> None:
-        
-        # Disable console output if verbose flag is not set
-        # Output redirection adapted from https://blender.stackexchange.com/a/44563
-        if not props.VERBOSE:
-            logfile = "assets/blender_render.log"
-            open(logfile, 'a').close()
-            old = os.dup(sys.stdout.fileno())
-            sys.stdout.flush()
-            os.close(sys.stdout.fileno())
-            fd = os.open(logfile, os.O_WRONLY)
-        
-        bpy.ops.render.render(write_still=True, animation=self.animation)
-        
-        # Re-enable console output
-        if not props.VERBOSE:
-            os.close(fd)
-            os.dup(old)
-            os.close(old)
-
+    # render image/video to configured output destination 
+    def render(self, animation: bool) -> None:
+        self.scene.render.image_settings.file_format = "AVI_JPEG" if animation else "PNG"
+        if props.VERBOSE:
+            bpy.ops.render.render(write_still=True, animation=animation)
+        else:
+            with hide_output():
+                bpy.ops.render.render(write_still=True, animation=animation)
+    
     # apply settings for preview rendering
     def set_preview_render(self,
                            file_path: str = "assets/gui/preview.png",
@@ -140,8 +147,6 @@ class Renderer:
                            num_samples: int = 8) -> None:
 
         self.scene.render.engine = 'CYCLES'
-        self.animation = False
-        self.scene.render.image_settings.file_format = 'PNG'
         self.scene.render.filepath = bpy.path.relpath(file_path)
         self.scene.render.film_transparent = use_transparent_bg
         self.scene.view_layers[0].cycles.use_denoising = False
@@ -155,16 +160,10 @@ class Renderer:
     # apply settings for final rendering
     def set_final_render(self,
                          file_path: str,
-                         animation: bool = False,
                          use_transparent_bg: bool = False,
                          num_samples: int = 64) -> None:
 
         self.scene.render.engine = 'CYCLES'
-        self.animation = animation
-        if animation:
-            self.scene.render.image_settings.file_format = 'AVI_JPEG'
-        else:
-            self.scene.render.image_settings.file_format = 'PNG'
         self.scene.render.filepath = file_path
         self.scene.render.film_transparent = use_transparent_bg
         self.scene.view_layers[0].cycles.use_denoising = True
@@ -179,10 +178,12 @@ class Renderer:
     # set aspect ratio
     def set_aspect_ratio(self, w: int, h: int) -> None:
         self.scene.render.resolution_y = int(self.scene.render.resolution_x / (w / h))
+    
+    # Set the amount of frames from 1 to frame_count
+    def set_frame_count(self, frame_count: int) -> None:
+        self.frame_count = frame_count
+        self.scene.frame_end = frame_count
 
-
-
-        
 
 #some other useful functions:
 
@@ -261,3 +262,21 @@ def generate_hdri_thumbnail(filepath):
 # rotate obj around Z axis and angle
 def rotate_object(obj: bpy.types.Object, angle: float) -> None:
     obj.rotation_euler[2] += radians(angle)
+
+# Enum containing Blender application handlers we use
+# See: https://docs.blender.org/api/current/bpy.app.handlers.html
+class Handler(enum.Enum):
+    PER_FRAME = enum.auto()
+    FINISHED  = enum.auto()
+
+def unregister_handler(render_handler, handlertype: Handler):
+    if handlertype == Handler.PER_FRAME:
+        bpy.app.handlers.frame_change_pre.remove(render_handler)
+    elif handlertype == Handler.FINISHED:
+        bpy.app.handlers.render_complete.remove(render_handler)
+
+def register_handler(render_handler, handlertype: Handler):
+    if handlertype == Handler.PER_FRAME:
+        bpy.app.handlers.frame_change_pre.append(render_handler)
+    elif handlertype == Handler.FINISHED:
+        bpy.app.handlers.render_complete.append(render_handler)

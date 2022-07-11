@@ -15,6 +15,7 @@ from tkinter import filedialog
 from PIL import ImageTk, Image
 
 import webbrowser
+import threading
 import requests
 import enum
 
@@ -22,6 +23,7 @@ from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.panel_materials import MaterialWidgets
 from gui.settings import Control
+from gui.loading_screen import VideoLoadingScreen, ImageLoadingScreen
 import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
 
@@ -33,7 +35,6 @@ import utils
 import os
 
 import HDRI.hdri as hdri
-
 
 ## for testing
 if props.DEBUG:
@@ -124,14 +125,10 @@ class LeftPanel(Frame):
         # All general program widgets
         frame_ops    = tk.Frame(master=self)
         lbl_ops      = tk.Label(master=frame_ops, text="Actions", font="Arial 10 bold")
-        btn_undo     = tk.Button(master=frame_ops, text="Undo", command=self.undo)
-        btn_redo     = tk.Button(master=frame_ops, text="Redo", command=self.redo)
         btn_settings = tk.Button(master=frame_ops, text="Settings", command=self.open_settings_window)
-        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)  # The update check may or may not be implemented
+        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)
         btn_help     = tk.Button(master=frame_ops, text="Help", command=self.open_help_page)
         lbl_ops.pack(fill=tk.X)
-        btn_undo.pack(fill=tk.X)
-        btn_redo.pack(fill=tk.X)
         btn_settings.pack(fill=tk.X)
         btn_updates.pack(fill=tk.X)
         btn_help.pack(fill=tk.X)
@@ -179,9 +176,22 @@ class LeftPanel(Frame):
             filetypes=[("Portable Network Graphics","*.png")])
         if filename == "":
             return
-        self.control.renderer.set_final_render(file_path=filename)
-        self.control.renderer.render()
-        self.control.renderer.set_preview_render()
+        
+        self.loading_image = ImageLoadingScreen(self)
+        self.update_idletasks()
+        
+        def render_finished(scene):
+            self.loading_image.close_window()
+            utils.unregister_handler(render_finished, utils.Handler.FINISHED)
+        utils.register_handler(render_finished, utils.Handler.FINISHED)
+        
+        def render():
+            self.control.renderer.set_final_render(file_path=filename)
+            self.control.renderer.render(animation=False)
+            self.control.renderer.set_preview_render()
+        
+        renderthread = threading.Thread(target=render)
+        renderthread.start()
     
     def render_video(self):
         filename = filedialog.asksaveasfilename(
@@ -191,16 +201,8 @@ class LeftPanel(Frame):
             filetypes=[("Audio Video Interleave","*.avi")])
         if filename == "":
             return
-        self.control.renderer.set_final_render(file_path=filename, animation=True)
-        self.control.renderer.render()
-        self.control.renderer.set_preview_render()
-    
-    def undo(self):
-        pass
-    
-    def redo(self):
-        pass
-    
+        self.loading_video = VideoLoadingScreen(self, self.control, filename)
+        
     def open_settings_window(self):
         SettingsWindow(self.master, self.control)
     
