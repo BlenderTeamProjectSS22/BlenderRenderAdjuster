@@ -2,7 +2,6 @@
 author: Romain Carl
 created on: 20/05/2022
 edited by: Alexander Ritter
-
 description:
 Some basic functionalities common to all tasks.
 Will need to be expanded and adapted as the project progresses.
@@ -184,25 +183,6 @@ class Renderer:
         self.frame_count = frame_count
         self.scene.frame_end = frame_count
 
-    def set_output_properties(self,
-                              resolution_percentage: int = 100,
-                              output_file_path: str = os.getcwd() + "/renders/result",
-                              res_x: int = 1920,
-                              res_y: int = 1080,
-                              animation: bool = False) -> None:
-        self.scene.render.resolution_percentage = resolution_percentage
-        self.scene.render.resolution_x = res_x
-        self.scene.render.resolution_y = res_y
-        self.scene.render.filepath = output_file_path
-        self.animation = animation
-        if animation:
-            self.scene.render.image_settings.file_format = 'AVI_JPEG'
-        else:
-            self.scene.render.image_settings.file_format = 'PNG'    
-    
-    def set_eevee(self,
-                  num_samples: int = 32,
-                  use_transparent_bg: bool = False) -> None:
 
 #some other useful functions:
 
