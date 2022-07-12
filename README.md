@@ -10,7 +10,7 @@
 
 ## Installation:
     
-    pip install bpy .... <Add more instructions here or create>
+    - [[Installation guide|installation]]
 
 ## How to Use:
     
