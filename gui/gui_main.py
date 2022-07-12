@@ -7,7 +7,7 @@
 
 from cgi import print_directory
 import tkinter as tk
-from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
+from tkinter import Frame, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
@@ -48,6 +48,8 @@ class ProgramGUI:
         camera   = utils.OrbitCam()
         renderer = utils.Renderer(camera.camera)
         renderer.set_preview_render()
+        self.max_frame = IntVar()
+        frames = utils.FrameControl(self.max_frame)
 
         hdri.initialize_world_texture()
 
@@ -71,7 +73,7 @@ class ProgramGUI:
         # Create global control object
         mid = Frame(master=master)
         self.preview = RenderPreview(master)
-        self.control = Control(renderer, self.preview, camera)
+        self.control = Control(renderer, self.preview, camera, frames)
         self.control.material = MaterialController()
         self.control.model = None
         
@@ -87,7 +89,7 @@ class ProgramGUI:
         right = RightPanel(master, self.control)
         camcontrols = CameraControls(mid, self.control)
         background_ctrl = BackgroundControl(mid, self.control)
-        frm_frame = FrameWidgets(mid, self.control)
+        frm_frame = FrameWidgets(mid, self.control, self.max_frame)
         
         mid.rowconfigure(1, weight=1)
         mid.columnconfigure(0, weight=1)
@@ -661,10 +663,12 @@ class LightingWidgets(Frame):
     # deletes the animations if "self.is_day_night" = false
     def switch_day_night_circle(self):
         if self.is_day_night.get():
+            self.control.frames.add_animation(utils.Animation.DAYNIGHT)
             self.activate_brightness_slider(False)
             delete_lights(self.light_objects)
             self.light_objects = day_night_cycle(self.daytime + self.STARTING_TIME_OF_DAY, self.get_brightness(), True, self.control.camera)
         else:
+            self.control.frames.remove_animation(utils.Animation.DAYNIGHT)
             delete_light_animation(self.light_objects)
             self.use_light_type = 0
         self.control.re_render()
@@ -734,26 +738,31 @@ class BackgroundControl(Frame):
 
 class FrameWidgets(Frame):
 
-    def __init__(self, master, control):
+    def __init__(self, master, control, max_frame: IntVar):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
         self.control = control
+        self.max_frame = max_frame
         
         # variables
         self.frame : int = 0
-        self.frame_end : int = control.renderer.scene.frame_end
+        max_frame.trace_add("write", self.max_changed)
 
         # grid
         self.columnconfigure(0, weight=1)
 
         # labels and sliders
         lbl_frame_setting = Label(master=self, text="Frame", font="Arial 10 bold")
-        slider_frame_setting = Scale(master=self, from_= 0, to = self.frame_end, orient="horizontal", command=lambda val: self.set_frame(val, False))
-        slider_frame_setting.bind("<ButtonRelease-1>", lambda event : self.set_frame(self.get_frame(), True)) 
-
+        self.slider_frame_setting = Scale(master=self, from_= 0, to=self.max_frame.get(), orient="horizontal", command=lambda val: self.set_frame(val, False))
+        self.slider_frame_setting.bind("<ButtonRelease-1>", lambda event : self.set_frame(self.get_frame(), True)) 
+        
         # packing
         lbl_frame_setting.grid(row=0)
-        slider_frame_setting.grid(row=1,sticky="wse")
+        self.slider_frame_setting.grid(row=1,sticky="wse")
 
+    # Update the slider length whenever the frame max is changed
+    def max_changed(self, var, index, mode):
+        self.slider_frame_setting.configure(to=self.max_frame.get())
+    
     # returns the frame value
     def get_frame(self) -> int:
         return self.frame

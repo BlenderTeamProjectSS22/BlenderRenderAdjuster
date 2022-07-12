@@ -16,6 +16,7 @@ from PIL import Image, ImageOps
 import sys
 import gui.properties as props
 from contextlib import contextmanager, redirect_stdout
+from tkinter import IntVar
 import enum
 
 
@@ -129,7 +130,6 @@ class Renderer:
         self.scene = bpy.context.scene
         self.camera = camera
         self.scene.camera = self.camera
-        self.frame_count  = self.scene.frame_end
     
     # render image/video to configured output destination 
     def render(self, animation: bool) -> None:
@@ -179,11 +179,42 @@ class Renderer:
     def set_aspect_ratio(self, w: int, h: int) -> None:
         self.scene.render.resolution_y = int(self.scene.render.resolution_x / (w / h))
     
-    # Set the amount of frames from 1 to frame_count
-    def set_frame_count(self, frame_count: int) -> None:
-        self.frame_count = frame_count
-        self.scene.frame_end = frame_count
+# Enum containing all possible animations paired with their maximum frame length
+class Animation(enum.Enum):
+    DEFAULT      = 5 * 24  # Set the default to 5 seconds video
+    DAYNIGHT     = 360
+    PRESET_ONE   = 1   # TODO Jonas
+    PRESET_TWO   = 1   # TODO Jonas
+    PRESET_THREE = 1   # TODO Jonas
 
+class FrameControl():
+    def __init__(self, slider_max: IntVar):
+        # List of all animation maximum frames
+        self.slider_max = slider_max
+        self.active_animations = []
+        self.add_animation(Animation.DEFAULT)
+    
+    # Get the maximum amount of frames necessary for the animation
+    def get_max_frame(self) -> int:
+        return max(self.active_animations, key=lambda a: a.value).value
+    
+    # Add an animation to be active, auto-changing the max frame to the from the longest animation
+    def add_animation(self, animation: Animation):
+        assert(animation.value > 0)
+        print("Adding animation " + str(animation.name) + " with length " + str(animation.value))
+        self.active_animations.append(animation)
+        self.__update_max_frame()
+    
+    # Removes animation and adjusts max frame
+    def remove_animation(self, animation: Animation):
+        print("Removing animation " + str(animation.name) + " with length " + str(animation.value))
+        self.active_animations.remove(animation)
+        self.__update_max_frame()
+    
+    # Update the maximum frame and adjust values (private method)
+    def __update_max_frame(self):
+        bpy.context.scene.frame_end = self.get_max_frame()
+        self.slider_max.set(self.get_max_frame())
 
 #some other useful functions:
 

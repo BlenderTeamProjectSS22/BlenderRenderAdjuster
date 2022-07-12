@@ -19,10 +19,9 @@ class VideoLoadingScreen(tk.Toplevel):
             self.resizable(width=False, height=False)
             self.finished = True
             self.protocol("WM_DELETE_WINDOW", self.prevent_close)
-            self.control.renderer.set_frame_count(5)
             
             self.LENGTH = 1000
-            self.FRAME_MAX = control.renderer.frame_count
+            self.FRAME_MAX = self.control.frames.get_max_frame()
             self.DELTA  = self.LENGTH / self.FRAME_MAX
             
             self.content = Frame(self)
