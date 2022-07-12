@@ -24,7 +24,6 @@ from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.settings import Control
 from gui.properties import *
-import bpy
 from mathutils import Vector
 
 import utils
@@ -109,6 +108,7 @@ class LeftPanel(Frame):
         if filename == "":
             return
         self.control.model = utils.import_mesh(filename)
+        PointCloudWidgets.hasconverted = False
         self.control.re_render()
         
     
@@ -255,7 +255,7 @@ class ColorMeshWidgets(Frame):
         lbl_look    = Label(master=self, text="Look", font="Arial 10 bold")
         lbl_color   = Label(master=self, text="Color")
         btn_picker  = Button(master=self, text="pick", command=self.pick_color)
-        lbl_type    = Label(master=self, text="Type")
+        lbl_add    = Label(master=self, text="Add")
         self.vertc = BooleanVar()
         self.mesh  = BooleanVar()
         self.point = BooleanVar()
@@ -263,7 +263,7 @@ class ColorMeshWidgets(Frame):
         check_mesh  = Checkbutton(master=self, text="Plane", variable=self.mesh, anchor="w", command=self.add_plane)
         lbl_look.grid(row=0, column=0, columnspan=2)
         lbl_color.grid(row=1, column=0)
-        lbl_type.grid(row=1, column=1)
+        lbl_add.grid(row=1, column=1)
         btn_picker.grid(row=2, column=0)
         check_vertc.grid(row=3, column=0, sticky="w")
         check_mesh.grid(row=2, column=1, sticky="w")
@@ -556,7 +556,7 @@ class PointCloudWidgets(Frame):
 
     def geoNodeForObject(self,object):
 
-        self.selectMainObject()
+        
         bpy.ops.object.modifier_add(type='NODES') 
         
         if object.modifiers[-1].node_group:
@@ -572,7 +572,7 @@ class PointCloudWidgets(Frame):
         node_group.links.new(group_out.inputs[0], new_node.outputs[0])
 
     def convert(self):
-        print(self.hasconverted)
+        self.selectMainObject()
         if self.hasconverted:
             
             if self.pointcloud.get():
@@ -616,15 +616,6 @@ class PointCloudObjects(enum.Enum):
     SPHERE = "sphere"
     CUBE = "cube"
     DISK = "disk"
-
-
-
-
-
-
-
-
-
 
 
 
