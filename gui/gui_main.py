@@ -38,7 +38,8 @@ import os
 import HDRI.hdri as hdri
 
 ## for testing
-import bpy
+if props.DEBUG:
+    import bpy
 
 class ProgramGUI:
     def __init__(self, master):
@@ -771,7 +772,7 @@ class FrameWidgets(Frame):
     def set_frame(self, value : int, is_released : bool) -> None:
         self.frame = value
         if is_released:
-            bpy.context.scene.frame_current = int(value)
+            self.control.frames.set_current_frame(int(value))
             self.control.re_render()
 
 

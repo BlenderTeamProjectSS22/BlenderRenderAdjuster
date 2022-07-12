@@ -194,6 +194,10 @@ class FrameControl():
         self.active_animations = []
         self.add_animation(Animation.DEFAULT)
     
+    # Sets the currently renderer frame of the scene
+    def set_current_frame(self, frame: int):
+        bpy.context.scene.frame_current = frame
+    
     # Get the maximum amount of frames necessary for the animation
     def get_max_frame(self) -> int:
         return max(self.active_animations, key=lambda a: a.value).value
