@@ -10,7 +10,7 @@
 
 ## Installation:
     
-    - [[Installation guide|installation]]
+    - [Installation guide](https://github.com/garvita-tiwari/blender_render/wiki/Installation)
 
 ## How to Use:
     
