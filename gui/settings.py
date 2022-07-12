@@ -62,7 +62,7 @@ class Control:
             exit()
     
     def re_render(self):
-        self.renderer.render()
+        self.renderer.render(animation=False)
         self.preview.reload()
         print("Updating preview...")
     
