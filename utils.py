@@ -247,7 +247,7 @@ def import_mesh(filepath: str) -> bpy.types.Object:
     return newObj
 
 def export_blend(filepath: str) -> None:
-    bpy.ops.wm.save_mainfile(filepath=filepath)
+    bpy.ops.wm.save_as_mainfile(filepath=filepath, copy=True)
 
 #scale obj down so that its bounding box fits into the unit cube (2 x 2 x 2)
 def scale_to_unit_cube(obj: bpy.types.Object) -> None:
