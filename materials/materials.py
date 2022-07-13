@@ -68,10 +68,12 @@ class CompositeNodes:
     
     def set_glow(self, is_glowing: bool):
         if is_glowing:
+            bpy.context.scene.use_nodes = True
             self.glow = True
             self.tree.links.new(self.rlayer.outputs["Image"], self.glare.inputs["Image"])
             self.tree.links.new(self.glare.outputs["Image"], self.output.inputs["Image"])
         else:
+            bpy.context.scene.use_nodes = False
             self.glow = False
             self.tree.links.new(self.rlayer.outputs["Image"], self.output.inputs["Image"])
 
@@ -118,7 +120,9 @@ class MaterialController:
         self.set_emissive(opts.get("emissive", self.emissive))
         self.set_emissive_strength(opts.get("strength", self.strength))
         self.compositing.set_glow(opts.get("glow", self.compositing.glow))
-        if not opts.get("bump", False):
+        if opts.get("bump", False):
+            self.noise.enable()
+        else:
             self.noise.disable()
         if not opts.get("preserve_color", True):
             self.set_base_color(DEFAULT_COLOR)
