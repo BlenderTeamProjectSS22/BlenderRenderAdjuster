@@ -1,4 +1,4 @@
-from tkinter import Frame, Label, Checkbutton, Scale, Entry, OptionMenu, StringVar, BooleanVar, DoubleVar
+from tkinter import Frame, Label, Checkbutton, Scale, Entry, OptionMenu, StringVar, BooleanVar, DoubleVar, IntVar
 import tkinter as tk
 from tkinter.ttk import Separator
 import enum
@@ -25,7 +25,7 @@ class MaterialWidgets(Frame):
         lbl_emissive  = Label(master=self.frm_emissive, text="Emissive Strength")
         self.emissive = BooleanVar(self)
         self.glow     = BooleanVar(self)
-        check_emiss   = Checkbutton(master=self, text="Emissive", variable=self.emissive, anchor="w", command=self.toggle_emissive)
+        check_emiss   = Checkbutton(master=self, text="Emissive", variable=self.emissive, anchor="w", command=lambda: self.toggle_emissive(rerender=True))
         check_glow    = Checkbutton(master=self, text="Glow", variable=self.glow, command=self.toggle_glow)
         
         validate_int = self.register(self.validate_integer)
@@ -41,11 +41,12 @@ class MaterialWidgets(Frame):
         self.slider_metallic  = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_metallic(val, False))
         self.slider_roughness = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_roughness(val, False))
         self.slider_transmiss = Scale(master=self, orient="horizontal", showvalue=False, command=lambda val: self.set_transmission(val, False))
-        self.slider_emissive  = Scale(master=self.frm_emissive, orient="horizontal", showvalue=False, command=lambda val: self.set_emissive(val, False))
+        self.emissive_strength = IntVar()
+        self.slider_emissive  = Scale(master=self.frm_emissive, orient="horizontal", variable=self.emissive_strength, showvalue=False, command=lambda val: self.set_emissive(False))
         self.slider_metallic.bind("<ButtonRelease-1>",  lambda event: self.set_metallic(self.slider_metallic.get(), True))
         self.slider_roughness.bind("<ButtonRelease-1>", lambda event: self.set_roughness(self.slider_roughness.get(), True))
         self.slider_transmiss.bind("<ButtonRelease-1>", lambda event: self.set_transmission(self.slider_transmiss.get(), True)) 
-        self.slider_emissive.bind("<ButtonRelease-1>", lambda event: self.set_emissive(self.slider_emissive.get(), True)) 
+        self.slider_emissive.bind("<ButtonRelease-1>", lambda event: self.set_emissive(True)) 
         
         
         lbl_sel_mat   = Label(master=self, text="Select:")
@@ -107,7 +108,7 @@ class MaterialWidgets(Frame):
         
         self.default_values()
         self.toogle_bumpiness(rerender=False)
-        self.toggle_emissive()
+        self.toggle_emissive(rerender=False)
         
         
     def default_values(self):
@@ -150,7 +151,6 @@ class MaterialWidgets(Frame):
         self.set_metallic(int(self.control.material.metallic*100), False)
         self.set_roughness(int(self.control.material.roughness*100), False)
         self.set_transmission(int(self.control.material.transmission*100), False)
-        self.set_emissive(int(self.control.material.strength*100), False)
         self.glow.set(int(self.control.material.compositing.glow))
         self.emissive.set(int(self.control.material.emissive))
         self.bump.set(self.control.material.noise.is_enabled)
@@ -158,7 +158,10 @@ class MaterialWidgets(Frame):
         self.noise_detail.set(self.control.material.noise.detail)
         self.noise_distortion.set(self.control.material.noise.distortion)
         self.toogle_bumpiness(rerender=False)
-        
+        self.toggle_emissive(rerender=False)
+        if self.emissive.get():
+            self.emissive_strength.set(int(self.control.material.strength*100))
+            self.set_emissive(isReleased=False)
     
     def set_metallic_input(self, event):
         x = 0
@@ -218,30 +221,31 @@ class MaterialWidgets(Frame):
             print("Setting transmission to " + str(value))
             self.control.re_render()
     
-    def set_emissive(self, value, isReleased: bool):
+    def set_emissive(self, isReleased: bool):
         self.ent_emissive.delete(0, tk.END)
-        self.ent_emissive.insert(tk.END, value)
-        self.slider_emissive.set(value)
+        self.ent_emissive.insert(tk.END, self.emissive_strength.get())
+        self.slider_emissive.set(self.emissive_strength.get())
         
-        self.control.material.set_emissive_strength(utils.percent(int(value)))
+        self.control.material.set_emissive_strength(utils.percent(self.emissive_strength.get()))
         
         if isReleased:
-                print("Setting emissive strength to " + str(value))
+                print("Setting emissive strength to " + str(self.emissive_strength.get()))
                 self.control.re_render()
         
-    def toggle_emissive(self):
+    def toggle_emissive(self, rerender: bool):
         is_emissive = self.emissive.get()
         
         frame_set_enabled(self.frm_emissive, is_emissive)
         
         if is_emissive:
-            self.slider_emissive.bind("<ButtonRelease-1>",  lambda event: self.set_emissive(self.slider_emissive.get(), True))
+            self.slider_emissive.bind("<ButtonRelease-1>",  lambda event: self.set_emissive(True))
         else:
             self.slider_emissive.unbind("<ButtonRelease-1>")
             
         self.control.material.set_emissive(is_emissive)
         print("Setting emissive to " + str(is_emissive))
-        self.control.re_render()
+        if rerender:
+            self.control.re_render()
     
     def toggle_glow(self):
         frame_set_enabled(self.slider_emissive, self.glow.get())
