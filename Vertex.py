@@ -1,8 +1,7 @@
 import bpy
 import random
 # start in object mode
-def import_vertex(obj: object, material: bpy.types.Material):
-  #obj = bpy.data.objects['Eiffel_tower']
+def load_vertex(obj: object, material: bpy.types.Material):
   mesh = obj.data
   Color_Attribute = material.node_tree.nodes.new('ShaderNodeVertexColor')
 
@@ -26,3 +25,7 @@ def import_vertex(obj: object, material: bpy.types.Material):
 
 # set to vertex paint mode to see the result
   bpy.ops.object.mode_set(mode='VERTEX_PAINT')
+
+def delete_vertex(material: bpy.types.Material):
+  disp=material.node_tree.nodes["Principled BSDF"].inputs['Base Color']
+  material.node_tree.links.remove(disp.links[0])
