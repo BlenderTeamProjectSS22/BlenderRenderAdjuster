@@ -118,7 +118,9 @@ class MaterialController:
         self.set_emissive(opts.get("emissive", self.emissive))
         self.set_emissive_strength(opts.get("strength", self.strength))
         self.compositing.set_glow(opts.get("glow", self.compositing.glow))
-        if not opts.get("bump", False):
+        if opts.get("bump", False):
+            self.noise.enable()
+        else:
             self.noise.disable()
         if not opts.get("preserve_color", True):
             self.set_base_color(DEFAULT_COLOR)
