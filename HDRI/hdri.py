@@ -31,18 +31,18 @@ def set_background_image(hdri_path: str) -> None:
     background_node = world.node_tree.nodes["Background"]
     
     world.node_tree.links.new(environment_texture_node.outputs["Color"], background_node.inputs["Color"])
-    environment_texture_node.image = bpy.data.images.load(hdri_path)
+    environment_texture_node.image = bpy.data.images.load(bpy.path.relpath(hdri_path))
 
 # removes the background image
 def remove_background_image() -> None:
     world = bpy.data.worlds["World"]
     environment_texture_node = world.node_tree.nodes["Environment Texture"]
-    link = environment_texture_node.outputs["Color"].links[0]
-    world.node_tree.links.remove(link)
+    if environment_texture_node.outputs["Color"].links:
+        link = environment_texture_node.outputs["Color"].links[0]
+        world.node_tree.links.remove(link)
     
     image = world.node_tree.nodes["Environment Texture"].image
-    image.user_clear()
-    bpy.data.images.remove(image)
+    bpy.data.images.remove(image, do_unlink=True)
 
 # rotates background image around global Z axis
 # angle: degree, image moves to the right if positive
@@ -67,7 +67,15 @@ def pan_background_vertical(angle: float) -> None:
 # new_strength < 1: background will appear darker than normal
 # new_strength > 1: background will appear brighter than normal
 def set_background_brightness(new_strength : float) -> None:
-    assert new_strength != None and new_strength > 0
+    assert new_strength != None and new_strength >= 0
     world = bpy.data.worlds["World"]
     world.node_tree.nodes["Background"].inputs[1].default_value = new_strength
 
+# set if the background light should affect the objects
+# the parameter "is_affecting" decides it
+# Adapted from https://blender.stackexchange.com/questions/154928/use-hdri-without-lighting-the-scene/171096#171096
+def background_brightness_affects_objects(is_affecting : bool) -> None:
+    world = bpy.data.worlds["World"]
+    world.cycles_visibility.diffuse      = is_affecting
+    world.cycles_visibility.transmission = is_affecting
+    world.cycles_visibility.scatter      = is_affecting
