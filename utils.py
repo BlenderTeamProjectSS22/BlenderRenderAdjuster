@@ -182,7 +182,7 @@ class Renderer:
 # Enum containing all possible animations paired with their maximum frame length
 class Animation(enum.Enum):
     DEFAULT      = 5 * 24  # Set the default to 5 seconds video
-    DAYNIGHT     = 360
+    DAYNIGHT     = 120
     PRESET_ONE   = 1   # TODO Jonas
     PRESET_TWO   = 1   # TODO Jonas
     PRESET_THREE = 1   # TODO Jonas

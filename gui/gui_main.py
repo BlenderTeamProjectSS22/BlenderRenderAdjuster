@@ -667,7 +667,7 @@ class LightingWidgets(Frame):
             self.control.frames.add_animation(utils.Animation.DAYNIGHT)
             self.activate_brightness_slider(False)
             delete_lights(self.light_objects)
-            self.light_objects = day_night_cycle(self.daytime + self.STARTING_TIME_OF_DAY, self.get_brightness(), True, self.control.camera)
+            self.light_objects = day_night_cycle(self.daytime + self.STARTING_TIME_OF_DAY, self.get_brightness(), True, self.control.camera, 3)
         else:
             self.control.frames.remove_animation(utils.Animation.DAYNIGHT)
             delete_light_animation(self.light_objects)
