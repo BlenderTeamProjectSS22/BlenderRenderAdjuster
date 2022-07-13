@@ -13,25 +13,23 @@ def load_texture(texture_path: str, material: bpy.types.Material):
       
   #connect the node between 'Base Color' of bsdf and 'Color' of texImage
   material.node_tree.links.new(disp,texImage.outputs[0])
+
+def delete_texture(material: bpy.types.Material):
+  disp=material.node_tree.nodes["Principled BSDF"].inputs['Base Color']
+  material.node_tree.links.remove(disp.links[0])
   
-def control_scale(material: bpy.types.Material, gross: int):
-    Mapping = material.node_tree.nodes.new('ShaderNodeTexImage')
-    Coord = material.node_tree.nodes.new('ShaderNodeTexCoord')
-    
-    material.node_tree.links.new(Mapping.inputs['Vector'], Coord.outputs['UV'])
+#def control_scale(material: bpy.types.Material, gross: int):
+ #   Mapping = material.node_tree.nodes.new('ShaderNodeTexImage')
+  #  Coord = material.node_tree.nodes.new('ShaderNodeTexCoord')
+   # 
+    #material.node_tree.links.new(Mapping.inputs['Vector'], Coord.outputs['UV'])
         
-    disp=material.node_tree.nodes["ShaderNodeTexImage"].inputs['Vector'] 
-    material.node_tree.links.new(disp,Mapping.outputs['Vector'])
+    #disp=material.node_tree.nodes["ShaderNodeTexImage"].inputs['Vector'] 
+    #material.node_tree.links.new(disp,Mapping.outputs['Vector'])
     
     
     #control the scale of Texture image
-    bpy.data.materials["Material"].node_tree.nodes["Mapping"].inputs[3].default_value[0] = gross
-    bpy.data.materials["Material"].node_tree.nodes["Mapping"].inputs[3].default_value[1] = gross
-    bpy.data.materials["Material"].node_tree.nodes["Mapping"].inputs[3].default_value[2] = gross
-  
 
-  
-
-def delete_texture(material: bpy.types.Material):
-  disp=material.node_tree.nodes["Principled BSDF"].inputs["Base Color"]
-  material.node_tree.links.remove(disp.links[0])
+    #bpy.data.materials["Material"].node_tree.nodes["Mapping"].inputs[3].default_value[0] = gross
+    #bpy.data.materials["Material"].node_tree.nodes["Mapping"].inputs[3].default_value[1] = gross
+    #bpy.data.materials["Material"].node_tree.nodes["Mapping"].inputs[3].default_value[2] = gross
