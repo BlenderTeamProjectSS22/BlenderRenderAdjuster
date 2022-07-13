@@ -8,7 +8,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('.venv-blender/lib/python3.10/site-packages/3.3', '3.3')],
+    datas=[('.venv-blender/lib/python3.10/site-packages/3.3', '3.3'),  ('assets/', 'assets/')],
     hiddenimports=['__future__', 'PIL._tkinter_finder'],
     hookspath=[],
     hooksconfig={},
