@@ -480,7 +480,23 @@ class LightingWidgets(Frame):
 
 class PointCloudWidgets(Frame):
     hasconverted = False
+    cube = None
+    sphere = None
+
+    
+   
+    
     def __init__(self, master, control):
+        bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(0.5, 0.5, 0.5))
+        self.cube = bpy.context.object
+        bpy.context.object.hide_render = True
+        bpy.context.object.hide_viewport = True
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+        self.sphere = bpy.context.object
+        bpy.context.object.hide_render = True
+        bpy.context.object.hide_viewport = True
+
+        self.size : float = 1
         Frame.__init__(self, master, borderwidth=2, relief="groove")
         self.master = master
         self.control = control
@@ -507,7 +523,12 @@ class PointCloudWidgets(Frame):
        
         
         lbl_size = Label(master=self, text="Point Size")
-        slider_size = Scale(master=self, orient="horizontal", showvalue=False, command=self.changesize)
+        slider_size = Scale(master=self, to = 8.0, orient="horizontal",
+                                  resolution = 0.1, showvalue=False, command=lambda val: self.set_size(val, False))
+        slider_size.bind("<ButtonRelease-1>", lambda event : self.set_size(self.get_size(), True)) 
+        slider_size.set(self.get_size())  
+
+
         check_pointcloud.grid(row=1, column=0, sticky="w")
         lbl_size.grid(row=2, column=0, sticky="w")
         slider_size.grid(row=2, column=1,  sticky="we")
@@ -520,9 +541,9 @@ class PointCloudWidgets(Frame):
     def set_object(self, *args):
         tex = PointCloudObjects(args[0])
         if tex == PointCloudObjects.SPHERE:
-            pass
+            bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.sphere
         elif tex == PointCloudObjects.CUBE:
-            pass
+            bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.cube
         elif tex == PointCloudObjects.DISK:
             pass
         else: # NONE
@@ -567,9 +588,15 @@ class PointCloudWidgets(Frame):
         nodes = node_group.nodes
         group_in = nodes.get('Group Input')
         group_out = nodes.get('Group Output')
-        new_node = nodes.new('GeometryNodeMeshToPoints')
-        node_group.links.new(group_in.outputs[0], new_node.inputs['Mesh'])
-        node_group.links.new(group_out.inputs[0], new_node.outputs[0])
+        point_node = nodes.new('GeometryNodeMeshToPoints')
+        object_node = nodes.new("GeometryNodeObjectInfo")
+        instance_node = nodes.new ('GeometryNodeInstanceOnPoints')
+        node_group.links.new(group_in.outputs[0], point_node.inputs['Mesh'])
+        node_group.links.new(instance_node.inputs[0], point_node.outputs[0])
+        node_group.links.new(instance_node.inputs[2], object_node.outputs[3])
+        node_group.links.new( group_out.inputs[0],instance_node.outputs[0])
+
+        
 
     def convert(self):
         self.selectMainObject()
@@ -589,9 +616,17 @@ class PointCloudWidgets(Frame):
                 self.hasconverted = True
         self.control.re_render()
     
-    def changesize(self):
-        bpy.data.node_groups["GeometryNodes"].nodes["Mesh to Points"].inputs[3].default_value = 8.75
+    def get_size(self) -> float:
+        return self.size
 
+    def set_size(self, value, is_released : bool) -> None:
+        self.size = float(value)
+        if is_released:
+            bpy.data.node_groups["GeometryNodes"].nodes["Mesh to Points"].inputs[3].default_value = value
+        self.control.re_render()
+
+    
+    
 
 
 
@@ -617,7 +652,7 @@ class PointCloudObjects(enum.Enum):
     CUBE = "cube"
     DISK = "disk"
 
-
+   
 
 
 class RightPanel(Frame):
