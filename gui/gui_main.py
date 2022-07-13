@@ -478,7 +478,7 @@ class TextureWidgets(Frame):
     
     def import_texture(self):
         filetypes = [
-            ("PNG image", "*.png")
+            ("PNG image", "*.png"), ("jpg image", "*.jpg"),
         ]
         filename = filedialog.askopenfilename(title="Select a texture", filetypes=filetypes)
 
