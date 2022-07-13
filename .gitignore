@@ -7,3 +7,6 @@ dist/
 data_samples
 preview.png
 .DS_Store
+hdri_thumbs/
+temp.png
+blender_render.log
