@@ -15,6 +15,7 @@ class Camera:
         self.z = z
         bpy.ops.object.camera_add(location=(x, y, z))
         self.cam = bpy.context.object
+        self.set_camera_rotation(90, 0, 90)
 
     def set_camera_position(self, x: float, y: float, z: float):
         self.x = x

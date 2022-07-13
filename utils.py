@@ -178,11 +178,16 @@ class Renderer:
     def set_aspect_ratio(self, w: int, h: int) -> None:
         self.scene.render.resolution_y = int(self.scene.render.resolution_x / (w / h))
     
+    # set camera
+    def set_camera(self, camera: bpy.types.Object) -> None:
+        self.scene.camera = camera
+        self.camera = camera
+
 # Enum containing all possible animations paired with their maximum frame length
 class Animation(enum.Enum):
     DEFAULT      = 5 * 24  # Set the default to 5 seconds video
     DAYNIGHT     = 360
-    PRESET_ONE   = 100   # TODO Jonas
+    PRESET_ONE   = 50   # TODO Jonas
     PRESET_TWO   = 1   # TODO Jonas
     PRESET_THREE = 1   # TODO Jonas
 
