@@ -14,5 +14,3 @@ def load_texture(texture_path: str, material: bpy.types.Material):
 def delete_texture(material: bpy.types.Material):
   disp=material.node_tree.nodes["Principled BSDF"].inputs['Base Color']
   material.node_tree.links.remove(disp.links[0])
-  
-
