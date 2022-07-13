@@ -68,10 +68,12 @@ class CompositeNodes:
     
     def set_glow(self, is_glowing: bool):
         if is_glowing:
+            bpy.context.scene.use_nodes = True
             self.glow = True
             self.tree.links.new(self.rlayer.outputs["Image"], self.glare.inputs["Image"])
             self.tree.links.new(self.glare.outputs["Image"], self.output.inputs["Image"])
         else:
+            bpy.context.scene.use_nodes = False
             self.glow = False
             self.tree.links.new(self.rlayer.outputs["Image"], self.output.inputs["Image"])
 
