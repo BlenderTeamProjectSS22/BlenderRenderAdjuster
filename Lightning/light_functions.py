@@ -239,7 +239,7 @@ def frame_setting_of_day_night_cycle(frame_current: int, lights: list[Light], sc
                 lightcollection[not is_day].set_brightness(((HALF_CYCLE_ANGLE - current_angle) * brightnesses[not is_day]) / (2 * DAWN_ANGLE)
                                                         + (brightnesses[not is_day] / 2))
                 lightcollection[is_day].set_brightness(((DAWN_ANGLE-(HALF_CYCLE_ANGLE -current_angle)) * brightnesses[is_day]) / (2 * DAWN_ANGLE))
-            elif current_angle > (HALF_CYCLE_ANGLE - DAWN_ANGLE - speed):
+            elif current_angle >= ((HALF_CYCLE_ANGLE - DAWN_ANGLE) - speed):
                 put_rotate_light_in_cyrcle(lightcollection[is_day], radius_of_light_object(lightcollection[is_day]), 0)
                 lightcollection[is_day].get_datas()[1].keyframe_insert(data_path = "rotation_euler", frame = f)
                 lightcollection[is_day].get_datas()[1].keyframe_insert(data_path = "location", frame = f)
@@ -261,7 +261,7 @@ def frame_setting_of_day_night_cycle(frame_current: int, lights: list[Light], sc
 
 # makes a day-night-cycle
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
-# - speed = a full day needs 360 frames on speed = 1
+# - speed = a full day needs 360 frames on speed = 1 (not tested for high speed)
 # all light objects will be deleted
 def day_night_cycle(starting_time: int, brightness: float,
                      add_fill_and_rim_light: bool, camera_object: OrbitCam, speed : int) -> list[Light]:
@@ -277,9 +277,10 @@ def day_night_cycle(starting_time: int, brightness: float,
         current_time = 0
     else:
         current_time = starting_time
+    if speed < 1:
+        speed = 1
     # setting starting values
     current_angle = ((current_time % 12) * 15 + 89) % HALF_CYCLE_ANGLE # transforming time to angle
-    current_time *= 10
     lights = day_light(brightness, 0,
                        add_fill_and_rim_light, camera_object)
     lightcollection = [lights[0]]
@@ -287,7 +288,7 @@ def day_night_cycle(starting_time: int, brightness: float,
     # lightcollection 0 = sun and 1 = moon
     # bightnesses: for saving the energies of the light sources
     brightnesses = [lightcollection[0].get_brightness(), lightcollection[1].get_brightness()] 
-    if current_time > 60 and starting_time <= 180:
+    if current_time > 6 and current_time <= 18:
         is_day = True
         lightcollection[1].set_brightness(0) 
     else:
