@@ -187,10 +187,7 @@ class Renderer:
 class Animation(enum.Enum):
     DEFAULT      = 5 * 24  # Set the default to 5 seconds video
     DAYNIGHT     = 360
-    PRESET_ONE   = 50   # TODO Jonas
-    PRESET_TWO   = 1   # TODO Jonas
-    PRESET_THREE = 1   # TODO Jonas
-
+    
 class FrameControl():
     def __init__(self, slider_max: IntVar):
         # List of all animation maximum frames

@@ -113,7 +113,6 @@ class LeftPanel(Frame):
         Frame.__init__(self, master)
         self.master = master
         self.control = control
-        self.camera_animation_cam = cammod.Camera("cam1", 5, 0, 0)
         lbl_spacer = Label(master=self, text="")
 
         lbl_fileop = Label(master=self, text="File operations", font="Arial 10 bold")
@@ -144,28 +143,11 @@ class LeftPanel(Frame):
         btn_help.pack(fill=tk.X)
         frame_ops.pack()
 
-
-        cam_frame = tk.Frame(master=self)
-        lbl_camerapresets = tk.Label(master=cam_frame, text="Camera Presets", font="Arial 10 bold")
-        btn_preset1 = tk.Button(master=cam_frame, text="Preset 1", command=self.camera_preset_1)
-        btn_preset2 = tk.Button(master=cam_frame, text="Preset 2")
-        btn_preset3 = tk.Button(master=cam_frame, text="Preset 3")
-        self.frames_entry_var = IntVar()
-        frame_entry = tk.Entry(master=cam_frame, textvariable=self.frames_entry_var)
-        btn_set = tk.Button(master=cam_frame, text="Set", command=self.set_frames)
-        self.is_renderer = BooleanVar()
-        check_renderer = tk.Checkbutton(master=cam_frame, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
-
+        # Initialize Animation controls
         lbl_spacer2 = Label(master=self, text="")
         lbl_spacer2.pack()
-        lbl_camerapresets.pack(fill=tk.X)
-        btn_preset1.pack(fill=tk.X)
-        btn_preset2.pack(fill=tk.X)
-        btn_preset3.pack(fill=tk.X)
-        frame_entry.pack()
-        btn_set.pack()
-        check_renderer.pack(fill=tk.X)
-        cam_frame.pack()
+        cameraanimationcontrols = CameraAnimationControls(self, self.control)
+        cameraanimationcontrols.pack(fill=tk.X)
     
         lbl_spacer3 = Label(master=self, text="")
         lbl_spacer3.pack()
@@ -277,25 +259,75 @@ class LeftPanel(Frame):
         webbrowser.open_new_tab("https://github.com/garvita-tiwari/blender_render/wiki")
 
 
+class CameraAnimationControls(Frame):
+    def __init__(self, master, control):
+        Frame.__init__(self, master)
+
+    
+        validate_int = self.register(self.validate_integer)
+        # TODO set start value of frame entry to current frame
+        # TODO presets for camera positions
+
+        self.control = control
+        self.camera_animation_cam = cammod.Camera("cam1", 5, 0, 0)
+
+        lbl_camerapresets = tk.Label(master=self, text="Camera Presets", font="Arial 10 bold")
+        btn_preset1 = tk.Button(master=self, text="Preset 1", command=self.camera_preset_1)
+        btn_preset2 = tk.Button(master=self, text="Preset 2", command=self.camera_preset_2)
+        btn_preset3 = tk.Button(master=self, text="Preset 3", command=self.camera_preset_3)
+        self.frames_entry_var = IntVar()
+        frame_entry = tk.Entry(master=self, textvariable=self.frames_entry_var, validate="key", validatecommand=(validate_int, '%P'))
+        btn_set = tk.Button(master=self, text="Set", command=self.set_frames)
+        self.is_renderer = BooleanVar()
+        check_renderer = tk.Checkbutton(master=self, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
+        self.is_tracking = BooleanVar()
+        check_tracking = tk.Checkbutton(master=self, text="Track camera", variable=self.is_tracking, anchor="w", command=self.switch_tracking)
+
+        lbl_camerapresets.grid()
+        btn_preset1.grid(sticky="we")
+        btn_preset2.grid(sticky="we")
+        btn_preset3.grid(sticky="we")
+        frame_entry.grid(row=4, column=0, sticky="w", pady=3, padx=3)
+        btn_set.grid(row=4, column=0, sticky="e", pady=3)
+        check_tracking.grid()
+        check_renderer.grid()
+        
+
+    def validate_integer(self, P):
+        if str.isdigit(P) or P == "":
+            return True
+        else:
+            return False
+        
+
     def camera_preset_1(self):
-        self.control.frames.add_custom_animation(150)
-        self.control.frames.add_animation(utils.Animation.PRESET_ONE)
         self.control.frames.remove_animation(utils.Animation.DEFAULT)
-        self.control.frames.remove_animation(utils.Animation.PRESET_TWO)
-        self.control.frames.remove_animation(utils.Animation.PRESET_THREE)
-        self.camera_animation_cam.preset_1(25, self.control.model)
+
+        self.camera_animation_cam.preset_1(25, self.control.model, self.is_tracking.get())
         self.camera_animation_cam.set_camera_position(3, 3, 0)
         self.camera_animation_cam.set_camera_rotation(90, 0, 135)
         self.camera_animation_cam.add_keyframe(50)
         self.camera_animation_cam.set_handles("AUTO")
         self.control.re_render()
 
+    def camera_preset_2(self):
+        pass
+
+    def camera_preset_3(self):
+        pass
 
     def switch_renderer(self):
         if self.is_renderer.get():
             self.control.renderer.set_camera(self.camera_animation_cam.cam)
         else:
             self.control.renderer.set_camera(self.control.camera.camera)
+        self.control.re_render()
+
+    def switch_tracking(self):
+        if self.is_tracking.get():
+            self.camera_animation_cam.set_mode("track", self.control.model)
+        else:
+            self.camera_animation_cam.set_mode("free", self.control.model)
         self.control.re_render()
 
     def set_frames(self):

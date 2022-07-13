@@ -71,8 +71,6 @@ class Camera:
             pt.handle_right_type = mode
         
 
-
-
     def drive_by(
         self,
         frames: int,
@@ -103,20 +101,23 @@ class Camera:
             self.cam.constraints.new(type="TRACK_TO")
             self.cam.constraints["Track To"].target = object
         else:
-            self.cam.constraints["Track To"].delete()
+            self.cam.constraints.remove(self.cam.constraints["Track To"])
 
-    def preset_1(self, frames: int, object: bpy.types.Object):
-
-
-
+    def preset_1(self, frames: int, object: bpy.types.Object, track: bool):
         self.drive_by(
             frames,
             [5, -3, 0],
             [5, 3, 0],
             [90, 0, 90],
-            False,
+            track,
             object,
         )
+
+    def preset_2(self, frames: int, object: bpy.types.Object):
+        pass
+
+    def preset_3(self, frames: int, object: bpy.types.Object):
+        pass
 
 class CameraPath:
     def __init__(self, path: str, cam: Camera):
