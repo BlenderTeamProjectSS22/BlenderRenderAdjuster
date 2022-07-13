@@ -1,4 +1,5 @@
 from calendar import c
+from os import set_inheritable
 import bpy
 import math
 from math import radians
@@ -15,6 +16,7 @@ class Camera:
         self.z = z
         bpy.ops.object.camera_add(location=(x, y, z))
         self.cam = bpy.context.object
+        self.cam.data.lens = 25
         self.set_camera_rotation(90, 0, 90)
 
     def set_camera_position(self, x: float, y: float, z: float):
@@ -49,6 +51,28 @@ class Camera:
         self.cam.keyframe_insert(data_path="location", frame=frame)
         self.cam.keyframe_insert(data_path="rotation_euler", frame=frame)
 
+    def set_handles(self, mode: str):
+
+        # ensure the action is still available
+        if self.cam.animation_data.action:
+        # and store it in a convenience variable
+            my_action = bpy.data.actions.get(self.cam.animation_data.action.name)
+        bpy.ops.object.select_all(action="DESELECT")
+        my_fcu_rot = my_action.fcurves.find("rotation_euler", index=1)
+        my_fcu_pos = my_action.fcurves.find("location", index=1)
+        for pt in my_fcu_rot.keyframe_points:
+            pt.select_control_point
+            pt.handle_left_type = mode
+            pt.handle_right_type = mode
+            print(pt.handle_left_type)
+        for pt in my_fcu_pos.keyframe_points:
+            pt.select_control_point
+            pt.handle_left_type = type=mode
+            pt.handle_right_type = mode
+        
+
+
+
     def drive_by(
         self,
         frames: int,
@@ -82,9 +106,7 @@ class Camera:
             self.cam.constraints["Track To"].delete()
 
     def preset_1(self, frames: int, object: bpy.types.Object):
-        startp = [-3,-5,0.5]
-        endP = [6,5,0.5]
-        rot = [90,0,90]
+
 
 
         self.drive_by(

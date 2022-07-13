@@ -150,6 +150,8 @@ class LeftPanel(Frame):
         btn_preset1 = Button(master=self, text="Preset 1", command=self.camera_preset_1)
         btn_preset2 = Button(master=self, text="Preset 2")
         btn_preset3 = Button(master=self, text="Preset 3")
+        self.frames_entry_var = IntVar()
+        frame_entry = Entry(master=self, textvariable=self.frames_entry_var)
         self.is_renderer = BooleanVar()
         check_renderer = Checkbutton(master=self, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
 
@@ -158,6 +160,7 @@ class LeftPanel(Frame):
         btn_preset1.pack(fill=tk.X)
         btn_preset2.pack(fill=tk.X)
         btn_preset3.pack(fill=tk.X)
+        frame_entry.pack(fill=tk.X)
         check_renderer.pack(fill=tk.X)
         
         lbl_spacer3 = Label(master=self, text="")
@@ -271,12 +274,18 @@ class LeftPanel(Frame):
 
 
     def camera_preset_1(self):
+        self.control.frames.add_custom_animation(150)
         self.control.frames.add_animation(utils.Animation.PRESET_ONE)
         self.control.frames.remove_animation(utils.Animation.DEFAULT)
         self.control.frames.remove_animation(utils.Animation.PRESET_TWO)
         self.control.frames.remove_animation(utils.Animation.PRESET_THREE)
-        self.camera_animation_cam.preset_1(self.control.frames.get_max_frame(), self.control.model)
-        self.camera_animation_cam.cam.select_set(True)
+        self.camera_animation_cam.preset_1(25, self.control.model)
+        self.camera_animation_cam.set_camera_position(3, 3, 0)
+        self.camera_animation_cam.set_camera_rotation(90, 0, 135)
+        self.camera_animation_cam.add_keyframe(50)
+        self.camera_animation_cam.set_handles("AUTO")
+        self.control.re_render()
+
 
     def switch_renderer(self):
         if self.is_renderer.get():

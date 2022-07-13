@@ -196,6 +196,7 @@ class FrameControl():
         # List of all animation maximum frames
         self.slider_max = slider_max
         self.active_animations = []
+        self.custom_length = 0
         self.add_animation(Animation.DEFAULT)
     
     # Sets the currently renderer frame of the scene
@@ -203,8 +204,8 @@ class FrameControl():
         bpy.context.scene.frame_current = frame
     
     # Get the maximum amount of frames necessary for the animation
-    def get_max_frame(self) -> int:
-        return max(self.active_animations, key=lambda a: a.value).value
+    def get_max_frame(self):
+        return max(self.custom_length, max(self.active_animations, key=lambda a: a.value).value)
     
     # Add an animation to be active, auto-changing the max frame to the from the longest animation
     def add_animation(self, animation: Animation):
@@ -213,6 +214,12 @@ class FrameControl():
         self.active_animations.append(animation)
         self.__update_max_frame()
     
+    def add_custom_animation(self, frames: int):
+        assert(frames > 0)
+        print("Adding custom animation with length " + str(frames))
+        self.custom_length = frames
+        self.__update_max_frame()
+
     # Removes animation and adjusts max frame
     def remove_animation(self, animation: Animation):
         if animation in self.active_animations:
