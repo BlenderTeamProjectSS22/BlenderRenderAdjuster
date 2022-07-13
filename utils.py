@@ -182,7 +182,7 @@ class Renderer:
 class Animation(enum.Enum):
     DEFAULT      = 5 * 24  # Set the default to 5 seconds video
     DAYNIGHT     = 360
-    PRESET_ONE   = 1   # TODO Jonas
+    PRESET_ONE   = 100   # TODO Jonas
     PRESET_TWO   = 1   # TODO Jonas
     PRESET_THREE = 1   # TODO Jonas
 
@@ -210,9 +210,12 @@ class FrameControl():
     
     # Removes animation and adjusts max frame
     def remove_animation(self, animation: Animation):
-        print("Removing animation " + str(animation.name) + " with length " + str(animation.value))
-        self.active_animations.remove(animation)
-        self.__update_max_frame()
+        if animation in self.active_animations:
+            print("Removing animation " + str(animation.name) + " with length " + str(animation.value))
+            self.active_animations.remove(animation)
+            self.__update_max_frame()
+        else:
+            print("Animation " + str(animation.name) + " not found in active animations")
     
     # Update the maximum frame and adjust values (private method)
     def __update_max_frame(self):

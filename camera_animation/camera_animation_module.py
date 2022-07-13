@@ -60,8 +60,11 @@ class Camera:
         #
         self.set_camera_position(startPoint[0], startPoint[1], startPoint[2])
         if track == False:
-            self.set_mode("dont_track", object)
-            self.set_camera_rotation(Rotation[0], Rotation[1], Rotation[2])
+            try:
+                self.set_camera_rotation(Rotation[0], Rotation[1], Rotation[2])
+                self.set_mode("dont_track", object)
+            except:
+                pass
         else:
             self.set_mode("track", object)
         self.add_keyframe(0)
@@ -77,6 +80,20 @@ class Camera:
         else:
             self.cam.constraints["Track To"].delete()
 
+    def preset_1(self, frames: int, object: bpy.types.Object):
+        startp = [-3,-5,0.5]
+        endP = [6,5,0.5]
+        rot = [90,0,90]
+
+
+        self.drive_by(
+            frames,
+            [5, -3, 0],
+            [5, 3, 0],
+            [90, 0, 90],
+            False,
+            object,
+        )
 
 class CameraPath:
     def __init__(self, path: str, cam: Camera):

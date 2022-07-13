@@ -51,6 +51,9 @@ class ProgramGUI:
         utils.clear_scene()
         camera   = utils.OrbitCam()
         renderer = utils.Renderer(camera.camera)
+        self.renderer_stash = renderer
+        camera_animation_cam = cammod.Camera("cam1", 6, 0, 0.5)
+        animation_renderer = utils.Renderer(camera_animation_cam.cam)
         renderer.set_preview_render()
         self.max_frame = IntVar()
         frames = utils.FrameControl(self.max_frame)
@@ -113,7 +116,6 @@ class LeftPanel(Frame):
         Frame.__init__(self, master)
         self.master = master
         self.control = control
-        self.camera_animation_cam = cammod.Camera("cam1", 6, 0, 0.5)
         lbl_spacer = Label(master=self, text="")
 
         lbl_fileop = Label(master=self, text="File operations", font="Arial 10 bold")
@@ -150,14 +152,15 @@ class LeftPanel(Frame):
         btn_preset1 = Button(master=self, text="Preset 1", command=self.camera_preset_1)
         btn_preset2 = Button(master=self, text="Preset 2")
         btn_preset3 = Button(master=self, text="Preset 3")
+        self.is_renderer = BooleanVar()
+        check_renderer = Checkbutton(master=self, text="Toggle Camera", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
 
         lbl_spacer2.pack()
         lbl_camerapresets.pack(fill=tk.X)
         btn_preset1.pack(fill=tk.X)
         btn_preset2.pack(fill=tk.X)
         btn_preset3.pack(fill=tk.X)
-        
-
+        check_renderer.pack(fill=tk.X)
         
         lbl_spacer3 = Label(master=self, text="")
         lbl_spacer3.pack()
@@ -270,12 +273,19 @@ class LeftPanel(Frame):
 
 
     def camera_preset_1(self):
-        startp = [-3,-5,0.5]
-        endP = [6,5,0.5]
-        rot = [90,0,90]
-        self.camera_animation_cam.drive_by(100, startp, endP, rot, True, self.control.model)
+        self.control.frames.add_animation(utils.Animation.PRESET_ONE)
+        self.control.frames.remove_animation(utils.Animation.DEFAULT)
+        self.control.frames.remove_animation(utils.Animation.PRESET_TWO)
+        self.control.frames.remove_animation(utils.Animation.PRESET_THREE)
+        self.camera_animation_cam.preset_1(100, self.control.model)
         self.camera_animation_cam.cam.select_set(True)
-        
+
+    def switch_renderer(self):
+        if self.is_renderer.get():
+            self.switch_camera(True)
+        else:
+            self.switch_camera(False)
+        self.control.re_render()
 
 class CameraControls(Frame):
     def __init__(self, master, control):
