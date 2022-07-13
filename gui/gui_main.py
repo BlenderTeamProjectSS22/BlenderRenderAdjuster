@@ -144,25 +144,29 @@ class LeftPanel(Frame):
         btn_help.pack(fill=tk.X)
         frame_ops.pack()
 
-        lbl_spacer2 = Label(master=self, text="")
 
-        lbl_camerapresets = Label(master=self, text="Camera Presets", font="Arial 10 bold")
-        btn_preset1 = Button(master=self, text="Preset 1", command=self.camera_preset_1)
-        btn_preset2 = Button(master=self, text="Preset 2")
-        btn_preset3 = Button(master=self, text="Preset 3")
+        cam_frame = tk.Frame(master=self)
+        lbl_camerapresets = tk.Label(master=cam_frame, text="Camera Presets", font="Arial 10 bold")
+        btn_preset1 = tk.Button(master=cam_frame, text="Preset 1", command=self.camera_preset_1)
+        btn_preset2 = tk.Button(master=cam_frame, text="Preset 2")
+        btn_preset3 = tk.Button(master=cam_frame, text="Preset 3")
         self.frames_entry_var = IntVar()
-        frame_entry = Entry(master=self, textvariable=self.frames_entry_var)
+        frame_entry = tk.Entry(master=cam_frame, textvariable=self.frames_entry_var)
+        btn_set = tk.Button(master=cam_frame, text="Set", command=self.set_frames)
         self.is_renderer = BooleanVar()
-        check_renderer = Checkbutton(master=self, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
+        check_renderer = tk.Checkbutton(master=cam_frame, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
 
+        lbl_spacer2 = Label(master=self, text="")
         lbl_spacer2.pack()
         lbl_camerapresets.pack(fill=tk.X)
         btn_preset1.pack(fill=tk.X)
         btn_preset2.pack(fill=tk.X)
         btn_preset3.pack(fill=tk.X)
-        frame_entry.pack(fill=tk.X)
+        frame_entry.pack()
+        btn_set.pack()
         check_renderer.pack(fill=tk.X)
-        
+        cam_frame.pack()
+    
         lbl_spacer3 = Label(master=self, text="")
         lbl_spacer3.pack()
         modelcontrols = ModelControls(self, self.control)
@@ -292,6 +296,12 @@ class LeftPanel(Frame):
             self.control.renderer.set_camera(self.camera_animation_cam.cam)
         else:
             self.control.renderer.set_camera(self.control.camera.camera)
+        self.control.re_render()
+
+    def set_frames(self):
+        self.control.frames.add_custom_animation(self.frames_entry_var.get())
+        self.control.frames.remove_animation(utils.Animation.DEFAULT)
+        print("Frames set to: " + str(self.frames_entry_var.get()))
         self.control.re_render()
 
 class CameraControls(Frame):

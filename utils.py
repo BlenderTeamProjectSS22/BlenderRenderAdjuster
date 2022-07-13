@@ -204,8 +204,11 @@ class FrameControl():
         bpy.context.scene.frame_current = frame
     
     # Get the maximum amount of frames necessary for the animation
-    def get_max_frame(self):
-        return max(self.custom_length, max(self.active_animations, key=lambda a: a.value).value)
+    def get_max_frame(self) -> int:
+        try:
+            return max(self.custom_length, max(self.active_animations, key=lambda a: a.value).value)
+        except ValueError:
+            return self.custom_length
     
     # Add an animation to be active, auto-changing the max frame to the from the longest animation
     def add_animation(self, animation: Animation):
@@ -214,6 +217,7 @@ class FrameControl():
         self.active_animations.append(animation)
         self.__update_max_frame()
     
+    # Add an animation with a custom length
     def add_custom_animation(self, frames: int):
         assert(frames > 0)
         print("Adding custom animation with length " + str(frames))
