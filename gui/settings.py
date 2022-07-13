@@ -8,7 +8,7 @@
 from dataclasses import dataclass
 import typing as t
 import yaml
-from utils import Renderer, OrbitCam
+from utils import Renderer, OrbitCam, FrameControl
 from gui.render_preview import RenderPreview
 from materials.materials import MaterialController
 from gui.properties import *
@@ -51,11 +51,13 @@ class Control:
     camera: OrbitCam
     settings: Settings
     material: MaterialController
+    frames: FrameControl
     
-    def __init__(self, renderer, preview, camera):
+    def __init__(self, renderer, preview, camera, frames):
         self.renderer = renderer
         self.preview = preview
         self.camera = camera
+        self.frames = frames
         self.settings = self.load_settings()
         if self.settings is None:
             print("Problem loading settings")
