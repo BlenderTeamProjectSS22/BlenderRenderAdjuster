@@ -92,6 +92,8 @@ def day_light(brightness: float, angle: int, add_fill_and_rim_light: bool, camer
     BRIGHTNESS_OF_FILL = 1500
     RADIUS_OF_RIM = 50
     RADIUS_OF_MAIN = 20
+    DAWN_ANGLE : int = 30
+    HALF_CYCLE_ANGLE : int = 180
     # precondition
     angle = precondition_angle_check(angle)
     # the distance of the lights
@@ -108,7 +110,7 @@ def day_light(brightness: float, angle: int, add_fill_and_rim_light: bool, camer
     # color of the sun
     color = [0.945, 0.855, 0.643]
     # dawnlight
-    if angle > 150:
+    if angle > (HALF_CYCLE_ANGLE - DAWN_ANGLE):
         color[1] -= (angle-140) * 0.021
         color[2] -= (angle-140) * 0.016
     # creating the lights
@@ -209,9 +211,11 @@ def put_rotate_light_in_cyrcle(light: Light, radius: float, angle : int):
 # function should only be used in day_night_circle()
 def frame_setting_of_day_night_cycle(frame_current: int, lights: list[Light], scene, current_angle: int, day_color: list[float],
                                         brightnesses: list[float], is_day: bool,
-                                        lightcollection: list[Light], radius: float) -> None:
+                                        lightcollection: list[Light], radius: float, speed: int) -> None:
+    # constants
     DAWN_ANGLE : int = 35
     HALF_CYCLE_ANGLE : int = 180
+    # loop
     for f in range(scene.frame_start, scene.frame_end + 1):
         scene.frame_set(f)
         # day and night change
@@ -235,7 +239,7 @@ def frame_setting_of_day_night_cycle(frame_current: int, lights: list[Light], sc
                 lightcollection[not is_day].set_brightness(((HALF_CYCLE_ANGLE - current_angle) * brightnesses[not is_day]) / (2 * DAWN_ANGLE)
                                                         + (brightnesses[not is_day] / 2))
                 lightcollection[is_day].set_brightness(((DAWN_ANGLE-(HALF_CYCLE_ANGLE -current_angle)) * brightnesses[is_day]) / (2 * DAWN_ANGLE))
-            elif current_angle == (HALF_CYCLE_ANGLE - DAWN_ANGLE):
+            elif current_angle >= ((HALF_CYCLE_ANGLE - DAWN_ANGLE) - speed):
                 put_rotate_light_in_cyrcle(lightcollection[is_day], radius_of_light_object(lightcollection[is_day]), 0)
                 lightcollection[is_day].get_datas()[1].keyframe_insert(data_path = "rotation_euler", frame = f)
                 lightcollection[is_day].get_datas()[1].keyframe_insert(data_path = "location", frame = f)
@@ -244,10 +248,13 @@ def frame_setting_of_day_night_cycle(frame_current: int, lights: list[Light], sc
             elif current_angle < DAWN_ANGLE:
                 lightcollection[not is_day].set_brightness((current_angle * brightnesses[not is_day]) / (2 * DAWN_ANGLE) + (brightnesses[not is_day] / 2))
                 lightcollection[is_day].set_brightness(((DAWN_ANGLE-1-current_angle) * brightnesses[is_day]) / (2 * DAWN_ANGLE))
+            elif current_angle < (DAWN_ANGLE + speed):
+                lightcollection[is_day].set_brightness(0)
+                lightcollection[not is_day].set_brightness(brightnesses[not is_day])
             # fit position and rotation  
             put_rotate_light_in_cyrcle(lights[0], radius, current_angle)
         # increment angle and saving datas in frames
-        current_angle += 1
+        current_angle += speed
         lights[0].get_datas()[1].keyframe_insert(data_path = "rotation_euler", frame = f)
         lights[0].get_datas()[1].keyframe_insert(data_path = "location", frame = f)
         for light in lightcollection:
@@ -257,9 +264,12 @@ def frame_setting_of_day_night_cycle(frame_current: int, lights: list[Light], sc
 
 # makes a day-night-cycle
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
+# - speed = a full day needs 360 frames on speed = 1 (only values from 1 to 5 allowed)
 # all light objects will be deleted
 def day_night_cycle(starting_time: int, brightness: float,
-                     add_fill_and_rim_light: bool, camera_object: OrbitCam) -> list[Light]:
+                     add_fill_and_rim_light: bool, camera_object: OrbitCam, speed : int) -> list[Light]:
+    # constants
+    HALF_CYCLE_ANGLE : int = 180
     # before starting time
     delete_all_lights()
     lightcollection : list[Light] = []
@@ -270,9 +280,12 @@ def day_night_cycle(starting_time: int, brightness: float,
         current_time = 0
     else:
         current_time = starting_time
+    if speed < 1:
+        speed = 1
+    if speed > 5:
+        speed = 5
     # setting starting values
-    current_angle = ((current_time % 12) * 15 + 89) % 180 # transforming time to angle
-    current_time *= 10
+    current_angle = ((current_time % 12) * 15 + 89) % HALF_CYCLE_ANGLE # transforming time to angle
     lights = day_light(brightness, 0,
                        add_fill_and_rim_light, camera_object)
     lightcollection = [lights[0]]
@@ -280,7 +293,7 @@ def day_night_cycle(starting_time: int, brightness: float,
     # lightcollection 0 = sun and 1 = moon
     # bightnesses: for saving the energies of the light sources
     brightnesses = [lightcollection[0].get_brightness(), lightcollection[1].get_brightness()] 
-    if current_time > 60 and starting_time <= 180:
+    if current_time > 6 and current_time <= 18:
         is_day = True
         lightcollection[1].set_brightness(0) 
     else:
@@ -296,7 +309,7 @@ def day_night_cycle(starting_time: int, brightness: float,
     # setting per frame
     frame_setting_of_day_night_cycle(frame_current, lights, scene, current_angle, day_color,
                                     brightnesses, is_day,
-                                    lightcollection, radius)
+                                    lightcollection, radius, speed)
     
     # postconditions
     assert len(lightcollection) == 2
