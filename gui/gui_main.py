@@ -263,10 +263,8 @@ class LeftPanel(Frame):
 class CameraAnimationControls(Frame):
     def __init__(self, master, control):
         Frame.__init__(self, master)
-
     
         validate_int = self.register(self.validate_integer)
-
         self.control = control
         self.camera_animation_cam = cammod.Camera("cam1", 5, 0, 0)
         self.columnconfigure(0, weight=2)
@@ -299,9 +297,6 @@ class CameraAnimationControls(Frame):
         check_tracking.grid(sticky="w", columnspan=2)
         check_renderer.grid(sticky="w", columnspan=2)
         
-
-
-
 
     def validate_integer(self, P):
         if str.isdigit(P) or P == "":
@@ -364,7 +359,7 @@ class AnimationPreview(Toplevel):
             Toplevel.__init__(self)
             self.master = master
             self.control = control
-            self.title("Settings")
+            self.title("Preview of animation")
             
             self.focus_set()
             self.grab_set()
@@ -386,7 +381,7 @@ class PreviewContent(Frame):
         file = os.path.join(parentdir, filename)
         my_label = Label(self)
         my_label.pack()
-        player = tkvideo(file, my_label, loop = 1, size = (1280,720))
+        player = tkvideo(file, my_label, loop = 1, size = (852,480))
         player.play()
 
     def cancel(self, event=None):
