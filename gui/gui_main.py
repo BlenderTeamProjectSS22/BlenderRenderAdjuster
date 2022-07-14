@@ -161,8 +161,11 @@ class LeftPanel(Frame):
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
-        print("Import")
         self.control.material.apply_material(self.control.model)
+        # recompute vertex colors if activated:
+        if(self.control.vertc.get()):
+            self.control.vertc.set(False)
+            self.control.vertc.set(True)
         self.control.camera.reset_position()
         self.control.re_render()
         
@@ -411,10 +414,12 @@ class ColorMeshWidgets(Frame):
         lbl_color   = Label(master=self, text="Color")
         btn_picker  = Button(master=self, text="pick", command=self.pick_color)
         lbl_type    = Label(master=self, text="Type")
-        self.vertc = BooleanVar()
+        self.control.vertc = BooleanVar()
         self.mesh  = BooleanVar()
         self.point = BooleanVar()
-        check_vertc = Checkbutton(master=self, text="Vertex color", variable=self.vertc, anchor="w", command=self.switch_vertex_color)
+        # handle vertc variable with tracing since it is changed at model import
+        check_vertc = Checkbutton(master=self, text="Vertex color", variable=self.control.vertc, anchor="w")
+        self.control.vertc.trace_add("write", self.update_vertex_color)
         check_mesh  = Checkbutton(master=self, text="Full mesh", variable=self.mesh, anchor="w", command=self.switch_mesh)
         check_point = Checkbutton(master=self, text="Point cloud", variable=self.point, anchor="w", command=self.switch_pointcloud)
         lbl_look.grid(row=0, column=0, columnspan=2)
@@ -428,14 +433,13 @@ class ColorMeshWidgets(Frame):
     def pick_color(self):
     
         color = askcolor(self.current_color)[0]
-        
         if color is not None:
             self.current_color = color
             self.control.material.set_color(utils.convert_color_to_bpy(self.current_color))
             self.control.re_render()
     
-    def switch_vertex_color(self):
-        if self.vertc.get():
+    def update_vertex_color(self, var, index, mode):
+        if self.control.vertc.get():
             self.mesh.set(False)
             load_vertex(self.control.model,self.control.material.material)
         else:

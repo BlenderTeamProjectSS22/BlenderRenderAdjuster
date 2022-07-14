@@ -3,7 +3,10 @@ import random
 # start in object mode
 def load_vertex(obj: object, material: bpy.types.Material):
   mesh = obj.data
-  Color_Attribute = material.node_tree.nodes.new('ShaderNodeVertexColor')
+  if(material.node_tree.nodes.get("Color Attribute") is None):
+    Color_Attribute = material.node_tree.nodes.new('ShaderNodeVertexColor')
+  else:
+    Color_Attribute = material.node_tree.nodes.get("Color Attribute")
 
   if not mesh.vertex_colors:
       mesh.vertex_colors.new()
