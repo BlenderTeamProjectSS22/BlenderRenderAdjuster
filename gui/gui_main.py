@@ -7,11 +7,12 @@
 
 from cgi import print_directory
 import tkinter as tk
-from tkinter import Frame, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
+from tkinter import Frame, Toplevel, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
+from tkvideo import tkvideo
 from PIL import ImageTk, Image
 
 import webbrowser
@@ -265,33 +266,43 @@ class CameraAnimationControls(Frame):
 
     
         validate_int = self.register(self.validate_integer)
-        # TODO set start value of frame entry to current frame
-        # TODO presets for camera positions
 
         self.control = control
         self.camera_animation_cam = cammod.Camera("cam1", 5, 0, 0)
-
+        self.columnconfigure(0, weight=2)
+        self.columnconfigure(1, weight=1)
         lbl_camerapresets = tk.Label(master=self, text="Camera Presets", font="Arial 10 bold")
         btn_preset1 = tk.Button(master=self, text="Preset 1", command=self.camera_preset_1)
+        btn_preview1 = tk.Button(master=self, text="Preview", command=self.preview_1)
         btn_preset2 = tk.Button(master=self, text="Preset 2", command=self.camera_preset_2)
+        btn_preview2 = tk.Button(master=self, text="Preview", command=self.preview_2)
         btn_preset3 = tk.Button(master=self, text="Preset 3", command=self.camera_preset_3)
-        self.frames_entry_var = IntVar()
+        btn_preview3 = tk.Button(master=self, text="Preview", command=self.preview_3)
+        lbl_frames = tk.Label(master=self, text="Set Frames:")
+        self.frames_entry_var = IntVar(value=120)
         frame_entry = tk.Entry(master=self, textvariable=self.frames_entry_var, validate="key", validatecommand=(validate_int, '%P'))
         btn_set = tk.Button(master=self, text="Set", command=self.set_frames)
         self.is_renderer = BooleanVar()
         check_renderer = tk.Checkbutton(master=self, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
         self.is_tracking = BooleanVar()
         check_tracking = tk.Checkbutton(master=self, text="Track camera", variable=self.is_tracking, anchor="w", command=self.switch_tracking)
-
+        frame_entry_var = 120
         lbl_camerapresets.grid()
-        btn_preset1.grid(sticky="we")
-        btn_preset2.grid(sticky="we")
-        btn_preset3.grid(sticky="we")
-        frame_entry.grid(row=4, column=0, sticky="w", pady=3, padx=3)
-        btn_set.grid(row=4, column=0, sticky="e", pady=3)
-        check_tracking.grid()
-        check_renderer.grid()
+        btn_preset1.grid(sticky="we", row = 1, column = 0)
+        btn_preview1.grid(sticky="e", row = 1, column = 1)
+        btn_preset2.grid(sticky="we", row = 2, column = 0)
+        btn_preview2.grid(sticky="e", row = 2, column = 1)
+        btn_preset3.grid(sticky="we", row = 3, column = 0)
+        btn_preview3.grid(sticky="e", row = 3, column = 1)
+        lbl_frames.grid(sticky="w", row = 4, column = 0)
+        frame_entry.grid(row=5, column=0, sticky="we")
+        btn_set.grid(row=5, column=1, sticky="we")
+        check_tracking.grid(sticky="w")
+        check_renderer.grid(sticky="w")
         
+
+
+
 
     def validate_integer(self, P):
         if str.isdigit(P) or P == "":
@@ -299,22 +310,24 @@ class CameraAnimationControls(Frame):
         else:
             return False
         
-
     def camera_preset_1(self):
-        self.control.frames.remove_animation(utils.Animation.DEFAULT)
-
-        self.camera_animation_cam.preset_1(25, self.control.model, self.is_tracking.get())
-        self.camera_animation_cam.set_camera_position(3, 3, 0)
-        self.camera_animation_cam.set_camera_rotation(90, 0, 135)
-        self.camera_animation_cam.add_keyframe(50)
+        frames = self.frames_entry_var.get()
+        self.camera_animation_cam.preset_1(frames, self.control.model, self.is_tracking.get())
+        
         self.camera_animation_cam.set_handles("AUTO")
         self.control.re_render()
 
     def camera_preset_2(self):
-        pass
+        self.camera_animation_cam.preset_2(self.frames_entry_var, self.control.model, self.is_tracking.get())
+
+        self.camera_animation_cam.set_handles("AUTO")
+        self.control.re_render()
 
     def camera_preset_3(self):
-        pass
+        self.camera_animation_cam.preset_2(self.frames_entry_var, self.control.model, self.is_tracking.get())
+
+        self.camera_animation_cam.set_handles("AUTO")
+        self.control.re_render()
 
     def switch_renderer(self):
         if self.is_renderer.get():
@@ -335,6 +348,54 @@ class CameraAnimationControls(Frame):
         self.control.frames.remove_animation(utils.Animation.DEFAULT)
         print("Frames set to: " + str(self.frames_entry_var.get()))
         self.control.re_render()
+
+    def preview_1(self):
+        AnimationPreview(self.master, self.control, "preview1.avi")
+
+    def preview_2(self):
+        AnimationPreview(self.master, self.control, "preview2.avi")
+
+    def preview_3(self):
+        AnimationPreview(self.master, self.control, "preview3.avi")
+
+class AnimationPreview(Toplevel):
+        def __init__(self, master, control, filename: str):
+            Toplevel.__init__(self)
+            self.master = master
+            self.control = control
+            self.title("Settings")
+            
+            self.focus_set()
+            self.grab_set()
+            
+            self.content = PreviewContent(self, control, filename)
+            self.initial_focus = self.content
+            self.content.grid(row=0, column=0, padx=5, pady=5)
+            
+            self.bind("<Escape>", self.content.cancel)
+            self.wait_window(self)
+
+class PreviewContent(Frame):
+    def __init__(self, master, control, filename: str):
+        Frame.__init__(self, master)
+        self.master = master
+        self.control = control
+        dirname = os.path.dirname(__file__)
+        parentdir = os.path.dirname(dirname)
+        file = os.path.join(parentdir, filename)
+        my_label = Label(self)
+        my_label.pack()
+        player = tkvideo(file, my_label, loop = 1, size = (1280,720))
+        player.play()
+
+    def cancel(self, event=None):
+        print("Closing window")
+        self.close_window()
+
+    def close_window(self):
+        self.master.focus_set()
+        self.master.destroy()
+
 
 class CameraControls(Frame):
     def __init__(self, master, control):

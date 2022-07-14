@@ -71,30 +71,25 @@ class Camera:
             pt.handle_right_type = mode
         
 
-    def drive_by(
-        self,
-        frames: int,
-        startPoint: list,
-        endPoint: list,
-        Rotation: list,
-        track: bool,
-        object: bpy.types.Object,
-    ):
+    def drive_by(self, frames: int, points: list, rotation: list, track: bool, object: bpy.types.Object,):
         #
-        self.set_camera_position(startPoint[0], startPoint[1], startPoint[2])
-        if track == False:
+        frame = 0
+        rot = 0
+        frames = frames / (len(points) - 1)
+        for i in range(len(points)):
+            self.set_camera_position(points[i][0], points[i][1], points[i][2])
             try:
-                self.set_camera_rotation(Rotation[0], Rotation[1], Rotation[2])
-                self.set_mode("dont_track", object)
+                self.set_camera_rotation(rotation[rot], rotation[rot + 1], rotation[rot + 2])
             except:
                 pass
-        else:
-            self.set_mode("track", object)
-        self.add_keyframe(0)
-        self.set_camera_position(endPoint[0], endPoint[1], endPoint[2])
-        if track == False:
-            self.set_camera_rotation(Rotation[0], Rotation[1], Rotation[2])
-        self.add_keyframe(frames)
+            self.add_keyframe(frame)
+            rot += 3
+            
+            print("Before: "+str(frame))
+            frame = frame + frames
+            print("After: "+str(frame))
+            
+
 
     def set_mode(self, mode: str, object: bpy.types.Object):
         if mode == "track":
@@ -104,55 +99,30 @@ class Camera:
             self.cam.constraints.remove(self.cam.constraints["Track To"])
 
     def preset_1(self, frames: int, object: bpy.types.Object, track: bool):
+        #left to right drive by
         self.drive_by(
             frames,
-            [5, -3, 0],
-            [5, 3, 0],
+            [[5, -3, 0],[5, 3, 0]],
             [90, 0, 90],
             track,
             object,
         )
 
-    def preset_2(self, frames: int, object: bpy.types.Object):
-        pass
+    def preset_2(self, frames: int, object: bpy.types.Object, track: bool):
 
-    def preset_3(self, frames: int, object: bpy.types.Object):
-        pass
+        self.drive_by(
+            frames,
+            [[5, -3, 0],[5, 3, 0],[5, 0, 0],[5, -3, 0]],
+            [90, 0, 90, 90, 90, 90, 90, 0, 90],
+            track,
+            object,
+        )
 
-class CameraPath:
-    def __init__(self, path: str, cam: Camera):
-        self.path = path
-        self.cam = cam.cam
-        self.camera = cam
-        self.pathObj = self.import_path(path)
-
-    def delete_path(self):
-        bpy.ops.object.select_all(action="DESELECT")
-        self.pathObj.select_set(True)
-        bpy.ops.object.delete()
-
-    def import_path(self, path: str):
-        if fnmatch.fnmatch(path, "*.obj"):
-            bpy.ops.wm.obj_import(filepath=path)
-        else:
-            raise ImportError("can only import .ply, .stl or .obj files")
-        newObj = bpy.context.object
-        scale_to_unit_cube(newObj)
-        return newObj
-
-    # not working yet
-    def follow_path(self, pathObj: bpy.types.Object, frames: int):
-        #path to curve
-        bpy.ops.object.select_all(action="DESELECT")
-
-        pathObj.select_set(True)
-        bpy.ops.object.convert(target="CURVE")
-
-        bpy.ops.object.select_all(action="DESELECT")
-        self.cam.select_set(True)
-        bpy.ops.object.constraint_add(type='FOLLOW_PATH')
-        bpy.context.object.constraints["Follow Path"].target = bpy.data.objects["NurbsPath_NurbsPath.001"]
-        bpy.context.object.constraints["Follow Path"].use_curve_follow = True
-        bpy.ops.constraint.followpath_path_animate(constraint="Follow Path", owner='OBJECT')
-
-        
+    def preset_3(self, frames: int, object: bpy.types.Object, track: bool):
+        self.drive_by(
+            frames,
+            [[5, -3, 0],[5, 3, 0],[5, 0, 0],[5, -3, 0]],
+            [90, 0, 90, 90, 90, 90, 90, 0, 90],
+            track,
+            object,
+        )
