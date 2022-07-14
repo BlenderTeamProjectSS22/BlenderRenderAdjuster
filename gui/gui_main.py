@@ -88,8 +88,7 @@ class ProgramGUI:
             self.control.camera.rotate_z(45)
             self.control.camera.rotate_x(-20)
             self.control.camera.set_distance(10)
-            self.control.re_render()
-        
+        self.control.re_render()
         left  = LeftPanel(master, self.control)
         right = RightPanel(master, self.control)
         camcontrols = CameraControls(mid, self.control)
