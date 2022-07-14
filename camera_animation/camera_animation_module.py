@@ -111,9 +111,10 @@ class Camera:
     def preset_2(self, frames: int, object: bpy.types.Object, track: bool):
 
         self.drive_by(
+            # get closer to the object/zoom in
             frames,
-            [[5, -3, 0],[5, 3, 0],[5, 0, 0],[5, -3, 0]],
-            [90, 0, 90, 90, 90, 90, 90, 0, 90],
+            [[100, 0, 0],[7, 0, 0],[3, 0, 0]],
+            [90, 0, 90],
             track,
             object,
         )

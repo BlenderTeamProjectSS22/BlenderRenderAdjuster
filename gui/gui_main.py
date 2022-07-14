@@ -317,13 +317,15 @@ class CameraAnimationControls(Frame):
         self.control.re_render()
 
     def camera_preset_2(self):
-        self.camera_animation_cam.preset_2(self.frames_entry_var, self.control.model, self.is_tracking.get())
+        frames = self.frames_entry_var.get()
+        self.camera_animation_cam.preset_2(frames, self.control.model, self.is_tracking.get())
 
         self.camera_animation_cam.set_handles("AUTO")
         self.control.re_render()
 
     def camera_preset_3(self):
-        self.camera_animation_cam.preset_2(self.frames_entry_var, self.control.model, self.is_tracking.get())
+        frames = self.frames_entry_var.get()
+        self.camera_animation_cam.preset_2(frames, self.control.model, self.is_tracking.get())
 
         self.camera_animation_cam.set_handles("AUTO")
         self.control.re_render()
