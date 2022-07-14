@@ -131,18 +131,18 @@ class LeftPanel(Frame):
         sep.pack(fill=tk.X)
         
         # All general program widgets
-        frame_ops    = tk.Frame(master=self)
-        lbl_ops      = tk.Label(master=frame_ops, text="Actions", font="Arial 10 bold")
-        btn_settings = tk.Button(master=frame_ops, text="Settings", command=self.open_settings_window)
-        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)
-        btn_help     = tk.Button(master=frame_ops, text="Help", command=self.open_help_page)
+        
+        lbl_ops      = tk.Label(master=self, text="Actions", font="Arial 10 bold")
+        btn_settings = tk.Button(master=self, text="Settings", command=self.open_settings_window)
+        btn_updates  = tk.Button(master=self, text="Check for updates", command=self.check_update)
+        btn_help     = tk.Button(master=self, text="Help", command=self.open_help_page)
         lbl_spacer.pack()
 
         lbl_ops.pack(fill=tk.X)
         btn_settings.pack(fill=tk.X)
         btn_updates.pack(fill=tk.X)
         btn_help.pack(fill=tk.X)
-        frame_ops.pack()
+        
 
         # Initialize Animation controls
         lbl_spacer2 = Label(master=self, text="")
@@ -280,25 +280,24 @@ class CameraAnimationControls(Frame):
         btn_preview3 = tk.Button(master=self, text="Preview", command=self.preview_3)
         lbl_frames = tk.Label(master=self, text="Set Frames:")
         self.frames_entry_var = IntVar(value=120)
-        frame_entry = tk.Entry(master=self, textvariable=self.frames_entry_var, validate="key", validatecommand=(validate_int, '%P'))
-        btn_set = tk.Button(master=self, text="Set", command=self.set_frames)
+        self.frame_entry = tk.Entry(master=self, textvariable=self.frames_entry_var, validate="key", validatecommand=(validate_int, '%P'), width=8)
+        self.frame_entry.bind("<Return>", self.set_frames)
         self.is_renderer = BooleanVar()
         check_renderer = tk.Checkbutton(master=self, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
         self.is_tracking = BooleanVar()
         check_tracking = tk.Checkbutton(master=self, text="Track camera", variable=self.is_tracking, anchor="w", command=self.switch_tracking)
         frame_entry_var = 120
-        lbl_camerapresets.grid()
+        lbl_camerapresets.grid(columnspan=2)
         btn_preset1.grid(sticky="we", row = 1, column = 0)
-        btn_preview1.grid(sticky="e", row = 1, column = 1)
+        btn_preview1.grid(sticky="we", row = 1, column = 1)
         btn_preset2.grid(sticky="we", row = 2, column = 0)
-        btn_preview2.grid(sticky="e", row = 2, column = 1)
+        btn_preview2.grid(sticky="we", row = 2, column = 1)
         btn_preset3.grid(sticky="we", row = 3, column = 0)
-        btn_preview3.grid(sticky="e", row = 3, column = 1)
-        lbl_frames.grid(sticky="w", row = 4, column = 0)
-        frame_entry.grid(row=5, column=0, sticky="we")
-        btn_set.grid(row=5, column=1, sticky="we")
-        check_tracking.grid(sticky="w")
-        check_renderer.grid(sticky="w")
+        btn_preview3.grid(sticky="we", row = 3, column = 1)
+        lbl_frames.grid(sticky="we", row = 4, column = 0)
+        self.frame_entry.grid(row=4, column=1, sticky="we")
+        check_tracking.grid(sticky="w", columnspan=2)
+        check_renderer.grid(sticky="w", columnspan=2)
         
 
 
@@ -343,7 +342,7 @@ class CameraAnimationControls(Frame):
             self.camera_animation_cam.set_mode("free", self.control.model)
         self.control.re_render()
 
-    def set_frames(self):
+    def set_frames(self, event):
         self.control.frames.add_custom_animation(self.frames_entry_var.get())
         self.control.frames.remove_animation(utils.Animation.DEFAULT)
         print("Frames set to: " + str(self.frames_entry_var.get()))
