@@ -9,12 +9,12 @@ from asyncio import selector_events
 from select import select
 from cgi import print_directory
 import tkinter as tk
-from tkinter import Frame, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
+from tkinter import Frame, Toplevel, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
-from tkinter.tix import Select
+from tkvideo import tkvideo
 from PIL import ImageTk, Image
 
 import webbrowser
@@ -30,6 +30,7 @@ from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.panel_materials import MaterialWidgets
 from gui.settings import Control
+
 from gui.loading_screen import VideoLoadingScreen, ImageLoadingScreen
 import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
@@ -95,8 +96,7 @@ class ProgramGUI:
             self.control.camera.rotate_z(45)
             self.control.camera.rotate_x(-20)
             self.control.camera.set_distance(10)
-            self.control.re_render()
-        
+        self.control.re_render()
         left  = LeftPanel(master, self.control)
         right = RightPanel(master, self.control)
         camcontrols = CameraControls(mid, self.control)
@@ -139,32 +139,25 @@ class LeftPanel(Frame):
         sep.pack(fill=tk.X)
         
         # All general program widgets
-        frame_ops    = tk.Frame(master=self)
-        lbl_ops      = tk.Label(master=frame_ops, text="Actions", font="Arial 10 bold")
-        btn_settings = tk.Button(master=frame_ops, text="Settings", command=self.open_settings_window)
-        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)
-        btn_help     = tk.Button(master=frame_ops, text="Help", command=self.open_help_page)
+        
+        lbl_ops      = tk.Label(master=self, text="Actions", font="Arial 10 bold")
+        btn_settings = tk.Button(master=self, text="Settings", command=self.open_settings_window)
+        btn_updates  = tk.Button(master=self, text="Check for updates", command=self.check_update)
+        btn_help     = tk.Button(master=self, text="Help", command=self.open_help_page)
         lbl_spacer.pack()
 
         lbl_ops.pack(fill=tk.X)
         btn_settings.pack(fill=tk.X)
         btn_updates.pack(fill=tk.X)
         btn_help.pack(fill=tk.X)
-        frame_ops.pack()
 
+        # Initialize Animation controls
         lbl_spacer2 = Label(master=self, text="")
-
-        lbl_camerapresets = Label(master=self, text="Camera Presets", font="Arial 10 bold")
-        btn_preset1 = Button(master=self, text="Preset 1", command=self.camera_preset_1())
-        btn_preset2 = Button(master=self, text="Preset 2")
-        btn_preset3 = Button(master=self, text="Preset 3")
-
         lbl_spacer2.pack()
-        lbl_camerapresets.pack(fill=tk.X)
-        btn_preset1.pack(fill=tk.X)
-        btn_preset2.pack(fill=tk.X)
-        btn_preset3.pack(fill=tk.X)
 
+        cameraanimationcontrols = CameraAnimationControls(self, self.control)
+        cameraanimationcontrols.pack(fill=tk.X)
+        
         lbl_spacer3 = Label(master=self, text="")
         lbl_spacer3.pack()
         modelcontrols = ModelControls(self, self.control)
@@ -274,14 +267,138 @@ class LeftPanel(Frame):
         webbrowser.open_new_tab("https://github.com/garvita-tiwari/blender_render/wiki")
 
 
+class CameraAnimationControls(Frame):
+    def __init__(self, master, control):
+        Frame.__init__(self, master)
+    
+        validate_int = self.register(self.validate_integer)
+        self.control = control
+        self.camera_animation_cam = cammod.Camera("cam1", 5, 0, 0)
+        self.columnconfigure(0, weight=2)
+        self.columnconfigure(1, weight=1)
+        lbl_camerapresets = tk.Label(master=self, text="Camera Presets", font="Arial 10 bold")
+        btn_preset1 = tk.Button(master=self, text="Preset 1", command=self.camera_preset_1)
+        btn_preview1 = tk.Button(master=self, text="Preview", command=self.preview_1)
+        btn_preset2 = tk.Button(master=self, text="Preset 2", command=self.camera_preset_2)
+        btn_preview2 = tk.Button(master=self, text="Preview", command=self.preview_2)
+        btn_preset3 = tk.Button(master=self, text="Preset 3", command=self.camera_preset_3)
+        btn_preview3 = tk.Button(master=self, text="Preview", command=self.preview_3)
+        lbl_frames = tk.Label(master=self, text="Set Frames:")
+        self.frames_entry_var = IntVar(value=120)
+        self.frame_entry = tk.Entry(master=self, textvariable=self.frames_entry_var, validate="key", validatecommand=(validate_int, '%P'), width=8)
+        self.frame_entry.bind("<Return>", self.set_frames)
+        self.is_renderer = BooleanVar()
+        check_renderer = tk.Checkbutton(master=self, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
+        self.is_tracking = BooleanVar()
+        check_tracking = tk.Checkbutton(master=self, text="Track camera", variable=self.is_tracking, anchor="w", command=self.switch_tracking)
+        frame_entry_var = 120
+        lbl_camerapresets.grid(columnspan=2)
+        btn_preset1.grid(sticky="we", row = 1, column = 0)
+        btn_preview1.grid(sticky="we", row = 1, column = 1)
+        btn_preset2.grid(sticky="we", row = 2, column = 0)
+        btn_preview2.grid(sticky="we", row = 2, column = 1)
+        btn_preset3.grid(sticky="we", row = 3, column = 0)
+        btn_preview3.grid(sticky="we", row = 3, column = 1)
+        lbl_frames.grid(sticky="we", row = 4, column = 0)
+        self.frame_entry.grid(row=4, column=1, sticky="we")
+        check_tracking.grid(sticky="w", columnspan=2)
+        check_renderer.grid(sticky="w", columnspan=2)
+        
+
+    def validate_integer(self, P):
+        if str.isdigit(P) or P == "":
+            return True
+        else:
+            return False
+        
     def camera_preset_1(self):
-        startp = [-3,-5,0.5]
-        endP = [6,5,0.5]
-        rot = [90,0,90]
-        camera_animation_cam = cammod.Camera("cam1", 6, 0, 0.5)
-        camera_animation_cam.drive_by(100, startp, endP, rot, True, self.control.model)
+        frames = self.frames_entry_var.get()
+        self.camera_animation_cam.preset_1(frames, self.control.model, self.is_tracking.get())
         
-        
+        self.camera_animation_cam.set_handles("AUTO")
+        self.control.re_render()
+
+    def camera_preset_2(self):
+        frames = self.frames_entry_var.get()
+        self.camera_animation_cam.preset_2(frames, self.control.model, self.is_tracking.get())
+
+        self.camera_animation_cam.set_handles("AUTO")
+        self.control.re_render()
+
+    def camera_preset_3(self):
+        frames = self.frames_entry_var.get()
+        self.camera_animation_cam.preset_2(frames, self.control.model, self.is_tracking.get())
+
+        self.camera_animation_cam.set_handles("AUTO")
+        self.control.re_render()
+
+    def switch_renderer(self):
+        if self.is_renderer.get():
+            self.control.renderer.set_camera(self.camera_animation_cam.cam)
+        else:
+            self.control.renderer.set_camera(self.control.camera.camera)
+        self.control.re_render()
+
+    def switch_tracking(self):
+        if self.is_tracking.get():
+            self.camera_animation_cam.set_mode("track", self.control.model)
+        else:
+            self.camera_animation_cam.set_mode("free", self.control.model)
+        self.control.re_render()
+
+    def set_frames(self, event):
+        self.control.frames.add_custom_animation(self.frames_entry_var.get())
+        self.control.frames.remove_animation(utils.Animation.DEFAULT)
+        print("Frames set to: " + str(self.frames_entry_var.get()))
+        self.control.re_render()
+
+    def preview_1(self):
+        AnimationPreview(self.master, self.control, "preview1.avi")
+
+    def preview_2(self):
+        AnimationPreview(self.master, self.control, "preview2.avi")
+
+    def preview_3(self):
+        AnimationPreview(self.master, self.control, "preview3.avi")
+
+class AnimationPreview(Toplevel):
+        def __init__(self, master, control, filename: str):
+            Toplevel.__init__(self)
+            self.master = master
+            self.control = control
+            self.title("Preview of animation")
+            
+            self.focus_set()
+            self.grab_set()
+            
+            self.content = PreviewContent(self, control, filename)
+            self.initial_focus = self.content
+            self.content.grid(row=0, column=0, padx=5, pady=5)
+            
+            self.bind("<Escape>", self.content.cancel)
+            self.wait_window(self)
+
+class PreviewContent(Frame):
+    def __init__(self, master, control, filename: str):
+        Frame.__init__(self, master)
+        self.master = master
+        self.control = control
+        dirname = os.path.dirname(__file__)
+        parentdir = os.path.dirname(dirname)
+        file = os.path.join(parentdir, filename)
+        my_label = Label(self)
+        my_label.pack()
+        player = tkvideo(file, my_label, loop = 1, size = (852,480))
+        player.play()
+
+    def cancel(self, event=None):
+        print("Closing window")
+        self.close_window()
+
+    def close_window(self):
+        self.master.focus_set()
+        self.master.destroy()
+
 
 class CameraControls(Frame):
     def __init__(self, master, control):

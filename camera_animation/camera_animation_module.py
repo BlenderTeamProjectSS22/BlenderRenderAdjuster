@@ -1,12 +1,10 @@
-from calendar import c
 import bpy
-import math
 from math import radians
 from utils import *
 
 # .venv-blender\Scripts\activate.bat
 
-# Camera class with most important controll methods to move around the scene
+# Camera class with most important controll methods to move manipulate camera
 class Camera:
     def __init__(self, name: str, x: float, y: float, z: float):
         self.name = name
@@ -15,16 +13,21 @@ class Camera:
         self.z = z
         bpy.ops.object.camera_add(location=(x, y, z))
         self.cam = bpy.context.object
+        self.cam.data.lens = 25
+        self.set_camera_rotation(90, 0, 90)
 
+    # sets the camera position
     def set_camera_position(self, x: float, y: float, z: float):
         self.x = x
         self.y = y
         self.z = z
         self.cam.location = (x, y, z)
 
+    # gets the camera position
     def get_camera_position(self):
         return self.x, self.y, self.z
 
+    # deletes all cameras in the scene
     def delete_all_cameras(self):
         bpy.ops.object.select_all(action="DESELECT")
         for ob in bpy.data.objects:
@@ -32,9 +35,11 @@ class Camera:
                 ob.select_set(True)
                 bpy.ops.object.delete()
 
+    # returns current orientation of the camera
     def get_camera_rotation(self):
         return self.cam.rotation_euler
 
+    # sets the current camera rotation
     def set_camera_rotation(
         self, x_rotation: float, y_rotation: float, z_rotation: float
     ):
@@ -48,70 +53,77 @@ class Camera:
         self.cam.keyframe_insert(data_path="location", frame=frame)
         self.cam.keyframe_insert(data_path="rotation_euler", frame=frame)
 
-    def drive_by(
-        self,
-        frames: int,
-        startPoint: list,
-        endPoint: list,
-        Rotation: list,
-        track: bool,
-        object: bpy.types.Object,
-    ):
+    # sets the handles of a keyframe to given mode
+    def set_handles(self, mode: str):
+        # ensure the action is still available
+        if self.cam.animation_data.action:
+        # and store it in a convenience variable
+            my_action = bpy.data.actions.get(self.cam.animation_data.action.name)
+        bpy.ops.object.select_all(action="DESELECT")
+        my_fcu_rot = my_action.fcurves.find("rotation_euler", index=1)
+        my_fcu_pos = my_action.fcurves.find("location", index=1)
+        # iterates over all keyframes
+        for pt in my_fcu_rot.keyframe_points:
+            pt.select_control_point
+            pt.handle_left_type = mode
+            pt.handle_right_type = mode
+            print(pt.handle_left_type)
+        for pt in my_fcu_pos.keyframe_points:
+            pt.select_control_point
+            pt.handle_left_type = type=mode
+            pt.handle_right_type = mode
+        
+    # function that receives arrays of position and rotation and adds keyframes evenly deivided through the frames
+    def drive_by(self, frames: int, points: list, rotation: list, track: bool, object: bpy.types.Object,):
         #
-        self.set_camera_position(startPoint[0], startPoint[1], startPoint[2])
-        if track == False:
-            self.set_mode("dont_track", object)
-            self.set_camera_rotation(Rotation[0], Rotation[1], Rotation[2])
-        else:
-            self.set_mode("track", object)
-        self.add_keyframe(0)
-        self.set_camera_position(endPoint[0], endPoint[1], endPoint[2])
-        if track == False:
-            self.set_camera_rotation(Rotation[0], Rotation[1], Rotation[2])
-        self.add_keyframe(frames)
+        frame = 0
+        rot = 0
+        frames = frames / (len(points) - 1)
+        for i in range(len(points)):
+            self.set_camera_position(points[i][0], points[i][1], points[i][2])
+            try:
+                self.set_camera_rotation(rotation[rot], rotation[rot + 1], rotation[rot + 2])
+            except:
+                pass
+            self.add_keyframe(frame)
+            rot += 3      
+            frame = frame + frames            
 
+    # adds or removes track to constrait from camera to object
     def set_mode(self, mode: str, object: bpy.types.Object):
         if mode == "track":
             self.cam.constraints.new(type="TRACK_TO")
             self.cam.constraints["Track To"].target = object
         else:
-            self.cam.constraints["Track To"].delete()
+            self.cam.constraints.remove(self.cam.constraints["Track To"])
 
+    # presets for the camera animation
+    def preset_1(self, frames: int, object: bpy.types.Object, track: bool):
+        #left to right drive by
+        self.drive_by(
+            frames,
+            [[5, -3, 0],[5, 3, 0]],
+            [90, 0, 90],
+            track,
+            object,
+        )
 
-class CameraPath:
-    def __init__(self, path: str, cam: Camera):
-        self.path = path
-        self.cam = cam.cam
-        self.camera = cam
-        self.pathObj = self.import_path(path)
+    def preset_2(self, frames: int, object: bpy.types.Object, track: bool):
+        # get closer to the object/zoom in
+        self.drive_by(
+            frames,
+            [[100, 0, 0],[7, 0, 0],[3, 0, 0]],
+            [90, 0, 90],
+            track,
+            object,
+        )
 
-    def delete_path(self):
-        bpy.ops.object.select_all(action="DESELECT")
-        self.pathObj.select_set(True)
-        bpy.ops.object.delete()
-
-    def import_path(self, path: str):
-        if fnmatch.fnmatch(path, "*.obj"):
-            bpy.ops.wm.obj_import(filepath=path)
-        else:
-            raise ImportError("can only import .ply, .stl or .obj files")
-        newObj = bpy.context.object
-        scale_to_unit_cube(newObj)
-        return newObj
-
-    # not working yet
-    def follow_path(self, pathObj: bpy.types.Object, frames: int):
-        #path to curve
-        bpy.ops.object.select_all(action="DESELECT")
-
-        pathObj.select_set(True)
-        bpy.ops.object.convert(target="CURVE")
-
-        bpy.ops.object.select_all(action="DESELECT")
-        self.cam.select_set(True)
-        bpy.ops.object.constraint_add(type='FOLLOW_PATH')
-        bpy.context.object.constraints["Follow Path"].target = bpy.data.objects["NurbsPath_NurbsPath.001"]
-        bpy.context.object.constraints["Follow Path"].use_curve_follow = True
-        bpy.ops.constraint.followpath_path_animate(constraint="Follow Path", owner='OBJECT')
-
-        
+    def preset_3(self, frames: int, object: bpy.types.Object, track: bool):
+        # fly over the object
+        self.drive_by(
+            frames,
+            [[5, -3, 0],[5, 3, 0],[5, 0, 0],[5, -3, 0]],
+            [90, 0, 90, 90, 90, 90, 90, 0, 90],
+            track,
+            object,
+        )

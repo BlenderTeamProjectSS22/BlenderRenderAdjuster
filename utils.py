@@ -2,7 +2,6 @@
 author: Romain Carl
 created on: 20/05/2022
 edited by: Alexander Ritter
-
 description:
 Some basic functionalities common to all tasks.
 Will need to be expanded and adapted as the project progresses.
@@ -179,13 +178,10 @@ class Renderer:
     def set_aspect_ratio(self, w: int, h: int) -> None:
         self.scene.render.resolution_y = int(self.scene.render.resolution_x / (w / h))
     
-# Enum containing all possible animations paired with their maximum frame length
-class Animation(enum.Enum):
-    DEFAULT      = 5 * 24  # Set the default to 5 seconds video
-    DAYNIGHT     = 120
-    PRESET_ONE   = 1   # TODO Jonas
-    PRESET_TWO   = 1   # TODO Jonas
-    PRESET_THREE = 1   # TODO Jonas
+    # set camera
+    def set_camera(self, camera: bpy.types.Object) -> None:
+        self.scene.camera = camera
+        self.camera = camera
 
     def set_output_properties(self,
                               resolution_percentage: int = 100,
@@ -211,11 +207,20 @@ class Animation(enum.Enum):
         self.scene.render.film_transparent = use_transparent_bg
         self.scene.eevee.taa_render_samples = num_samples
 
+# Enum containing all possible animations paired with their maximum frame length
+class Animation(enum.Enum):
+    DEFAULT      = 5 * 24  # Set the default to 5 seconds video
+    DAYNIGHT     = 120
+    PRESET_ONE   = 1   # TODO Jonas
+    PRESET_TWO   = 1   # TODO Jonas
+    PRESET_THREE = 1   # TODO Jonas
+    
 class FrameControl():
     def __init__(self, slider_max: IntVar):
         # List of all animation maximum frames
         self.slider_max = slider_max
         self.active_animations = []
+        self.custom_length = 0
         self.add_animation(Animation.DEFAULT)
     
     # Sets the currently renderer frame of the scene
@@ -224,7 +229,10 @@ class FrameControl():
     
     # Get the maximum amount of frames necessary for the animation
     def get_max_frame(self) -> int:
-        return max(self.active_animations, key=lambda a: a.value).value
+        try:
+            return max(self.custom_length, max(self.active_animations, key=lambda a: a.value).value)
+        except ValueError:
+            return self.custom_length
     
     # Add an animation to be active, auto-changing the max frame to the from the longest animation
     def add_animation(self, animation: Animation):
@@ -233,11 +241,21 @@ class FrameControl():
         self.active_animations.append(animation)
         self.__update_max_frame()
     
+    # Add an animation with a custom length
+    def add_custom_animation(self, frames: int):
+        assert(frames > 0)
+        print("Adding custom animation with length " + str(frames))
+        self.custom_length = frames
+        self.__update_max_frame()
+
     # Removes animation and adjusts max frame
     def remove_animation(self, animation: Animation):
-        print("Removing animation " + str(animation.name) + " with length " + str(animation.value))
-        self.active_animations.remove(animation)
-        self.__update_max_frame()
+        if animation in self.active_animations:
+            print("Removing animation " + str(animation.name) + " with length " + str(animation.value))
+            self.active_animations.remove(animation)
+            self.__update_max_frame()
+        else:
+            print("Animation " + str(animation.name) + " not found in active animations")
     
     # Update the maximum frame and adjust values (private method)
     def __update_max_frame(self):
