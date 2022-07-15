@@ -36,15 +36,27 @@ class SettingsContent(Frame):
         validate_int = self.register(validate_integer)
         
         lbl_aspect = Label(master=self, text="Aspect ratio")
-        self.ent_width  = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'))
-        self.ent_height = Entry(master=self, validate="key", validatecommand=(validate_int, '%P'))
+        self.ent_width  = Entry(master=self, fg="gray", validate="key", validatecommand=(validate_int, '%P'))
+        self.ent_height = Entry(master=self, fg="gray", validate="key", validatecommand=(validate_int, '%P'))
         
         lbl_limit = Label(master=self, text="Time limit")
-        self.ent_limit = Entry(master=self, validate="key", validatecommand=(self.register(validate_float), '%P'))
+        self.ent_limit = Entry(master=self, fg="gray", validate="key", validatecommand=(self.register(validate_float), '%P'))
         
         lbl_settings = Label(master=self, text="Settings")
         btn_ok = Button(master=self, text="Ok", command=self.accept)
         btn_cancel = Button(master=self, text="Cancel", command=self.cancel)
+        
+        # Insert default values for the entries from settings
+        self.ent_width.insert(tk.END, str(self.control.settings.aspect.width))
+        self.ent_height.insert(tk.END, str(self.control.settings.aspect.height))
+        self.ent_limit.insert(tk.END, "{:.2f}".format(self.control.settings.timelimit))
+        
+        self.ent_width.bind("<FocusIn>", lambda event: event.widget.config(fg="black"))
+        self.ent_height.bind("<FocusIn>", lambda event: event.widget.config(fg="black"))
+        self.ent_limit.bind("<FocusIn>", lambda event: event.widget.config(fg="black"))
+        self.ent_width.bind("<FocusOut>", lambda event: self.on_entry_leave(event, self.control.settings.aspect.width))
+        self.ent_height.bind("<FocusOut>", lambda event: self.on_entry_leave(event, self.control.settings.aspect.height))
+        self.ent_limit.bind("<FocusOut>", lambda event: self.on_entry_leave(event, self.control.settings.timelimit))
             
         lbl_settings.grid(row=0, column=0, columnspan=2)
         lbl_aspect.grid(row=1, column=0)
@@ -54,20 +66,37 @@ class SettingsContent(Frame):
         self.ent_limit.grid(row=2, column=1)
         btn_cancel.grid(row=3, column=1)
         btn_ok.grid(row=3, column=2)
+    
+    def on_entry_leave(self, event, default):
+        if event.widget.get() == "" :
+            event.widget.config(fg="gray")
+            if isinstance(default, float):
+                event.widget.insert(tk.END, "{:.2f}".format(default))
+            else:
+                event.widget.insert(tk.END, str(default))
+        else:
+            limit = float(event.widget.get().replace(",", "."))
+            if limit == default:
+                event.widget.config(fg="gray")
         
     def accept(self):
-        w = int(self.ent_width.get())
-        h = int(self.ent_height.get())
-        limit = int(self.ent_limit.get())
-        self.control.settings.set_aspect_ratio(w, h)
-        self.control.settings.set_time_limit(limit)
+    
+        if self.ent_width.get() != "" and self.ent_height.get() != "":
+            w = int(self.ent_width.get())
+            h = int(self.ent_height.get())
+            self.control.settings.set_aspect_ratio(w, h)
+        
+        if self.ent_limit.get() != "":
+            limit = float(self.ent_limit.get().replace(",", "."))
+            self.control.settings.set_time_limit(limit)
+        
         self.control.save_settings(self.control.settings)
         self.control.re_render()
         self.close_window()
         print("New settings: " + str(self.control.settings))
         
     def cancel(self, event=None):
-        print("Closing window")
+        print("Closing settings window")
         self.close_window()
         
     def close_window(self):
