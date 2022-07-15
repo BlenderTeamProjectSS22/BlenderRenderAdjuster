@@ -1,19 +1,27 @@
-from tkinter import OptionMenu, Frame
+from tkinter import Entry, OptionMenu, Frame
+from tkinter.ttk import Progressbar
 
-# Two functions to enable/disable widgets
-def widget_set_enabled(frame, is_enabled: bool):
-    if is_enabled:
-        for widget in frame.winfo_children():
-            widget.configure(state="active")
+# Enable/disable frame, recursively applied to all widgets contained in the frame
+def frame_set_enabled(frame, is_enabled: bool):
+    for widget in frame.winfo_children():
+        #print(widget)
+        if isinstance(widget, OptionMenu):
+            widget_set_enabled(widget, is_enabled)
+        elif widget.winfo_children():
+            frame_set_enabled(widget, is_enabled)
+        elif isinstance(widget, Progressbar):
+            pass
+        else:
+            widget_set_enabled(widget, is_enabled)
+
+# Enable/disable a single widget
+def widget_set_enabled(widget, is_enabled: bool):
+    state = "active" if is_enabled else "disabled"
+    state_ent = "normal" if is_enabled else "readonly"
+    if isinstance(widget, Entry):
+        widget.configure(state=state_ent)
     else:
-        for widget in frame.winfo_children():
-            #print(widget)
-            if isinstance(widget, OptionMenu):
-                widget.configure(state="disable")
-            elif widget.winfo_children():
-                widget_disable(widget)
-            else:
-                widget.configure(state="disable")
+        widget.configure(state=state)
 
 def validate_integer(input: str):
         # TODO This prevents deleting e.g. '5', because field can't be empty

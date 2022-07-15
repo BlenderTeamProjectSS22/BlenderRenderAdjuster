@@ -9,8 +9,9 @@ from dataclasses import dataclass
 import typing as t
 import yaml
 import os, shutil
-from utils import Renderer, OrbitCam
+from utils import Renderer, OrbitCam, FrameControl
 from gui.render_preview import RenderPreview
+from materials.materials import MaterialController
 from gui.properties import *
 
 @dataclass
@@ -71,18 +72,21 @@ class Control:
     preview: RenderPreview
     camera: OrbitCam
     settings: Settings
+    material: MaterialController
+    frames: FrameControl
     
-    def __init__(self, renderer, preview, camera):
+    def __init__(self, renderer, preview, camera, frames):
         self.renderer = renderer
         self.preview = preview
         self.camera = camera
+        self.frames = frames
         self.settings = self.load_settings()
         if self.settings is None:
             print("Problem loading settings")
             exit()
     
     def re_render(self):
-        self.renderer.render()
+        self.renderer.render(animation=False)
         self.preview.reload()
         print("Updating preview...")
     

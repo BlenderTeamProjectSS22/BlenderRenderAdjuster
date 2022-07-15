@@ -10,7 +10,7 @@
 
 ## Installation:
     
-    pip install bpy .... <Add more instructions here or create>
+[Installation guide](https://github.com/garvita-tiwari/blender_render/wiki/Installation)
 
 ## How to Use:
     
