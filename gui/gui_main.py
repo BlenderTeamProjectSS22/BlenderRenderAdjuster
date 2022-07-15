@@ -353,13 +353,13 @@ class CameraAnimationControls(Frame):
         self.control.re_render()
 
     def preview_1(self):
-        AnimationPreview(self.master, self.control, "preview1.avi")
+        AnimationPreview(self.master, self.control, "assets/videos/preview1.avi")
 
     def preview_2(self):
-        AnimationPreview(self.master, self.control, "preview2.avi")
+        AnimationPreview(self.master, self.control, "assets/videos/preview2.avi")
 
     def preview_3(self):
-        AnimationPreview(self.master, self.control, "preview3.avi")
+        AnimationPreview(self.master, self.control, "assets/videos/preview3.avi")
 
 class AnimationPreview(Toplevel):
         def __init__(self, master, control, filename: str):
