@@ -8,6 +8,7 @@
 from asyncio import selector_events
 from select import select
 from cgi import print_directory
+
 import tkinter as tk
 from tkinter import Frame, Toplevel, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
 from tkinter import ttk
@@ -21,10 +22,9 @@ import webbrowser
 import threading
 import requests
 import enum
-from Texture import load_texture
-from Texture import delete_texture
+
+from Texture import load_texture, delete_texture
 from Vertex import import_vertex
-import bpy
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
@@ -626,11 +626,11 @@ class TextureWidgets(Frame):
     def set_texture(self, *args):
         tex = Textures(args[0])
         if tex == Textures.WOOD:
-            load_texture("assets/pngexample/wood.png", self.control.material.material)
+            load_texture("assets/textures/wood.png", self.control.material.material)
         elif tex == Textures.BRICKS:
-            load_texture("assets/pngexample/brick.png", self.control.material.material)
+            load_texture("assets/textures/brick.png", self.control.material.material)
         elif tex == Textures.IRON:
-            load_texture("assets/pngexample/iron.png", self.control.material.material)
+            load_texture("assets/textures/iron.png", self.control.material.material)
         else: # NONE
             delete_texture(self.control.material.material)
         self.control.re_render()
@@ -638,8 +638,11 @@ class TextureWidgets(Frame):
     def import_texture(self):
         filetypes = [
             ("PNG image", "*.png"),
+            ("jpg image", "*.jpg")
         ]
         filename = filedialog.askopenfilename(title="Select a texture", filetypes=filetypes)
+        if filename == "":
+            return
 
         load_texture(filename, self.control.material.material)
         self.control.re_render()
