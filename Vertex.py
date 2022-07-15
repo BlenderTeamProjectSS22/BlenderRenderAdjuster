@@ -27,8 +27,10 @@ def load_vertex(obj: object, material: bpy.types.Material):
   material.node_tree.links.new(disp,Color_Attribute.outputs[0])
 
 # set to vertex paint mode to see the result
-  bpy.ops.object.mode_set(mode='VERTEX_PAINT')
+ # bpy.ops.object.mode_set(mode='VERTEX_PAINT')
 
 def delete_vertex(material: bpy.types.Material):
-  disp=material.node_tree.nodes["Principled BSDF"].inputs['Base Color']
-  material.node_tree.links.remove(disp.links[0])
+  if(material.node_tree.nodes.get("Color Attribute") is not None):
+    disp=material.node_tree.nodes["Color Attribute"].outputs['Color']
+    if(disp.links != ()):
+      material.node_tree.links.remove(disp.links[0])

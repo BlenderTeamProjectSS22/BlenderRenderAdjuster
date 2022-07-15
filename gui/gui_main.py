@@ -440,6 +440,8 @@ class ColorMeshWidgets(Frame):
     
     def update_vertex_color(self, var, index, mode):
         if self.control.vertc.get():
+            if self.control.tex_selected.get() != "none": 
+                self.control.tex_selected.set("none")
             self.mesh.set(False)
             load_vertex(self.control.model,self.control.material.material)
         else:
@@ -472,31 +474,38 @@ class TextureWidgets(Frame):
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
-        tex_selected = StringVar(self)
-        tex_selected.set("none")
+        
+        self.control.tex_selected = StringVar(self)
+        self.control.tex_selected.set("none")
         lbl_textures = Label(master=self, text="Texture selection:", font=FONT_TITLE)
+        
         btn_import_texture = Button(master=self, text="Import", command=self.import_texture)
         lbl_sel_tex    = Label(master=self, text="Select:")
         textures = (Textures.NONE.value, Textures.WOOD.value, Textures.BRICKS.value, Textures.IRON.value)
-        dropdown_textures = OptionMenu(self, tex_selected, *textures, command=self.set_texture)
+        dropdown_textures = OptionMenu(self, self.control.tex_selected, *textures)
+        self.control.tex_selected.trace_add("write", self.set_texture)
         lbl_textures.grid(row=0, column=0, columnspan=2, sticky="we")
         btn_import_texture.grid(row=1, column=0, columnspan=2, sticky="")
         lbl_sel_tex.grid(row=2, column=0, sticky="w")
         dropdown_textures.grid(row=2, column=1, sticky="we")
     
     def set_texture(self, *args):
-        tex = Textures(args[0])
+        tex = Textures(self.control.tex_selected.get())
         if tex == Textures.WOOD:
+            self.control.vertc.set(False)
             load_texture(PATH_TEXTURES + Textures.WOOD.value + ".png", self.control.material.material)
         elif tex == Textures.BRICKS:
+            self.control.vertc.set(False)
             load_texture(PATH_TEXTURES + Textures.BRICKS.value + ".png", self.control.material.material)
         elif tex == Textures.IRON:
+            self.control.vertc.set(False)
             load_texture(PATH_TEXTURES + Textures.IRON.value + ".png", self.control.material.material)
         else: # NONE
             delete_texture(self.control.material.material)
         self.control.re_render()
     
     def import_texture(self):
+        self.control.vertc.set(False)
         filetypes = [
             ("PNG image", "*.png"),
             ("jpg image", "*.jpg")
