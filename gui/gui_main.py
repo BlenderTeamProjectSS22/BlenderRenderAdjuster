@@ -9,7 +9,7 @@ from asyncio import selector_events
 from select import select
 from cgi import print_directory
 import tkinter as tk
-from tkinter import Frame, Label, Button, StringVar, BooleanVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
+from tkinter import Frame, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
@@ -18,6 +18,7 @@ from tkinter.tix import Select
 from PIL import ImageTk, Image
 
 import webbrowser
+import threading
 import requests
 import enum
 from Texture import load_texture
@@ -29,14 +30,15 @@ from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.panel_materials import MaterialWidgets
 from gui.settings import Control
+from gui.loading_screen import VideoLoadingScreen, ImageLoadingScreen
 import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
 from camera_animation import camera_animation_module as cammod
 
-
-from materials.materials import MaterialController
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, create_default_light
 from Lightning.light_functions import day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
+from materials.materials import MaterialController
+
 from Lightning.light_class import Light
 from HDRI.hdri import set_background_brightness, background_brightness_affects_objects
 
@@ -45,9 +47,9 @@ import os
 
 import HDRI.hdri as hdri
 
-
 ## for testing
-import bpy
+if props.DEBUG:
+    import bpy
 
 class ProgramGUI:
     def __init__(self, master):
@@ -57,6 +59,8 @@ class ProgramGUI:
         camera   = utils.OrbitCam()
         renderer = utils.Renderer(camera.camera)
         renderer.set_preview_render()
+        self.max_frame = IntVar()
+        frames = utils.FrameControl(self.max_frame)
 
         hdri.initialize_world_texture()
 
@@ -67,19 +71,20 @@ class ProgramGUI:
             utils.generate_hdri_thumbnail("assets/HDRIs/" + filename)
         
         master.title("Render adjuster")
-        master.minsize(107+184+480,307)
+        master.minsize(107+1135+184,507)
         icon = ImageTk.PhotoImage(Image.open("assets/gui/icon.ico"))
         master.iconphoto(True, icon)
         
         master.columnconfigure(0, weight=0, minsize=107)
-        master.columnconfigure(1, weight=16)
+        master.columnconfigure(1, weight=16, minsize=1135)
         master.columnconfigure(2, weight=0, minsize=184)
-        master.rowconfigure(0, weight=9, minsize=307)
-        master.rowconfigure(1, weight=9)
+        master.rowconfigure(0, weight=15, minsize=307)
+        master.rowconfigure(1, weight=1)
         
         # Create global control object
+        mid = Frame(master=master)
         self.preview = RenderPreview(master)
-        self.control = Control(renderer, self.preview, camera)
+        self.control = Control(renderer, self.preview, camera, frames)
         self.control.material = MaterialController()
         self.control.model = None
         
@@ -94,21 +99,22 @@ class ProgramGUI:
         
         left  = LeftPanel(master, self.control)
         right = RightPanel(master, self.control)
-        under = UnderPanel(master, self.control)
-        camcontrols = CameraControls(master, self.control)
-        modelcontrols = ModelControls(master, self.control)
-
-        background_ctrl = BackgroundControl(master, self.control)
+        camcontrols = CameraControls(mid, self.control)
+        background_ctrl = BackgroundControl(mid, self.control)
+        frm_frame = FrameWidgets(mid, self.control, self.max_frame)
         
-        left.grid(row=0, column=0, sticky="nw")
+        mid.rowconfigure(1, weight=1)
+        mid.columnconfigure(0, weight=1)
+        mid.columnconfigure(1, weight=1)
+        camcontrols.grid(row=1, column=0, sticky="nsew")
+        background_ctrl.grid(row=1, column=1, sticky="nwse")
+        frm_frame.grid(row=0, columnspan=2, sticky="esw")
+        
+        left.grid(row=0, column=0, sticky="nw", rowspan=2)
         self.preview.grid(row=0, column=1, sticky="nwes")
-        under.grid(row=1, column=1, sticky="nwe")
-        camcontrols.grid(row=2, column=1, sticky="nw")
-        modelcontrols.grid(row=2, column=1, sticky="sw")
 
-        right.grid(row=0, column=2, sticky="ne")
-
-        background_ctrl.grid(row=2, column=1, sticky="e")
+        mid.grid(row=1, column=1, sticky="nwes")
+        right.grid(row=0, column=2, sticky="ne", rowspan=2)
 
 
 class LeftPanel(Frame):
@@ -136,7 +142,7 @@ class LeftPanel(Frame):
         frame_ops    = tk.Frame(master=self)
         lbl_ops      = tk.Label(master=frame_ops, text="Actions", font="Arial 10 bold")
         btn_settings = tk.Button(master=frame_ops, text="Settings", command=self.open_settings_window)
-        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)  # The update check may or may not be implemented
+        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)
         btn_help     = tk.Button(master=frame_ops, text="Help", command=self.open_help_page)
         lbl_spacer.pack()
 
@@ -145,7 +151,6 @@ class LeftPanel(Frame):
         btn_updates.pack(fill=tk.X)
         btn_help.pack(fill=tk.X)
         frame_ops.pack()
-
 
         lbl_spacer2 = Label(master=self, text="")
 
@@ -159,10 +164,11 @@ class LeftPanel(Frame):
         btn_preset1.pack(fill=tk.X)
         btn_preset2.pack(fill=tk.X)
         btn_preset3.pack(fill=tk.X)
-        
 
-
-
+        lbl_spacer3 = Label(master=self, text="")
+        lbl_spacer3.pack()
+        modelcontrols = ModelControls(self, self.control)
+        modelcontrols.pack(fill=tk.X)
     
     def import_model(self):
         filetypes = [
@@ -177,6 +183,7 @@ class LeftPanel(Frame):
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
+        print("Import")
         self.control.material.apply_material(self.control.model)
         self.control.camera.reset_position()
         self.control.re_render()
@@ -200,9 +207,22 @@ class LeftPanel(Frame):
             filetypes=[("Portable Network Graphics","*.png")])
         if filename == "":
             return
-        self.control.renderer.set_final_render(file_path=filename)
-        self.control.renderer.render()
-        self.control.renderer.set_preview_render()
+        
+        self.loading_image = ImageLoadingScreen(self)
+        self.update_idletasks()
+        
+        def render_finished(scene):
+            self.loading_image.close_window()
+            utils.unregister_handler(render_finished, utils.Handler.FINISHED)
+        utils.register_handler(render_finished, utils.Handler.FINISHED)
+        
+        def render():
+            self.control.renderer.set_final_render(file_path=filename)
+            self.control.renderer.render(animation=False)
+            self.control.renderer.set_preview_render()
+        
+        renderthread = threading.Thread(target=render)
+        renderthread.start()
     
     def render_video(self):
         filename = filedialog.asksaveasfilename(
@@ -212,9 +232,7 @@ class LeftPanel(Frame):
             filetypes=[("Audio Video Interleave","*.avi")])
         if filename == "":
             return
-        self.control.renderer.set_final_render(file_path=filename, animation=True)
-        self.control.renderer.render()
-        self.control.renderer.set_preview_render()
+        self.loading_video = VideoLoadingScreen(self, self.control, filename)
     
     def open_settings_window(self):
         SettingsWindow(self.master, self.control)
@@ -270,40 +288,73 @@ class CameraControls(Frame):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
         
         self.control = control
+        
+        self.columnconfigure(0, weight=4)
+        self.columnconfigure(1, weight=4)
+        self.columnconfigure(2, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=4)
+        
         lbl_controls = Label(master=self, text="Camera Controls", font="Arial 10 bold")
-        lbl_rot   = Label(master=self, text="Rotation")
-        lbl_pan   = Label(master=self, text="Panning")
-        lbl_controls.grid(row=0, column=0, columnspan=7)
-        lbl_rot.grid(row=1, column=0, columnspan=3)
-        lbl_pan.grid(row=1, column=3, columnspan=3)
+        
+        light_gray = "#e6e6e6"
+        frm_rot = Frame(master=self)
+        frm_rot.columnconfigure(0, weight=1)
+        frm_rot.columnconfigure(1, weight=1)
+        frm_rot.columnconfigure(2, weight=1)
+        frm_rot.rowconfigure(0, weight=1)
+        frm_rot.rowconfigure(1, weight=4)
+        frm_rot.rowconfigure(2, weight=4)
+        frm_rot.rowconfigure(3, weight=4)
+        lbl_rot = Label(master=frm_rot, text="Rotation")
+        btn_up_rot = Button(master=frm_rot, text="↑", command=self.rotate_up, bg=light_gray)
+        btn_down_rot = Button(master=frm_rot, text="↓", command=self.rotate_down, bg=light_gray)
+        btn_right_rot = Button(master=frm_rot, text="→", command=self.rotate_right, bg=light_gray)
+        btn_left_rot = Button(master=frm_rot, text="←", command=self.rotate_left, bg=light_gray)
+        lbl_rot.grid(row=0, column=0, columnspan=3, pady=10)
+        btn_up_rot.grid(row=1, column=1, sticky="news")
+        btn_left_rot.grid(row=2, column=0, sticky="news")
+        btn_right_rot.grid(row=2, column=2, sticky="news")
+        btn_down_rot.grid(row=3, column=1, sticky="news")
+        
+        frm_pan = Frame(master=self)
+        frm_pan.columnconfigure(0, weight=1)
+        frm_pan.columnconfigure(1, weight=1)
+        frm_pan.columnconfigure(2, weight=1)
+        frm_pan.rowconfigure(0, weight=1)
+        frm_pan.rowconfigure(1, weight=4)
+        frm_pan.rowconfigure(2, weight=4)
+        frm_pan.rowconfigure(3, weight=4)
+        lbl_pan = Label(master=frm_pan, text="Panning")
+        btn_up_pan = Button(master=frm_pan, text="↑", command=self.move_up, bg=light_gray)
+        btn_down_pan = Button(master=frm_pan, text="↓", command=self.move_down, bg=light_gray)
+        btn_right_pan = Button(master=frm_pan, text="→", command=self.move_right, bg=light_gray)
+        btn_left_pan = Button(master=frm_pan, text="←", command=self.move_left, bg=light_gray)
+        lbl_pan.grid(row=0, column=0, columnspan=3, pady=10)
+        btn_up_pan.grid(row=1, column=1, sticky="news")
+        btn_left_pan.grid(row=2, column=0, sticky="news")
+        btn_right_pan.grid(row=2, column=2, sticky="news")
+        btn_down_pan.grid(row=3, column=1, sticky="news")
+        
+        frm_dist = Frame(master=self)
+        frm_dist.columnconfigure(0, weight=1)
+        frm_dist.rowconfigure(0, weight=1)
+        frm_dist.rowconfigure(1, weight=4)
+        frm_dist.rowconfigure(2, weight=4)
+        lbl_dist = Label(master=frm_dist, text="Distance")
+        btn_in = Button(master=frm_dist, text="Pan in", command=self.pan_in, bg=light_gray)
+        btn_out = Button(master=frm_dist, text="Pan out", command=self.pan_out, bg=light_gray)
+        lbl_dist.grid(row=0, column=0, sticky="news")
+        btn_in.grid(row=1, column=0, padx=8, sticky="ew")
+        btn_out.grid(row=2, column=0, padx=8, sticky="ew")
 
-        btn_up_rot = Button(master=self, text="↑", command=self.rotate_up)
-        btn_down_rot = Button(master=self, text="↓", command=self.rotate_down)
-        btn_right_rot = Button(master=self, text="→", command=self.rotate_right)
-        btn_left_rot = Button(master=self, text="←", command=self.rotate_left)
-
-        btn_up_rot.grid(row=2, column=1)
-        btn_left_rot.grid(row=3, column=0, sticky="w")
-        btn_right_rot.grid(row=3, column=2, sticky="e")
-        btn_down_rot.grid(row=4, column=1)
-
-        btn_up_pan = Button(master=self, text="↑", command=self.move_up)
-        btn_down_pan = Button(master=self, text="↓", command=self.move_down)
-        btn_right_pan = Button(master=self, text="→", command=self.move_right)
-        btn_left_pan = Button(master=self, text="←", command=self.move_left)
-
-        btn_up_pan.grid(row=2, column=4)
-        btn_left_pan.grid(row=3, column=3, sticky="w")
-        btn_right_pan.grid(row=3, column=5, sticky="e")
-        btn_down_pan.grid(row=4, column=4)
-
-        lbl_dist   = Label(master=self, text="Distance")
-        btn_in = Button(master=self, text="Pan in", command=self.pan_in)
-        btn_out = Button(master=self, text="Pan out", command=self.pan_out)
-
-        lbl_dist.grid(row = 1, column=6)
-        btn_in.grid(row=2, column=6, padx=8)
-        btn_out.grid(row=4, column=6, padx=8)
+        btn_reset = Button(master=self, text="Reset camera angle", command=self.reset_camera)
+        
+        lbl_controls.grid(row=0, column=0, columnspan=3)
+        frm_rot.grid(row=1, column=0, padx=10, pady=10, sticky="news")
+        frm_pan.grid(row=1, column=1, padx=10, pady=10, sticky="news")
+        frm_dist.grid(row=1, column=2, padx=10, sticky="news")
+        btn_reset.grid(row=2, column=0, columnspan=3)
 
     def rotate_up(self):
         self.control.camera.rotate_x(-10)
@@ -350,11 +401,15 @@ class CameraControls(Frame):
     def pan_out(self):
         self.control.camera.set_distance(self.control.camera.get_distance() * zoom_factor)
         self.control.re_render()
+    
+    def reset_camera(self):
+        self.control.camera.reset_position()
+        self.control.re_render()
         
     
 class ModelControls(Frame):
     def __init__(self, master, control):
-        Frame.__init__(self, master, borderwidth=2, relief="groove")
+        Frame.__init__(self, master)
         
         self.control = control
         lbl_controls = Label(master=self, text="Model Controls", font="Arial 10 bold")
@@ -485,7 +540,7 @@ class LightingWidgets(Frame):
     # constants
     TIME_TO_ANGLE_CONSTANT : int = 15
     HIGH_OF_LATERN_LIGHT : int = 2
-    STARTING_TIME : int = 6
+    STARTING_TIME_OF_DAY : int = 6
 
     def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
@@ -651,10 +706,12 @@ class LightingWidgets(Frame):
     # deletes the animations if "self.is_day_night" = false
     def switch_day_night_circle(self):
         if self.is_day_night.get():
+            self.control.frames.add_animation(utils.Animation.DAYNIGHT)
             self.activate_brightness_slider(False)
             delete_lights(self.light_objects)
-            self.light_objects = day_night_cycle(self.STARTING_TIME, self.get_brightness(), True, self.control.camera)
+            self.light_objects = day_night_cycle(self.daytime + self.STARTING_TIME_OF_DAY, self.get_brightness(), True, self.control.camera, 3)
         else:
+            self.control.frames.remove_animation(utils.Animation.DAYNIGHT)
             delete_light_animation(self.light_objects)
             self.use_light_type = 0
         self.control.re_render()
@@ -664,38 +721,45 @@ class BackgroundControl(Frame):
     def __init__(self, master, control):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
         
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        self.rowconfigure(3, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
+        self.columnconfigure(3, weight=1)
+        self.columnconfigure(4, weight=1)
         self.control = control
         lbl_controls = Label(master=self, text="Background", font="Arial 10 bold")
-        lbl_select   = Label(master=self, text="Select HDRI image:")
         lbl_controls.grid(row=0, column=0, columnspan=5)
-        lbl_select.grid(row=1, column=0, columnspan=5)
 
         empty_bg_lbl = Label(master=self, text="Empty", font="Arial 10 bold")
-        empty_bg_lbl.grid(row=2, column=0)
+        empty_bg_lbl.grid(row=1, column=0)
         self.empty_bg = PhotoImage(file = "assets/gui/empty_bg.png").subsample(2,2)
         empty_bg_btn = Button(master=self, image=self.empty_bg, command=self.remove_background)
-        empty_bg_btn.grid(row = 3, column=0)
+        empty_bg_btn.grid(row=2, column=0)
 
         bg1_lbl = Label(master=self, text="Green Park", font="Arial 10 bold")
-        bg1_lbl.grid(row=2, column=1)
+        bg1_lbl.grid(row=1, column=1)
         self.bg1 = PhotoImage(file = "assets/hdri_thumbs/green_point_park_2k.hdr.png").subsample(2,2)
         bg1_btn = Button(master=self, image=self.bg1, command=lambda: self.load_hdri("assets/HDRIs/green_point_park_2k.hdr"))
-        bg1_btn.grid(row = 3, column=1)
+        bg1_btn.grid(row=2, column=1)
 
         bg2_lbl = Label(master=self, text="Old Depot", font="Arial 10 bold")
-        bg2_lbl.grid(row=2, column=2)
+        bg2_lbl.grid(row=1, column=2)
         self.bg2 = PhotoImage(file = "assets/hdri_thumbs/old_depot_2k.hdr.png").subsample(2,2)
         bg2_btn = Button(master=self, image=self.bg2, command=lambda: self.load_hdri("assets/HDRIs/old_depot_2k.hdr"))
-        bg2_btn.grid(row = 3, column=2)
+        bg2_btn.grid(row=2, column=2)
 
         bg3_lbl = Label(master=self, text="Desert", font="Arial 10 bold")
-        bg3_lbl.grid(row=2, column=3)
+        bg3_lbl.grid(row=1, column=3)
         self.bg3 = PhotoImage(file = "assets/hdri_thumbs/syferfontein_6d_clear_2k.hdr.png").subsample(2,2)
         bg3_btn = Button(master=self, image=self.bg3, command=lambda: self.load_hdri("assets/HDRIs/syferfontein_6d_clear_2k.hdr"))
-        bg3_btn.grid(row = 3, column=3)
+        bg3_btn.grid(row=2, column=3)
 
         btn_import_hdri = Button(master=self, text="Import custom HDRI", command=self.import_hdri)
-        btn_import_hdri.grid(row=3, column=4)
+        btn_import_hdri.grid(row=2, column=4)
 
     def load_hdri(self, path: str):
         hdri.set_background_image(path)
@@ -788,48 +852,33 @@ class PointCloudObjects(enum.Enum):
     DISK = "disk"
 
 
-class UnderPanel(Frame):
-
-    def __init__(self, master, control):
-        Frame.__init__(self, master)
-
-        self.current_color = (255, 255, 0)
-        
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
-        self.columnconfigure(0, weight=1)
-
-        self.control = control
-        
-        # Frame setting widgets
-        frm_frame = FrameWidgets(self, control)
-        frm_frame.grid(row=0, sticky="enw")
-
-
 class FrameWidgets(Frame):
 
-    def __init__(self, master, control):
+    def __init__(self, master, control, max_frame: IntVar):
         Frame.__init__(self, master, borderwidth=2, relief="groove")
         self.control = control
+        self.max_frame = max_frame
         
         # variables
         self.frame : int = 0
-        self.frame_end : int = control.renderer.scene.frame_end
+        max_frame.trace_add("write", self.max_changed)
 
         # grid
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
 
         # labels and sliders
         lbl_frame_setting = Label(master=self, text="Frame", font="Arial 10 bold")
-        slider_frame_setting = Scale(master=self, from_= 0, to = self.frame_end, orient="horizontal", showvalue=True, command=lambda val: self.set_frame(val, False))
-        slider_frame_setting.bind("<ButtonRelease-1>", lambda event : self.set_frame(self.get_frame(), True)) 
-
+        self.slider_frame_setting = Scale(master=self, from_= 0, to=self.max_frame.get(), orient="horizontal", command=lambda val: self.set_frame(val, False))
+        self.slider_frame_setting.bind("<ButtonRelease-1>", lambda event : self.set_frame(self.get_frame(), True)) 
+        
         # packing
         lbl_frame_setting.grid(row=0)
-        slider_frame_setting.grid(row=1,sticky="wne")
+        self.slider_frame_setting.grid(row=1,sticky="wse")
 
+    # Update the slider length whenever the frame max is changed
+    def max_changed(self, var, index, mode):
+        self.slider_frame_setting.configure(to=self.max_frame.get())
+    
     # returns the frame value
     def get_frame(self) -> int:
         return self.frame
@@ -838,7 +887,7 @@ class FrameWidgets(Frame):
     def set_frame(self, value : int, is_released : bool) -> None:
         self.frame = value
         if is_released:
-            bpy.context.scene.frame_current = int(value)
+            self.control.frames.set_current_frame(int(value))
             self.control.re_render()
 
 class RightPanel(Frame):
