@@ -1,12 +1,17 @@
-__pycache__/
-renders/
-build/
-dist/
-.venv-blender
-*.zip
-data_samples
-preview.png
-.DS_Store
-hdri_thumbs/
-temp.png
-blender_render.log
+# Ignore everything
+*
+
+# Allow these files
+*.py                                # Python source code
+*.md                                # Markdown files, e.g. the Readme
+requirements.txt                    # requirements for pip
+main-linux.spec
+main-windows.spec
+assets/HDRIs/*.hdr                  # HDRI images
+assets/textures/brick.png           # Texture files should be png only for highest quality
+assets/textures/iron.png
+assets/textures/wood.png
+assets/default_settings.yaml        # Default settings should be included, but not "settings.yaml"
+assets/gui/icon.ico                 # Program icon
+assets/gui/empty_bg.png             # Empty image if no render has happend yet
+/assets/gui/preview_unavailable.png

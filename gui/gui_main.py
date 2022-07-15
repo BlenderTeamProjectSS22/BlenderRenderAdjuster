@@ -11,15 +11,13 @@ from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
-from tkinter.tix import Select
 from PIL import ImageTk, Image
 
 import webbrowser
 import threading
 import requests
 import enum
-from Texture import load_texture
-from Texture import delete_texture
+from Texture import load_texture, delete_texture
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
@@ -485,7 +483,8 @@ class TextureWidgets(Frame):
     
     def import_texture(self):
         filetypes = [
-            ("PNG image", "*.png"), ("jpg image", "*.jpg"),
+            ("PNG image", "*.png"),
+            ("jpg image", "*.jpg")
         ]
         filename = filedialog.askopenfilename(title="Select a texture", filetypes=filetypes)
         if filename == "":
