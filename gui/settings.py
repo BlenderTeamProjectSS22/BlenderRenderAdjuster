@@ -64,9 +64,6 @@ class Settings():
         self.timelimit = limit
         self.renderer.set_time_limit(limit)
     
-DEFAULT_CONFIG_PATH = "assets/default_settings.yaml"
-CONFIG_PATH         = "assets/settings.yaml"
-    
 class Control:
     renderer: Renderer
     preview: RenderPreview

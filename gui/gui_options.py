@@ -62,7 +62,7 @@ class SettingsContent(Frame):
         self.ent_width.bind("<FocusOut>", lambda event: self.on_entry_leave(event, self.control.settings.aspect.width))
         self.ent_height.bind("<FocusOut>", lambda event: self.on_entry_leave(event, self.control.settings.aspect.height))
         self.ent_limit.bind("<FocusOut>", lambda event: self.on_entry_leave(event, self.control.settings.timelimit))
-            
+        
         self.columnconfigure(1, weight=1)
         lbl_settings.grid(row=0, column=0, columnspan=2)
         lbl_aspect.grid(row=1, column=0, sticky="w")

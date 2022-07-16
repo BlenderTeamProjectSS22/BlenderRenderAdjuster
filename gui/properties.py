@@ -7,3 +7,17 @@ VERSION_PATCH = 0
 
 DEBUG = False
 VERBOSE = False
+
+DEFAULT_CONFIG_PATH = "assets/default_settings.yaml"
+CONFIG_PATH         = "assets/settings.yaml"
+
+PATH_ICON     = "assets/gui/icon.ico"
+PATH_EMPTY_BG = "assets/gui/empty_bg.png"
+PATH_HDRI     = "assets/hdris/"
+PATH_THUMB    = "assets/hdri_thumbs"
+PATH_MODELS   = "assets/models/"
+PATH_TEXTURES = "assets/textures/"
+PATH_PREVIEW  = "assets/gui/preview.png"
+PATH_PREVIEW_UNAVAILABLE = "assets/gui/preview_unavailable.png"
+
+FONT_TITLE = "Arial 10 bold"

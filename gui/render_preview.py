@@ -14,7 +14,7 @@ class RenderPreview(Frame):
         def __init__(self, master):
             Frame.__init__(self, master, bg="black")
             
-            self.original_image = Image.open("assets/gui/preview_unavailable.png")
+            self.original_image = Image.open(PATH_PREVIEW_UNAVAILABLE)
             self.img = ImageTk.PhotoImage(self.original_image)
             
             self.w = self.original_image.width
@@ -47,7 +47,7 @@ class RenderPreview(Frame):
         # Preview is refreshed when called
         def reload(self):
             try:
-                self.original_image = Image.open("assets/gui/preview.png")
+                self.original_image = Image.open(PATH_PREVIEW)
             except FileNotFoundError:
-                self.original_image = Image.open("assets/gui/preview_unavailable.png")
+                self.original_image = Image.open(PATH_PREVIEW_UNAVAILABLE)
             self.resize(self.original_image, self.w, self.h)

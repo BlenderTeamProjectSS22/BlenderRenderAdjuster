@@ -25,7 +25,7 @@ from gui.panel_materials import MaterialWidgets
 from gui.settings import Control
 from gui.loading_screen import VideoLoadingScreen, ImageLoadingScreen
 import gui.properties as props
-from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
+from gui.properties import *
 
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, create_default_light
 from Lightning.light_functions import day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
@@ -55,14 +55,14 @@ class ProgramGUI:
         hdri.initialize_world_texture()
 
         #generate HDRI previews
-        hdri_dir = os.fsencode("assets/HDRIs/")
+        hdri_dir = os.fsencode(PATH_HDRI)
         for file in os.listdir(hdri_dir):
             filename = os.fsdecode(file)
-            utils.generate_hdri_thumbnail("assets/HDRIs/" + filename)
+            utils.generate_hdri_thumbnail(PATH_HDRI + filename)
         
         master.title("Render adjuster")
         master.minsize(107+1135+184,507)
-        icon = ImageTk.PhotoImage(Image.open("assets/gui/icon.ico"))
+        icon = ImageTk.PhotoImage(Image.open(PATH_ICON))
         master.iconphoto(True, icon)
         
         master.columnconfigure(0, weight=0, minsize=107)
@@ -80,7 +80,7 @@ class ProgramGUI:
         
         # Load defaul cube if debug is enabled
         if props.DEBUG:
-            self.control.model = utils.import_mesh("assets/STL samples/cube.obj")
+            self.control.model = utils.import_mesh(PATH_MODELS + "cube.obj")
             self.control.camera.rotate_z(45)
             self.control.camera.rotate_x(-20)
             self.control.camera.set_distance(10)
@@ -112,7 +112,7 @@ class LeftPanel(Frame):
         self.control = control
         lbl_spacer = Label(master=self, text="")
 
-        lbl_fileop = Label(master=self, text="File operations", font="Arial 10 bold")
+        lbl_fileop = Label(master=self, text="File operations", font=FONT_TITLE)
         btn_import = Button(master=self, text="Import model", command=self.import_model)
         btn_export = Button(master=self, text="Export model", command=self.export_model)
         btn_render = Button(master=self, text="Save render", command=self.render_image)
@@ -128,7 +128,7 @@ class LeftPanel(Frame):
         
         # All general program widgets
         frame_ops    = tk.Frame(master=self)
-        lbl_ops      = tk.Label(master=frame_ops, text="Actions", font="Arial 10 bold")
+        lbl_ops      = tk.Label(master=frame_ops, text="Actions", font=FONT_TITLE)
         btn_settings = tk.Button(master=frame_ops, text="Settings", command=self.open_settings_window)
         btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)
         btn_help     = tk.Button(master=frame_ops, text="Help", command=self.open_help_page)
@@ -150,7 +150,7 @@ class LeftPanel(Frame):
             ("STL file", "*.stl"),
             ("Wavefront OBJ", "*.obj")
         ]
-        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes, initialdir="assets/model presets/")
+        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes, initialdir=PATH_MODELS)
         if filename == "":
             return
         if self.control.model != None:
@@ -259,7 +259,7 @@ class CameraControls(Frame):
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=4)
         
-        lbl_controls = Label(master=self, text="Camera Controls", font="Arial 10 bold")
+        lbl_controls = Label(master=self, text="Camera Controls", font=FONT_TITLE)
         
         light_gray = "#e6e6e6"
         frm_rot = Frame(master=self)
@@ -376,7 +376,7 @@ class ModelControls(Frame):
         Frame.__init__(self, master)
         
         self.control = control
-        lbl_controls = Label(master=self, text="Model Controls", font="Arial 10 bold")
+        lbl_controls = Label(master=self, text="Model Controls", font=FONT_TITLE)
         lbl_rot   = Label(master=self, text="Rotation:")
         lbl_controls.grid(row=0, column=0, columnspan=3)
         lbl_rot.grid(row=1, column=0)
@@ -402,7 +402,7 @@ class ColorMeshWidgets(Frame):
         
         self.current_color = None
         
-        lbl_look    = Label(master=self, text="Look", font="Arial 10 bold")
+        lbl_look    = Label(master=self, text="Look", font=FONT_TITLE)
         lbl_color   = Label(master=self, text="Color")
         btn_picker  = Button(master=self, text="pick", command=self.pick_color)
         lbl_type    = Label(master=self, text="Type")
@@ -459,7 +459,7 @@ class TextureWidgets(Frame):
         self.rowconfigure(2, weight=1)
         tex_selected = StringVar(self)
         tex_selected.set("none")
-        lbl_textures = Label(master=self, text="Texture selection:", font="Arial 10 bold")
+        lbl_textures = Label(master=self, text="Texture selection:", font=FONT_TITLE)
         btn_import_texture = Button(master=self, text="Import", command=self.import_texture)
         lbl_sel_tex    = Label(master=self, text="Select:")
         textures = (Textures.NONE.value, Textures.WOOD.value, Textures.BRICKS.value, Textures.IRON.value)
@@ -472,11 +472,11 @@ class TextureWidgets(Frame):
     def set_texture(self, *args):
         tex = Textures(args[0])
         if tex == Textures.WOOD:
-            load_texture("assets/textures/wood.png", self.control.material.material)
+            load_texture(PATH_TEXTURES + Textures.WOOD.value + ".png", self.control.material.material)
         elif tex == Textures.BRICKS:
-            load_texture("assets/textures/brick.png", self.control.material.material)
+            load_texture(PATH_TEXTURES + Textures.BRICKS.value + ".png", self.control.material.material)
         elif tex == Textures.IRON:
-            load_texture("assets/textures/iron.png", self.control.material.material)
+            load_texture(PATH_TEXTURES + Textures.IRON.value + ".png", self.control.material.material)
         else: # NONE
             delete_texture(self.control.material.material)
         self.control.re_render()
@@ -528,7 +528,7 @@ class LightingWidgets(Frame):
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
         # labels
-        lbl_light = Label(master=self, text="Lighting", font="Arial 10 bold")
+        lbl_light = Label(master=self, text="Lighting", font=FONT_TITLE)
         self.lbl_brightness = Label(master=self, text="Brightness(inactive)")
         lbl_daytime = Label(master=self, text="Time of day/night")
         lbl_background = Label(master=self, text="Background Strength")
@@ -697,31 +697,31 @@ class BackgroundControl(Frame):
         self.columnconfigure(3, weight=1)
         self.columnconfigure(4, weight=1)
         self.control = control
-        lbl_controls = Label(master=self, text="Background", font="Arial 10 bold")
+        lbl_controls = Label(master=self, text="Background", font=FONT_TITLE)
         lbl_controls.grid(row=0, column=0, columnspan=5)
 
-        empty_bg_lbl = Label(master=self, text="Empty", font="Arial 10 bold")
+        empty_bg_lbl = Label(master=self, text="Empty", font=FONT_TITLE)
         empty_bg_lbl.grid(row=1, column=0)
-        self.empty_bg = PhotoImage(file = "assets/gui/empty_bg.png").subsample(2,2)
+        self.empty_bg = PhotoImage(file = PATH_EMPTY_BG).subsample(2,2)
         empty_bg_btn = Button(master=self, image=self.empty_bg, command=self.remove_background)
         empty_bg_btn.grid(row=2, column=0)
 
-        bg1_lbl = Label(master=self, text="Green Park", font="Arial 10 bold")
+        bg1_lbl = Label(master=self, text="Green Park", font=FONT_TITLE)
         bg1_lbl.grid(row=1, column=1)
         self.bg1 = PhotoImage(file = "assets/hdri_thumbs/green_point_park_2k.hdr.png").subsample(2,2)
-        bg1_btn = Button(master=self, image=self.bg1, command=lambda: self.load_hdri("assets/HDRIs/green_point_park_2k.hdr"))
+        bg1_btn = Button(master=self, image=self.bg1, command=lambda: self.load_hdri("assets/hdris/green_point_park_2k.hdr"))
         bg1_btn.grid(row=2, column=1)
 
-        bg2_lbl = Label(master=self, text="Old Depot", font="Arial 10 bold")
+        bg2_lbl = Label(master=self, text="Old Depot", font=FONT_TITLE)
         bg2_lbl.grid(row=1, column=2)
         self.bg2 = PhotoImage(file = "assets/hdri_thumbs/old_depot_2k.hdr.png").subsample(2,2)
-        bg2_btn = Button(master=self, image=self.bg2, command=lambda: self.load_hdri("assets/HDRIs/old_depot_2k.hdr"))
+        bg2_btn = Button(master=self, image=self.bg2, command=lambda: self.load_hdri("assets/hdris/old_depot_2k.hdr"))
         bg2_btn.grid(row=2, column=2)
 
-        bg3_lbl = Label(master=self, text="Desert", font="Arial 10 bold")
+        bg3_lbl = Label(master=self, text="Desert", font=FONT_TITLE)
         bg3_lbl.grid(row=1, column=3)
         self.bg3 = PhotoImage(file = "assets/hdri_thumbs/syferfontein_6d_clear_2k.hdr.png").subsample(2,2)
-        bg3_btn = Button(master=self, image=self.bg3, command=lambda: self.load_hdri("assets/HDRIs/syferfontein_6d_clear_2k.hdr"))
+        bg3_btn = Button(master=self, image=self.bg3, command=lambda: self.load_hdri("assets/hdris/syferfontein_6d_clear_2k.hdr"))
         bg3_btn.grid(row=2, column=3)
 
         btn_import_hdri = Button(master=self, text="Import custom HDRI", command=self.import_hdri)
@@ -760,7 +760,7 @@ class FrameWidgets(Frame):
         self.columnconfigure(0, weight=1)
 
         # labels and sliders
-        lbl_frame_setting = Label(master=self, text="Frame", font="Arial 10 bold")
+        lbl_frame_setting = Label(master=self, text="Frame", font=FONT_TITLE)
         self.slider_frame_setting = Scale(master=self, from_= 0, to=self.max_frame.get(), orient="horizontal", command=lambda val: self.set_frame(val, False))
         self.slider_frame_setting.bind("<ButtonRelease-1>", lambda event : self.set_frame(self.get_frame(), True)) 
         

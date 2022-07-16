@@ -15,6 +15,7 @@ import fnmatch
 from PIL import Image, ImageOps
 import sys
 import gui.properties as props
+from gui.properties import PATH_THUMB
 from contextlib import contextmanager, redirect_stdout
 from tkinter import IntVar
 import enum
@@ -295,10 +296,9 @@ def generate_hdri_thumbnail(filepath):
 
     thumb = ImageOps.fit(cropped, (256, 256), Image.ANTIALIAS)
     
-    thumb_folder = "assets/hdri_thumbs/"
-    if not os.path.exists(thumb_folder):
-        os.mkdir(thumb_folder)
-    thumb.save(thumb_folder + filename + ".png", "PNG")
+    if not os.path.exists(PATH_THUMB):
+        os.mkdir(PATH_THUMB)
+    thumb.save(PATH_THUMB + filename + ".png", "PNG")
 
 # rotate obj around Z axis and angle
 def rotate_object(obj: bpy.types.Object, angle: float) -> None:
