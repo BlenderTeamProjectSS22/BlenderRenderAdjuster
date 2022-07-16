@@ -25,6 +25,7 @@ class SettingsWindow(Toplevel):
             self.content.grid(row=0, column=0, padx=5, pady=5)
             
             self.bind("<Escape>", self.content.cancel)
+            self.resizable(False, False)
             self.wait_window(self)
             
 class SettingsContent(Frame):
@@ -34,14 +35,19 @@ class SettingsContent(Frame):
         self.control = control
         validate_int = self.register(validate_integer)
         
-        lbl_aspect = Label(master=self, text="Aspect ratio")
-        self.ent_width  = Entry(master=self, fg="gray", validate="key", validatecommand=(validate_int, '%P'))
-        self.ent_height = Entry(master=self, fg="gray", validate="key", validatecommand=(validate_int, '%P'))
+        frm_aspect = Frame(master=self)
+        lbl_aspect = Label(master=self, text="Aspect ratio of rendered image")
+        lbl_colon  = Label(master=frm_aspect, text=" : ")
+        self.ent_width  = Entry(master=frm_aspect, width=5, fg="gray", validate="key", validatecommand=(validate_int, '%P'))
+        self.ent_height = Entry(master=frm_aspect, width=5, fg="gray", validate="key", validatecommand=(validate_int, '%P'))
+        self.ent_width.pack(side=tk.LEFT)
+        lbl_colon.pack(side=tk.LEFT)
+        self.ent_height.pack(side=tk.LEFT)
         
-        lbl_limit = Label(master=self, text="Time limit")
-        self.ent_limit = Entry(master=self, fg="gray", validate="key", validatecommand=(self.register(validate_float), '%P'))
+        lbl_limit = Label(master=self, text="Time limit for preview render")
+        self.ent_limit = Entry(master=self, fg="gray", width=10, validate="key", validatecommand=(self.register(validate_float), '%P'))
         
-        lbl_settings = Label(master=self, text="Settings")
+        lbl_settings = Label(master=self, text="Settings", font="Arial 10 bold")
         btn_ok = Button(master=self, text="Ok", command=self.accept)
         btn_cancel = Button(master=self, text="Cancel", command=self.cancel)
         
@@ -57,14 +63,14 @@ class SettingsContent(Frame):
         self.ent_height.bind("<FocusOut>", lambda event: self.on_entry_leave(event, self.control.settings.aspect.height))
         self.ent_limit.bind("<FocusOut>", lambda event: self.on_entry_leave(event, self.control.settings.timelimit))
             
+        self.columnconfigure(1, weight=1)
         lbl_settings.grid(row=0, column=0, columnspan=2)
-        lbl_aspect.grid(row=1, column=0)
-        self.ent_width.grid(row=1, column=1)
-        self.ent_height.grid(row=1, column=2)
-        lbl_limit.grid(row=2, column=0)
-        self.ent_limit.grid(row=2, column=1)
-        btn_cancel.grid(row=3, column=1)
-        btn_ok.grid(row=3, column=2)
+        lbl_aspect.grid(row=1, column=0, sticky="w")
+        frm_aspect.grid(row=1, column=1, pady=5, padx=5)
+        lbl_limit.grid(row=2, column=0, sticky="w")
+        self.ent_limit.grid(row=2, column=1, sticky="we", pady=5, padx=5)
+        btn_cancel.grid(row=3, column=0)
+        btn_ok.grid(row=3, column=1)
     
     def on_entry_leave(self, event, default):
         if event.widget.get() == "" :
