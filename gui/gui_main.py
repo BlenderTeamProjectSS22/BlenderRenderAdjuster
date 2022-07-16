@@ -7,7 +7,7 @@
 
 from cgi import print_directory
 import tkinter as tk
-from tkinter import Frame, Toplevel, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
+from tkinter import Frame, Toplevel, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage, Tk
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
@@ -30,7 +30,7 @@ from camera_animation import camera_animation_module as cammod
 from gui.loading_screen import VideoLoadingScreen, ImageLoadingScreen
 import gui.properties as props
 from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
-
+from gui.anim_window import PreviewWindow, PreviewContent
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, create_default_light
 from Lightning.light_functions import day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
 from materials.materials import MaterialController
@@ -319,7 +319,7 @@ class CameraAnimationControls(Frame):
 
     def camera_preset_3(self):
         frames = self.frames_entry_var.get()
-        self.camera_animation_cam.preset_2(frames, self.control.model, self.is_tracking.get())
+        self.camera_animation_cam.preset_3(frames, self.control.model, self.is_tracking.get())
 
         self.camera_animation_cam.set_handles("AUTO")
         self.control.re_render()
@@ -345,51 +345,14 @@ class CameraAnimationControls(Frame):
         self.control.re_render()
 
     def preview_1(self):
-        AnimationPreview(self.master, self.control, "preview1.avi")
+        PreviewWindow(self.master, self.control, "preview1.avi")
 
     def preview_2(self):
-        AnimationPreview(self.master, self.control, "preview2.avi")
+        PreviewWindow(self.master, self.control, "preview2.avi")
 
     def preview_3(self):
-        AnimationPreview(self.master, self.control, "preview3.avi")
-
-class AnimationPreview(Toplevel):
-        def __init__(self, master, control, filename: str):
-            Toplevel.__init__(self)
-            self.master = master
-            self.control = control
-            self.title("Preview of animation")
-            
-            self.focus_set()
-            self.grab_set()
-            
-            self.content = PreviewContent(self, control, filename)
-            self.initial_focus = self.content
-            self.content.grid(row=0, column=0, padx=5, pady=5)
-            
-            self.bind("<Escape>", self.content.cancel)
-            self.wait_window(self)
-
-class PreviewContent(Frame):
-    def __init__(self, master, control, filename: str):
-        Frame.__init__(self, master)
-        self.master = master
-        self.control = control
-        dirname = os.path.dirname(__file__)
-        parentdir = os.path.dirname(dirname)
-        file = os.path.join(parentdir, filename)
-        my_label = Label(self)
-        my_label.pack()
-        player = tkvideo(file, my_label, loop = 1, size = (852,480))
-        player.play()
-
-    def cancel(self, event=None):
-        print("Closing window")
-        self.close_window()
-
-    def close_window(self):
-        self.master.focus_set()
-        self.master.destroy()
+        PreviewWindow(self.master, self.control, "preview3.avi")
+    
 
 
 class CameraControls(Frame):
