@@ -6,6 +6,7 @@
 # GUI element: Main program, renders the GUI and connects it to other function
 
 
+from ctypes import pointer
 import tkinter as tk
 from tkinter import Frame, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
 from tkinter import ttk
@@ -14,7 +15,7 @@ from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
-import pointcloud.point
+from CreatePointcloudFromObject import convert,switchrandom,switchvertex
 import bpy
 import webbrowser
 import threading
@@ -160,8 +161,6 @@ class LeftPanel(Frame):
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
-
-        PointCloudWidgets.hasconverted = False
         self.control.material.apply_material(self.control.model)
         self.control.camera.reset_position()
         self.control.re_render()
@@ -448,10 +447,10 @@ class ColorMeshWidgets(Frame):
             bpy.ops.object.delete()   
             
         else:
-            bpy.ops.mesh.primitive_plane_add(enter_editmode=False, align='WORLD', location=(0, 0, -1), scale=(40, 40, 40))
+            bpy.ops.mesh.primitive_plane_add(enter_editmode=False, align='WORLD', location=(0, 0, -1), scale=(1, 1, 1))
+            bpy.ops.transform.resize(value=(10, 10, 10))
         
         bpy.ops.object.select_all(action = "DESELECT")
-        print(self.control.model.name)
         bpy.data.objects[self.control.model.name].select_set(True) 
         self.control.re_render()
 
@@ -792,17 +791,24 @@ class PointCloudWidgets(Frame):
     hasconverted = False
     cube = None
     sphere = None
+    disk = None
 
-    
-   
-    
     def __init__(self, master, control):
-        bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(0.5, 0.5, 0.5))
+        bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         self.cube = bpy.context.object
         bpy.context.object.hide_render = True
         bpy.context.object.hide_viewport = True
+
         bpy.ops.mesh.primitive_uv_sphere_add(radius=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         self.sphere = bpy.context.object
+        bpy.context.object.hide_render = True
+        bpy.context.object.hide_viewport = True
+       
+        bpy.ops.mesh.primitive_circle_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.mesh.edge_face_add()
+        bpy.ops.object.editmode_toggle()
+        self.disk = bpy.context.object
         bpy.context.object.hide_render = True
         bpy.context.object.hide_viewport = True
 
@@ -814,7 +820,8 @@ class PointCloudWidgets(Frame):
         self.vertices = BooleanVar()
         self.pointcloud = BooleanVar()
         obj_selected = StringVar(self)
-        obj_selected.set("default")
+        obj_selected.set("sphere")
+        self.vertices.set(True)
 
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
@@ -822,16 +829,14 @@ class PointCloudWidgets(Frame):
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
         lbl_pointcloudsettings =  Label(master=self, text="Pointcloud Object:", font="Arial 10 bold")
-        check_pointcloud = Checkbutton(master=self, text="Pointcloud", variable=self.pointcloud, anchor="w", command=self.convert)
-        check_vertices  = Checkbutton(master=self, text="vertices", variable=self.vertices, anchor="w", command=self.switch_vertex)
-        check_random = Checkbutton(master=self, text="random", variable=self.random, anchor="w", command=self.switch_random)
+        check_pointcloud = Checkbutton(master=self, text="Pointcloud", variable=self.pointcloud, anchor="w", command=self.converter)
+        check_vertices  = Checkbutton(master=self, text="vertices", variable=self.vertices, anchor="w", command=self.switch_to_vertex)
+        check_random = Checkbutton(master=self, text="random", variable=self.random, anchor="w", command=self.switch_to_random)
         pointcloudobjects = (PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value)
         lbl_pointcloudobjects =  Label(master=self, text="Select Object:") 
-        pointcloudobjects = ("default", PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value )
+        pointcloudobjects = (PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value )
         dropdown_objects = OptionMenu(self, obj_selected, *pointcloudobjects, command=self.set_object)
        
-       
-        
         lbl_size = Label(master=self, text="Point Size")
         slider_size = Scale(master=self, to = 8.0, orient="horizontal",
                                   resolution = 0.1, showvalue=False, command=lambda val: self.set_size(val, False))
@@ -855,76 +860,29 @@ class PointCloudWidgets(Frame):
         elif tex == PointCloudObjects.CUBE:
             bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.cube
         elif tex == PointCloudObjects.DISK:
-            pass
+            bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.disk
         else: # NONE
             pass
+        self.selectMainObject()
         self.control.re_render()
 
     def selectMainObject(self):
-        #bpy.ops.object.select_all(action = "DESELECT")
-       # self.objectname = self.control.model.name
-        #bpy.data.objects[self.objectname].select_set(True)
         bpy.context.view_layer.objects.active = self.control.model
+   
 
-    def new_GeometryNodes_group(self):
-        ''' Create a new empty node group that can be used
-            in a GeometryNodes modifier.
-        '''
-       
-        node_group = bpy.data.node_groups.new('GeometryNodes', 'GeometryNodeTree')
-        inNode = node_group.nodes.new('NodeGroupInput')
-        inNode.outputs.new('NodeSocketGeometry', 'Geometry')
-        outNode = node_group.nodes.new('NodeGroupOutput')
-        #outNode.inputs.new('NodeSocketGeometry', 'Geometry')
-        #node_group.links.new(inNode.outputs['Geometry'], outNode.inputs['Geometry'])
-        inNode.location = Vector((-1.5*inNode.width, 0))
-        #outNode.location = Vector((1.5*outNode.width, 0))
-        return node_group
+    def reset(self):
 
-# In 3.2 Adding the modifier no longer automatically creates a node group.
-# This test could be done with versioning, but this approach is more general
-# in case a later version of Blender goes back to including a node group.
 
-    def geoNodeForObject(self,object):
-
-        
-        bpy.ops.object.modifier_add(type='NODES') 
-        
-        if object.modifiers[-1].node_group:
-            node_group = object.modifiers[-1].node_group    
-        else:
-            node_group = self.new_GeometryNodes_group()
-            object.modifiers[-1].node_group = node_group
-        nodes = node_group.nodes
-        group_in = nodes.get('Group Input')
-        group_out = nodes.get('Group Output')
-        point_node = nodes.new('GeometryNodeMeshToPoints')
-        object_node = nodes.new("GeometryNodeObjectInfo")
-        instance_node = nodes.new ('GeometryNodeInstanceOnPoints')
-        node_group.links.new(group_in.outputs[0], point_node.inputs['Mesh'])
-        node_group.links.new(instance_node.inputs[0], point_node.outputs[0])
-        node_group.links.new(instance_node.inputs[2], object_node.outputs[3])
-        node_group.links.new( group_out.inputs[0],instance_node.outputs[0])
-
-        
-
-    def convert(self):
-        self.selectMainObject()
-        if self.hasconverted:
-            
-            if self.pointcloud.get():
-                bpy.context.object.modifiers["GeometryNodes"].show_render = True
-                bpy.context.object.modifiers["GeometryNodes"].show_viewport = True
-            else:
-                bpy.context.object.modifiers["GeometryNodes"].show_render = False
-                bpy.context.object.modifiers["GeometryNodes"].show_viewport = False
-            
-        else:
-            if(not self.control.model == None):
-                self.control.model.select_set(True)
-                self.geoNodeForObject(bpy.context.active_object)
-                self.hasconverted = True
-        self.control.re_render()
+        self.hasconverted = False
+        #print(self.hasconverted)
+       #self.pointcloud.set(False)
+        #self.obj_selected.set("sphere")
+        print("test")
+        return
+    
+    def converter(self):
+        convert(self)
+    
     
     def get_size(self) -> float:
         return self.size
@@ -932,24 +890,23 @@ class PointCloudWidgets(Frame):
     def set_size(self, value, is_released : bool) -> None:
         self.size = float(value)
         if is_released:
-            bpy.data.node_groups["GeometryNodes"].nodes["Mesh to Points"].inputs[3].default_value = value
+            bpy.data.node_groups["GeometryNodes"].nodes["Scale Elements"].inputs[2].default_value = value
         self.control.re_render()
 
     
-    
-
-
-
-
-    def switch_random(self):
+    def switch_to_random(self):
+        
         if self.random.get():
+            switchrandom(self)
             self.vertices.set(False)
         else:
             self.vertices.set(True)
         self.control.re_render()
 
-    def switch_vertex(self):
+    def switch_to_vertex(self):
+        
         if self.vertices.get():
+            switchvertex(self)
             self.random.set(False)
         else:
             self.random.set(True)
@@ -995,5 +952,7 @@ class RightPanel(Frame):
         frm_light.grid(row=3, column=0, sticky="we")
 
         # Pointcloud widgets
-        frm_light = PointCloudWidgets(self, control)
-        frm_light.grid(row=4, column=0, sticky="we")
+        frm_point = PointCloudWidgets(self, control)
+        frm_point.grid(row=4, column=0, sticky="we")
+    
+  
