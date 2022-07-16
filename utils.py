@@ -130,6 +130,7 @@ class Renderer:
         self.scene = bpy.context.scene
         self.camera = camera
         self.scene.camera = self.camera
+        self.time_limit = 0
     
     # render image/video to configured output destination 
     def render(self, animation: bool) -> None:
@@ -155,8 +156,13 @@ class Renderer:
         self.scene.render.use_persistent_data = False
         self.scene.cycles.max_bounces = 4
         self.scene.cycles.tile_size = 4096
-        self.scene.cycles.time_limit = 0.3
-
+        self.scene.cycles.time_limit = self.time_limit
+        
+    # Change the maximum render time
+    def set_time_limit(self, limit: float):
+        self.time_limit = limit
+        self.scene.cycles.time_limit = limit
+        
     # apply settings for final rendering
     def set_final_render(self,
                          file_path: str,
