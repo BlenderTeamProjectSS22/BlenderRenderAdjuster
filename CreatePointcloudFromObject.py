@@ -3,13 +3,11 @@ from mathutils import Vector
 
 
 
-
-
 def new_GeometryNodes_group():
         ''' Create a new empty node group that can be used
             in a GeometryNodes modifier.
         '''
-       
+    
         node_group = bpy.data.node_groups.new('GeometryNodes', 'GeometryNodeTree')
         inNode = node_group.nodes.new('NodeGroupInput')
         inNode.outputs.new('NodeSocketGeometry', 'Geometry')
@@ -20,11 +18,10 @@ def new_GeometryNodes_group():
         #outNode.location = Vector((1.5*outNode.width, 0))
         return node_group
 
-# In 3.2 Adding the modifier no longer automatically creates a node group.
-# This test could be done with versioning, but this approach is more general
-# in case a later version of Blender goes back to including a node group.
+# In 3.2 Adding the modifier no longer automatically creates a node group, so it has to be created.
 
 def geoNodeForObject(self,object):
+
 
     bpy.ops.object.modifier_add(type='NODES') 
     if object.modifiers[-1].node_group:
@@ -46,9 +43,6 @@ def geoNodeForObject(self,object):
     node_group.links.new(group_scale.inputs[0], object_node.outputs[3])
     node_group.links.new(group_out.inputs[0],instance_node.outputs[0])
     bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.sphere
-
-   
-
 
 def switchrandom(self):
     
@@ -75,6 +69,7 @@ def switchvertex(self):
     
 
 def convert(self):
+        
         self.selectMainObject()
         if self.hasconverted:
             

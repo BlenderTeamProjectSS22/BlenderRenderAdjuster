@@ -163,6 +163,7 @@ class LeftPanel(Frame):
         self.control.model = utils.import_mesh(filename)
         self.control.material.apply_material(self.control.model)
         self.control.camera.reset_position()
+
         self.control.re_render()
         
     
@@ -792,6 +793,7 @@ class PointCloudWidgets(Frame):
     cube = None
     sphere = None
     disk = None
+    modeltest = None
 
     def __init__(self, master, control):
         bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
@@ -870,12 +872,14 @@ class PointCloudWidgets(Frame):
         bpy.context.view_layer.objects.active = self.control.model
    
 
+
+
     def reset(self):
 
-
+        
         self.hasconverted = False
         #print(self.hasconverted)
-       #self.pointcloud.set(False)
+        #self.pointcloud.set(False)
         #self.obj_selected.set("sphere")
         print("test")
         return
