@@ -54,8 +54,9 @@ import HDRI.hdri as hdri
 if props.DEBUG:
     import bpy
 
-class ProgramGUI:
+class ProgramGUI(tk.Frame):
     def __init__(self, master):
+        Frame.__init__(self, master)
     
         # blender initialization
         utils.clear_scene()
@@ -79,15 +80,15 @@ class ProgramGUI:
         icon = ImageTk.PhotoImage(Image.open(PATH_ICON))
         master.iconphoto(True, icon)
         
-        master.columnconfigure(0, weight=0, minsize=107)
-        master.columnconfigure(1, weight=16, minsize=1135)
-        master.columnconfigure(2, weight=0, minsize=184)
-        master.rowconfigure(0, weight=15, minsize=307)
-        master.rowconfigure(1, weight=1)
+        self.columnconfigure(0, weight=0, minsize=107)
+        self.columnconfigure(1, weight=16, minsize=1135)
+        self.columnconfigure(2, weight=0, minsize=184)
+        self.rowconfigure(0, weight=15, minsize=307)
+        self.rowconfigure(1, weight=1)
         
         # Create global control object
-        mid = Frame(master=master)
-        self.preview = RenderPreview(master)
+        mid = Frame(master=self)
+        self.preview = RenderPreview(master=self)
         self.control = Control(renderer, settings, self.preview, camera, frames)
         self.control.material = MaterialController()
         self.control.model = None
@@ -99,8 +100,10 @@ class ProgramGUI:
             self.control.camera.rotate_x(-20)
             self.control.camera.set_distance(10)
         self.control.re_render()
-        left  = LeftPanel(master, self.control)
-        right = RightPanel(master, self.control)
+        
+        left  = LeftPanel(self, self.control)
+        self.right = RightPanel(self, self.control)
+        
         camcontrols = CameraControls(mid, self.control)
         background_ctrl = BackgroundControl(mid, self.control)
         frm_frame = FrameWidgets(mid, self.control, self.max_frame)
@@ -115,7 +118,7 @@ class ProgramGUI:
         left.grid(row=0, column=0, sticky="nw", rowspan=2)
         self.preview.grid(row=0, column=1, sticky="nwes")
         mid.grid(row=1, column=1, sticky="nwes")
-        right.grid(row=0, column=2, sticky="ne", rowspan=2)
+        self.right.grid(row=0, column=2, sticky="ne", rowspan=2)
 
 
 class LeftPanel(Frame):
@@ -990,4 +993,5 @@ class RightPanel(Frame):
         
         # Lighting widgets
         frm_light = LightingWidgets(self, control)
+        
         frm_light.grid(row=3, column=0, sticky="we")
