@@ -31,4 +31,5 @@ if args.verbose:
 
 root = tk.Tk()
 my_gui = ProgramGUI(root)
+my_gui.pack(fill=tk.BOTH)
 root.mainloop()
