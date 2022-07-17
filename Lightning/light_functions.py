@@ -1,9 +1,8 @@
 import bpy
 import math
 from Lightning.light_class import *
-from utils import *
+from utils import OrbitCam
 from HDRI.hdri import background_brightness_affects_objects
-#from camera_animation_module import *
 
 # delete all lights
 def delete_all_lights() -> None:
@@ -55,6 +54,12 @@ def precondition_angle_check(angle : int) -> int:
 # - camera_object = the camera object if the light need to be fit ("None" if the camera shouldnt be used)
 def creating_fill_and_rim_light(radius_rim: float, brightness_rim: float,
                                 brightness_fill: float, camera_object: OrbitCam) -> list[Light]:
+    # constants
+    POINT_LIGHT_RADIUS_OF_RIM = 0.25
+    POINT_LIGHT_RADIUS_OF_FILL = 5
+    DISTANCE_FILL_LIGHT = 20
+    STANDARD_FILL_LIGHT_POS = [-14, -16, 0.3]
+    Z_ANGLE : int = 170
     # if camera is used
     if not camera_object == None:
         camera_angle_diff = camera_object.get_location()[0] / camera_object.get_distance()
@@ -64,22 +69,23 @@ def creating_fill_and_rim_light(radius_rim: float, brightness_rim: float,
         # creating Lights
         rim = PointLight("rim", -radius_rim * math.sin(camera_angle),
                     -radius_rim * math.cos(camera_angle),
-                    radius_rim * math.sin(math.radians(170)),
-                    brightness_rim, 0.25)
-        fill = PointLight("fill", 20 * math.sin(camera_angle),
-                    20 * math.cos(camera_angle),
-                    20 * math.sin(math.radians(170)),
-                    brightness_fill, 5)
+                    radius_rim * math.sin(math.radians(Z_ANGLE)),
+                    brightness_rim, POINT_LIGHT_RADIUS_OF_RIM)
+        fill = PointLight("fill", DISTANCE_FILL_LIGHT * math.sin(camera_angle),
+                    DISTANCE_FILL_LIGHT * math.cos(camera_angle),
+                    DISTANCE_FILL_LIGHT * math.sin(math.radians(Z_ANGLE)),
+                    brightness_fill, POINT_LIGHT_RADIUS_OF_FILL)
         # link lights to controller
         rim.get_datas()[1].parent = camera_object.get_controller()  
         fill.get_datas()[1].parent = camera_object.get_controller()     
     # if camera is not used
     else:
         # creating Lights
-        fill = PointLight("fill", -14, 16, 0.3, brightness_fill, 5)
+        fill = PointLight("fill", STANDARD_FILL_LIGHT_POS[0], STANDARD_FILL_LIGHT_POS[1],
+                         STANDARD_FILL_LIGHT_POS[2], brightness_fill, POINT_LIGHT_RADIUS_OF_FILL)
         rim = PointLight("rim", 0, -radius_rim,
-                        radius_rim * math.sin(math.radians(170)),
-                        brightness_rim, 0.25)
+                        radius_rim * math.sin(math.radians(Z_ANGLE)),
+                        brightness_rim, POINT_LIGHT_RADIUS_OF_RIM)
     return [fill, rim]
 
 # creating the daylight (plus rim- and fill-light if add_fill_and_rim_light = True)
@@ -234,8 +240,8 @@ def frame_setting_of_day_night_cycle(frame_current: int, lights: list[Light], sc
             if current_angle > (HALF_CYCLE_ANGLE - DAWN_ANGLE):  
                 if is_day:       
                     lightcollection[0].set_color(day_color[0],
-                                                day_color[1] - (current_angle-140) * 0.021,
-                                                day_color[2] - (current_angle-140) * 0.016)
+                                                day_color[1] - (current_angle-(HALF_CYCLE_ANGLE - DAWN_ANGLE)) * 0.021,
+                                                day_color[2] - (current_angle-(HALF_CYCLE_ANGLE - DAWN_ANGLE)) * 0.016)
                 lightcollection[not is_day].set_brightness(((HALF_CYCLE_ANGLE - current_angle) * brightnesses[not is_day]) / (2 * DAWN_ANGLE)
                                                         + (brightnesses[not is_day] / 2))
                 lightcollection[is_day].set_brightness(((DAWN_ANGLE-(HALF_CYCLE_ANGLE -current_angle)) * brightnesses[is_day]) / (2 * DAWN_ANGLE))
@@ -270,6 +276,8 @@ def day_night_cycle(starting_time: int, brightness: float,
                      add_fill_and_rim_light: bool, camera_object: OrbitCam, speed : int) -> list[Light]:
     # constants
     HALF_CYCLE_ANGLE : int = 180
+    STARTING_TIME_OF_DAY : int = 6
+    STARTING_TIME_OF_NIGHT : int = 18
     # before starting time
     delete_all_lights()
     lightcollection : list[Light] = []
@@ -277,15 +285,15 @@ def day_night_cycle(starting_time: int, brightness: float,
     day_color = [0.945, 0.855, 0.643]
     # preconditions
     if starting_time > 24 or starting_time < 0:
-        current_time = 0
+        starting_time = 0
     else:
-        current_time = starting_time
+        starting_time = starting_time
     if speed < 1:
         speed = 1
     if speed > 5:
         speed = 5
     # setting starting values
-    current_angle = ((current_time % 12) * 15 + 89) % HALF_CYCLE_ANGLE # transforming time to angle
+    current_angle = ((starting_time % 12) * 15 + 89) % HALF_CYCLE_ANGLE # transforming time to angle
     lights = day_light(brightness, 0,
                        add_fill_and_rim_light, camera_object)
     lightcollection = [lights[0]]
@@ -293,7 +301,7 @@ def day_night_cycle(starting_time: int, brightness: float,
     # lightcollection 0 = sun and 1 = moon
     # bightnesses: for saving the energies of the light sources
     brightnesses = [lightcollection[0].get_brightness(), lightcollection[1].get_brightness()] 
-    if current_time > 6 and current_time <= 18:
+    if starting_time > STARTING_TIME_OF_DAY  and starting_time <= STARTING_TIME_OF_NIGHT:
         is_day = True
         lightcollection[1].set_brightness(0) 
     else:
@@ -330,23 +338,3 @@ def delete_light_animation(lights : list[Light]):
 def create_default_light() -> list[Light]:
     default_light = Light("light", "POINT", 4.0762, 1.0055, 5.9039, 1000)
     return [default_light]
-
-### for testing
-
-## create camera
-# deleteAllCameras()
-# myCamera = OrbitCam(bpy.data.objects['Kopf'])
-# myCamera.set_distance(6)
-
-## test functions
-# delete_all_lights()
-# night_light(1, 50, True, myCamera)
-# delete_lights(night_light(1, 90, True, None))
-# lights = day_light(1, 180, True, None)
-# lantern_light(1, 20, True, None)
-# delete_light_animation(day_night_cycle(12, 1, True, None))
-# myCamera.rotate_z(270)
-
-# update scene, if needed
-# dg = bpy.context.evaluated_depsgraph_get() 
-# dg.update()
