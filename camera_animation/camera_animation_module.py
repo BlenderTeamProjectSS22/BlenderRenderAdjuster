@@ -112,7 +112,7 @@ class Camera:
         # get closer to the object/zoom in
         self.drive_by(
             frames,
-            [[100, 0, 0],[7, 0, 0],[3, 0, 0]],
+            [[100, 0, 0],[3, 0, 0]],
             [90, 0, 90],
             track,
             object,
