@@ -17,7 +17,12 @@ import webbrowser
 import threading
 import requests
 import enum
+
 from Texture import load_texture, delete_texture
+from Vertex import load_vertex, delete_vertex
+
+import bpy
+import random
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
@@ -156,8 +161,11 @@ class LeftPanel(Frame):
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
-        print("Import")
         self.control.material.apply_material(self.control.model)
+        # recompute vertex colors if activated:
+        if(self.control.vertc.get()):
+            self.control.vertc.set(False)
+            self.control.vertc.set(True)
         self.control.camera.reset_position()
         self.control.re_render()
         
@@ -406,10 +414,12 @@ class ColorMeshWidgets(Frame):
         lbl_color   = Label(master=self, text="Color")
         btn_picker  = Button(master=self, text="pick", command=self.pick_color)
         lbl_type    = Label(master=self, text="Type")
-        self.vertc = BooleanVar()
+        self.control.vertc = BooleanVar()
         self.mesh  = BooleanVar()
         self.point = BooleanVar()
-        check_vertc = Checkbutton(master=self, text="Vertex color", variable=self.vertc, anchor="w", command=self.switch_vertex_color)
+        # handle vertc variable with tracing since it is changed at model import
+        check_vertc = Checkbutton(master=self, text="Vertex color", variable=self.control.vertc, anchor="w")
+        self.control.vertc.trace_add("write", self.update_vertex_color)
         check_mesh  = Checkbutton(master=self, text="Full mesh", variable=self.mesh, anchor="w", command=self.switch_mesh)
         check_point = Checkbutton(master=self, text="Point cloud", variable=self.point, anchor="w", command=self.switch_pointcloud)
         lbl_look.grid(row=0, column=0, columnspan=2)
@@ -423,13 +433,18 @@ class ColorMeshWidgets(Frame):
     def pick_color(self):
     
         color = askcolor(self.current_color)[0]
-        
         if color is not None:
             self.current_color = color
             self.control.material.set_color(utils.convert_color_to_bpy(self.current_color))
             self.control.re_render()
     
-    def switch_vertex_color(self):
+    def update_vertex_color(self, var, index, mode):
+        if self.control.vertc.get():
+            if self.control.tex_selected.get() != "none": 
+                self.control.tex_selected.set("none")
+            load_vertex(self.control.model,self.control.material.material)
+        else:
+            delete_vertex(self.control.material.material)
         self.control.re_render()
     
     def switch_mesh(self):
@@ -457,31 +472,38 @@ class TextureWidgets(Frame):
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
-        tex_selected = StringVar(self)
-        tex_selected.set("none")
+        
+        self.control.tex_selected = StringVar(self)
+        self.control.tex_selected.set("none")
         lbl_textures = Label(master=self, text="Texture selection:", font=FONT_TITLE)
+        
         btn_import_texture = Button(master=self, text="Import", command=self.import_texture)
         lbl_sel_tex    = Label(master=self, text="Select:")
         textures = (Textures.NONE.value, Textures.WOOD.value, Textures.BRICKS.value, Textures.IRON.value)
-        dropdown_textures = OptionMenu(self, tex_selected, *textures, command=self.set_texture)
+        dropdown_textures = OptionMenu(self, self.control.tex_selected, *textures)
+        self.control.tex_selected.trace_add("write", self.set_texture)
         lbl_textures.grid(row=0, column=0, columnspan=2, sticky="we")
         btn_import_texture.grid(row=1, column=0, columnspan=2, sticky="")
         lbl_sel_tex.grid(row=2, column=0, sticky="w")
         dropdown_textures.grid(row=2, column=1, sticky="we")
     
     def set_texture(self, *args):
-        tex = Textures(args[0])
+        tex = Textures(self.control.tex_selected.get())
         if tex == Textures.WOOD:
+            self.control.vertc.set(False)
             load_texture(PATH_TEXTURES + Textures.WOOD.value + ".png", self.control.material.material)
         elif tex == Textures.BRICKS:
+            self.control.vertc.set(False)
             load_texture(PATH_TEXTURES + Textures.BRICKS.value + ".png", self.control.material.material)
         elif tex == Textures.IRON:
+            self.control.vertc.set(False)
             load_texture(PATH_TEXTURES + Textures.IRON.value + ".png", self.control.material.material)
         else: # NONE
             delete_texture(self.control.material.material)
         self.control.re_render()
     
     def import_texture(self):
+        self.control.vertc.set(False)
         filetypes = [
             ("PNG image", "*.png"),
             ("jpg image", "*.jpg")
