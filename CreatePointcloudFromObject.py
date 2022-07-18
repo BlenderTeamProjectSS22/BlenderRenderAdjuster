@@ -9,6 +9,8 @@ def new_GeometryNodes_group():
         '''
     
         node_group = bpy.data.node_groups.new('GeometryNodes', 'GeometryNodeTree')
+        node_group.name = "GeometryNodes"
+
         inNode = node_group.nodes.new('NodeGroupInput')
         inNode.outputs.new('NodeSocketGeometry', 'Geometry')
         outNode = node_group.nodes.new('NodeGroupOutput')
@@ -42,7 +44,10 @@ def geoNodeForObject(self,object):
     node_group.links.new(instance_node.inputs[2], group_scale.outputs[0])
     node_group.links.new(group_scale.inputs[0], object_node.outputs[3])
     node_group.links.new(group_out.inputs[0],instance_node.outputs[0])
-    bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.sphere
+
+    
+    
+
 
 def switchrandom(self):
     
@@ -85,10 +90,34 @@ def convert(self):
                 self.control.model.select_set(True)
                 geoNodeForObject(self,bpy.context.active_object)
                 self.hasconverted = True
+                self.set_object
+                self.obj_selected.set("sphere")
+                bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.sphere
+                setRightAfterImport(self)
+                
+
+
+
         self.control.re_render()
 
 
+def setRightAfterImport(self):
+    if (self.vertices.get()):
+        switchvertex(self)
+    else:
+        switchrandom(self)
 
 
+
+
+def setSphere(self):
+    bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.sphere
+
+
+def setCube(self):
+    bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.cube
+
+def setDisk(self):
+    bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.disk
 
         
