@@ -3,3 +3,4 @@ Pillow
 pyinstaller
 requests
 pyyaml
+tkVideoPlayer

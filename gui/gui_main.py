@@ -12,7 +12,6 @@ from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
-from tkvideo import tkvideo
 from PIL import ImageTk, Image
 
 import webbrowser
