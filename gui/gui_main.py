@@ -442,25 +442,23 @@ class ColorMeshWidgets(Frame):
         if self.control.vertc.get():
             if self.control.tex_selected.get() != "none": 
                 self.control.tex_selected.set("none")
-            self.control.vertc.set(True)
             load_vertex(self.control.model,self.control.material.material)
         else:
-            self.control.vertc.set(False)
             delete_vertex(self.control.material.material)
         self.control.re_render()
     
     def switch_mesh(self):
         if self.mesh.get():
-            self.mesh.set(True)
+            self.point.set(False)
         else:
-            self.mesh.set(False)
+            self.point.set(True)
         self.control.re_render()
     
     def switch_pointcloud(self):
         if self.point.get():
-            self.point.set(True)
+            self.mesh.set(False)
         else:
-            self.point.set(False)
+            self.mesh.set(True)
         self.control.re_render()
 
 
