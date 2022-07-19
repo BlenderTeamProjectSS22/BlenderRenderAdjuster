@@ -110,7 +110,6 @@ def setRightAfterImport(self):
 
 
 
-
 def setSphere(self):
     bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.sphere
 
@@ -122,9 +121,25 @@ def setDisk(self):
     bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.disk
 
 
-def setInstanceObjectScale(self):
-    bpy.context.view_layer.objects.active = self.sphere
-    bpy.ops.transform.resize(value=(0.2, 0.2, 0.2))
-    self.selectMainObject()
+def setSize(self,value):
+    bpy.data.node_groups["GeometryNodes"].nodes["Scale Elements"].inputs[2].default_value = (value + 0.1) / 10
 
         
+def createPointObjects(self):
+    bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+    self.cube = bpy.context.object
+    bpy.context.object.hide_render = True
+    bpy.context.object.hide_viewport = True
+
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+    self.sphere = bpy.context.object
+    bpy.context.object.hide_render = True
+    bpy.context.object.hide_viewport = True
+    
+    bpy.ops.mesh.primitive_circle_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.edge_face_add()
+    bpy.ops.object.editmode_toggle()
+    self.disk = bpy.context.object
+    bpy.context.object.hide_render = True
+    bpy.context.object.hide_viewport = True

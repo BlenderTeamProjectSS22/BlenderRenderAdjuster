@@ -15,7 +15,7 @@ from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
-from CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube,setInstanceObjectScale
+from CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube,createPointObjects,setSize
 import bpy
 import webbrowser
 import threading
@@ -799,23 +799,7 @@ class PointCloudWidgets(Frame):
     modeltest = None
 
     def __init__(self, master, control):
-        bpy.ops.mesh.primitive_cube_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
-        self.cube = bpy.context.object
-        bpy.context.object.hide_render = True
-        bpy.context.object.hide_viewport = True
-
-        bpy.ops.mesh.primitive_uv_sphere_add(radius=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
-        self.sphere = bpy.context.object
-        bpy.context.object.hide_render = True
-        bpy.context.object.hide_viewport = True
-       
-        bpy.ops.mesh.primitive_circle_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
-        bpy.ops.object.editmode_toggle()
-        bpy.ops.mesh.edge_face_add()
-        bpy.ops.object.editmode_toggle()
-        self.disk = bpy.context.object
-        bpy.context.object.hide_render = True
-        bpy.context.object.hide_viewport = True
+        createPointObjects(self)
 
         self.size : float = 1
         Frame.__init__(self, master, borderwidth=2, relief="groove")
@@ -843,8 +827,8 @@ class PointCloudWidgets(Frame):
         dropdown_objects = OptionMenu(self, self.obj_selected, *pointcloudobjects, command=self.set_object)
        
         lbl_size = Label(master=self, text="Point Size")
-        slider_size = Scale(master=self, to = 8.0, orient="horizontal",
-                                  resolution = 0.1, showvalue=False, command=lambda val: self.set_size(val, False))
+        slider_size = Scale(master=self, to = 2, orient="horizontal",
+                                  resolution = 0.05, showvalue=False, command=lambda val: self.set_size(val, False))
         slider_size.bind("<ButtonRelease-1>", lambda event : self.set_size(self.get_size(), True)) 
         slider_size.set(self.get_size())  
 
@@ -866,8 +850,6 @@ class PointCloudWidgets(Frame):
             setCube(self)
         elif tex == PointCloudObjects.DISK:
             setDisk(self)
-        else: # NONE
-            pass
         
         self.selectMainObject()
         self.control.re_render()
@@ -876,17 +858,12 @@ class PointCloudWidgets(Frame):
         bpy.context.view_layer.objects.active = self.control.model
    
 
-
-
     def reset(self):
-
         bpy.ops.object.modifier_remove(modifier="GeometryNodes")
-        #setInstanceObjectScale(self)
         self.hasconverted = False
         self.pointcloud.set(False)
-        
-        
-        
+
+            
     
     def converter(self):
         convert(self)
@@ -897,7 +874,7 @@ class PointCloudWidgets(Frame):
 
     def set_size(self, value, is_released : bool) -> None:
         self.size = float(value)
-        bpy.data.node_groups["GeometryNodes"].nodes["Scale Elements"].inputs[2].default_value = value
+        setSize(self,value)
         if is_released:
             self.control.re_render()
 
