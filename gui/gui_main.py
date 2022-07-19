@@ -5,6 +5,7 @@
 # description:
 # GUI element: Main program, renders the GUI and connects it to other function
 
+from pickle import FALSE
 import tkinter as tk
 from tkinter import Frame, Toplevel, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage, Tk
 from tkinter import ttk
@@ -670,6 +671,7 @@ class LightingWidgets(Frame):
         self.background_strength : float = 1
         self.is_day_night : bool = BooleanVar()
         self.is_brightness_changeble : bool = False
+        self.is_daytime_changeble : bool = False
         
         # grid
         self.columnconfigure(0, weight=1)
@@ -680,7 +682,7 @@ class LightingWidgets(Frame):
         # labels
         lbl_light = Label(master=self, text="Lighting", font=FONT_TITLE)
         self.lbl_brightness = Label(master=self, text="Brightness(inactive)")
-        lbl_daytime = Label(master=self, text="Time of day/night")
+        self.lbl_daytime = Label(master=self, text="Time(inactive)")
         lbl_background = Label(master=self, text="Background Strength")
         # buttons
         btn_use_lights_switch = Button(master=self, text="Lights off", command=self.lights_off)
@@ -693,11 +695,11 @@ class LightingWidgets(Frame):
         # slider
         self.slider_brightness = Scale(master=self, to = 8.0, orient="horizontal",
                                   resolution = 0.1, showvalue=False, command=lambda val: self.set_brightness(val, False))
-        slider_daytime = Scale(master=self, from_= 0, to = 12, orient="horizontal", showvalue=True, command=lambda val: self.set_daytime(val, False))
+        self.slider_daytime = Scale(master=self, from_= 0, to = 12, orient="horizontal", showvalue=True, command=lambda val: self.set_daytime(val, False))
         slider_background = Scale(master=self, from_= 0, to = 10, orient="horizontal",
                                   resolution = 0.1, showvalue=False, command=lambda val: self.set_background_strength(val, False))
         self.slider_brightness.bind("<ButtonRelease-1>", lambda event : self.set_brightness(self.get_brightness(), True)) 
-        slider_daytime.bind("<ButtonRelease-1>", lambda event : self.set_daytime(self.get_daytime(), True)) 
+        self.slider_daytime.bind("<ButtonRelease-1>", lambda event : self.set_daytime(self.get_daytime(), True)) 
         slider_background.bind("<ButtonRelease-1>", lambda event : self.set_background_strength(self.get_background_strength(), True)) 
 
         # packing
@@ -710,8 +712,8 @@ class LightingWidgets(Frame):
         btn_night.grid(row=3, column=1, sticky="we",pady=1)
         btn_lantern.grid(row=4, column=1, sticky="we",pady=1, columnspan=2)
         check_day_night_circle.grid(row=5, column=0, sticky="", pady=1, columnspan=2)
-        lbl_daytime.grid(row=6, column=0, sticky="w")
-        slider_daytime.grid(row=6, column=1,  sticky="we", columnspan=2)  
+        self.lbl_daytime.grid(row=6, column=0, sticky="w")
+        self.slider_daytime.grid(row=6, column=1,  sticky="we", columnspan=2)  
         lbl_background.grid(row=7, column=0,  sticky="w") 
         slider_background.grid(row=7, column=1,  sticky="we", columnspan=2) 
 
@@ -719,6 +721,7 @@ class LightingWidgets(Frame):
         self.slider_brightness.set(self.get_brightness())  
         slider_background.set(self.get_background_strength())
         self.slider_brightness.configure(state="disable")
+        self.slider_daytime.configure(state="disable")
         
 
     # set the background strength and rerenders
@@ -736,6 +739,7 @@ class LightingWidgets(Frame):
     def lights_off(self) -> None:
         lights_enabled(False)
         self.activate_brightness_slider(False)
+        self.activate_daytime_slider(False)
         self.control.re_render()
 
     # puts the brightness slider active or inactive
@@ -749,10 +753,21 @@ class LightingWidgets(Frame):
             self.is_brightness_changeble = False
             self.lbl_brightness.configure(text="Brightness(inactive)")
 
+    # puts the daytime slider active or inactive
+    def activate_daytime_slider(self, is_active : bool) -> None:
+        if is_active:
+            self.slider_daytime.configure(state="active")
+            self.is_daytime_changeble = True
+            self.lbl_daytime.configure(text="Time(active)")
+        else:
+            self.slider_daytime.configure(state="disable")
+            self.is_daytime_changeble = False
+            self.lbl_daytime.configure(text="Time(inactive)")
+
     # set daytime value to "value"
     def set_daytime(self, value : int, is_released : bool) -> None:
         self.daytime = value
-        if is_released:
+        if is_released and self.slider_daytime["state"] == "active":
             self.fit_brightness_to_lights()
 
     # returns the daytime value
@@ -787,7 +802,6 @@ class LightingWidgets(Frame):
     # set default light
     def set_default_light(self) -> None:
         self.standard_light_settings(0)
-        self.activate_brightness_slider(False)
         self.light_objects = create_default_light()
         self.control.re_render()
         
@@ -796,6 +810,12 @@ class LightingWidgets(Frame):
         lights_enabled(True)
         if use_light_type != 0:
             self.activate_brightness_slider(True)
+        else:
+            self.activate_brightness_slider(False)
+        if use_light_type in [1, 2]:
+            self.activate_daytime_slider(True)
+        else:
+            self.activate_daytime_slider(False)
         self.use_light_type = use_light_type
         self.is_day_night.set(False)
         delete_all_lights()
@@ -824,6 +844,7 @@ class LightingWidgets(Frame):
         if self.is_day_night.get():
             self.control.frames.add_animation(utils.Animation.DAYNIGHT)
             self.activate_brightness_slider(False)
+            self.activate_daytime_slider(False)
             delete_lights(self.light_objects)
             self.light_objects = day_night_cycle(self.daytime + self.STARTING_TIME_OF_DAY, self.get_brightness(), True, self.control.camera, 3)
         else:
