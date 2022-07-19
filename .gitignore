@@ -1,18 +1,12 @@
-__pycache__/
-renders/
-build/
-dist/
-.venv-blender
-.vscode
-*.zip
-data_samples
-preview.png
-hdri_thumbs/
-temp.png
-blender_render.log
 # Ignore everything
 /*
 !assets
+!gui/*.py
+!camera_animation/*.py
+!materials/*.py
+!Lightning/*.py
+!HDRI/*.py
+!pointcloud/*.py
 !*.gitignore
 !*.py
 !*.md
