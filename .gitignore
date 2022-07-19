@@ -10,3 +10,40 @@ preview.png
 hdri_thumbs/
 temp.png
 blender_render.log
+# Ignore everything
+/*
+!assets
+!*.gitignore
+!*.py
+!*.md
+!requirements.txt
+!main-windows.spec
+!main-linux.spec
+
+# Ignore everything in the assets folder, except for the necessary ones
+assets/*
+!assets/gui
+!assets/HDRIs
+!assets/textures/
+!assets/models/
+!assets/default_settings.yml
+
+# Only allow logo and no preview image, excluding the generated "preview.png"
+assets/gui/*
+!assets/gui/icon.ico
+!assets/gui/empty_bg.png
+!assets/gui/preview_unavailable.png
+
+# Only allow .hdr files in the HDRI folder
+assets/HDRIs/*
+!assets/HDRIs/*.hdr
+
+# Only allow currently used images in the textures folder (should always be png)
+assets/textures/*
+!assets/textures/bricks.png
+!assets/textures/iron.png
+!assets/textures/wood.png
+
+# Only allow .objs for model presets
+assets/models/*
+!assets/models/*.obj

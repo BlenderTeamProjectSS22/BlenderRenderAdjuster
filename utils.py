@@ -14,6 +14,7 @@ import fnmatch
 from PIL import Image, ImageOps
 import sys
 import gui.properties as props
+from gui.properties import PATH_THUMB
 from contextlib import contextmanager, redirect_stdout
 from tkinter import IntVar
 import enum
@@ -129,6 +130,7 @@ class Renderer:
         self.scene = bpy.context.scene
         self.camera = camera
         self.scene.camera = self.camera
+        self.time_limit = 0
     
     # render image/video to configured output destination 
     def render(self, animation: bool) -> None:
@@ -154,8 +156,13 @@ class Renderer:
         self.scene.render.use_persistent_data = False
         self.scene.cycles.max_bounces = 4
         self.scene.cycles.tile_size = 4096
-        self.scene.cycles.time_limit = 0.3
-
+        self.scene.cycles.time_limit = self.time_limit
+        
+    # Change the maximum render time
+    def set_time_limit(self, limit: float):
+        self.time_limit = limit
+        self.scene.cycles.time_limit = limit
+        
     # apply settings for final rendering
     def set_final_render(self,
                          file_path: str,
@@ -304,10 +311,9 @@ def generate_hdri_thumbnail(filepath):
 
     thumb = ImageOps.fit(cropped, (256, 256), Image.ANTIALIAS)
     
-    thumb_folder = "assets/hdri_thumbs/"
-    if not os.path.exists(thumb_folder):
-        os.mkdir(thumb_folder)
-    thumb.save(thumb_folder + filename + ".png", "PNG")
+    if not os.path.exists(PATH_THUMB):
+        os.mkdir(PATH_THUMB)
+    thumb.save(PATH_THUMB + filename + ".png", "PNG")
 
 # rotate obj around Z axis and angle
 def rotate_object(obj: bpy.types.Object, angle: float) -> None:
