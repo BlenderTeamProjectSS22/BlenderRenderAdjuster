@@ -209,9 +209,9 @@ class FrameControl():
     
     # Get the maximum amount of frames necessary for the animation
     def get_max_frame(self) -> int:
-        try:
+        if len(self.active_animations) != 0:
             return max(self.custom_length, max(self.active_animations, key=lambda a: a.value).value)
-        except ValueError:
+        else:
             return self.custom_length
     
     # Add an animation to be active, auto-changing the max frame to the from the longest animation
