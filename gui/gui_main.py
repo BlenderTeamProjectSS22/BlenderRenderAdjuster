@@ -357,21 +357,19 @@ class CameraAnimationControls(Frame):
         self.control.re_render()
 
     def set_frames(self, event):
-        try:
-            self.control.frames.add_custom_animation(self.frames_entry_var.get())
-            self.control.frames.remove_animation(utils.Animation.DEFAULT)
-            print("Frames set to: " + str(self.frames_entry_var.get()))
-
-            if(self.current_preset == "preset1"):
-                self.camera_animation_cam.remove_keyframes()
-                self.camera_preset_1()
-            elif(self.current_preset == "preset2"):
-                self.camera_animation_cam.remove_keyframes()
-                self.camera_preset_2()
-            elif(self.current_preset == "preset3"):
-                self.camera_preset_3()
-        except:
-            print("Frames not set, invalid value")
+        
+        self.control.frames.add_custom_animation(self.frames_entry_var.get())
+        self.control.frames.remove_animation(utils.Animation.DEFAULT)
+        print("Frames set to: " + str(self.frames_entry_var.get()))
+        if(self.current_preset == "preset1"):
+            self.camera_animation_cam.remove_keyframes()
+            self.camera_preset_1()
+        elif(self.current_preset == "preset2"):
+            self.camera_animation_cam.remove_keyframes()
+            self.camera_preset_2()
+        elif(self.current_preset == "preset3"):
+            self.camera_preset_3()
+    
         self.control.re_render()
 
     def preview_1(self):

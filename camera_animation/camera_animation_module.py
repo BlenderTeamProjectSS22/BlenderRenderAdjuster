@@ -73,10 +73,13 @@ class Camera:
             pt.handle_right_type = mode
 
     def remove_keyframes(self):
-        obj = self.cam
-        if obj.animation_data: #Check for presence of animation data.
-            obj.animation_data_clear()
-            obj.animation_data.action = None
+        try:
+            obj = self.cam
+            if obj.animation_data: #Check for presence of animation data.
+                obj.animation_data_clear()
+                obj.animation_data.action = None
+        except:
+            pass
         
     # function that receives arrays of position and rotation and adds keyframes evenly deivided through the frames
     def drive_by(self, frames: int, points: list, rotation: list):
