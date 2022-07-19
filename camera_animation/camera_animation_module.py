@@ -67,15 +67,20 @@ class Camera:
             pt.select_control_point
             pt.handle_left_type = mode
             pt.handle_right_type = mode
-            print(pt.handle_left_type)
         for pt in my_fcu_pos.keyframe_points:
             pt.select_control_point
             pt.handle_left_type = type=mode
             pt.handle_right_type = mode
+
+    def remove_keyframes(self):
+        obj = self.cam
+        if obj.animation_data: #Check for presence of animation data.
+            obj.animation_data_clear()
+            obj.animation_data.action = None
         
     # function that receives arrays of position and rotation and adds keyframes evenly deivided through the frames
     def drive_by(self, frames: int, points: list, rotation: list):
-        #
+        
         frame = 0
         rot = 0
         frames = frames / (len(points) - 1)
@@ -103,7 +108,7 @@ class Camera:
         self.drive_by(
             frames,
             [[5, -3, 0],[5, 3, 0]],
-            [90, 0, 90],
+            [90, 0, 90, 90, 0, 90, 90, 0, 90],
         )
 
     def preset_2(self, frames: int):
@@ -111,7 +116,7 @@ class Camera:
         self.drive_by(
             frames,
             [[100, 0, 0],[3, 0, 0]],
-            [90, 0, 90],
+            [90, 0, 90, 90, 0, 90, 90, 0, 90],
         )
 
     def preset_3(self, frames: int):

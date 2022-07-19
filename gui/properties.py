@@ -19,5 +19,6 @@ PATH_MODELS   = "assets/models/"
 PATH_TEXTURES = "assets/textures/"
 PATH_PREVIEW  = "assets/gui/preview.png"
 PATH_PREVIEW_UNAVAILABLE = "assets/gui/preview_unavailable.png"
+PATH_ANIM = "assets/animation_presets"
 
 FONT_TITLE = "Arial 10 bold"

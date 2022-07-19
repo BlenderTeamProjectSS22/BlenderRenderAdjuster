@@ -292,7 +292,6 @@ class CameraAnimationControls(Frame):
         check_renderer = tk.Checkbutton(master=self, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
         self.track_model = BooleanVar()
         track_model_check = tk.Checkbutton(master=self, text="Track camera", variable=self.track_model, anchor="w", command=self.switch_tracking)
-        frame_entry_var = 120
         lbl_camerapresets.grid(columnspan=2)
         btn_preset1.grid(sticky="we", row = 1, column = 0)
         btn_preview1.grid(sticky="we", row = 1, column = 1)
@@ -304,24 +303,40 @@ class CameraAnimationControls(Frame):
         self.frame_entry.grid(row=4, column=1, sticky="we")
         track_model_check.grid(sticky="w", columnspan=2)
         check_renderer.grid(sticky="w", columnspan=2)
+        self.current_preset = None
         
         
     def camera_preset_1(self):
+        try:
+            self.camera_animation_cam.remove_keyframes()
+        except:
+            pass
         frames = self.frames_entry_var.get()
+        self.current_preset = "preset1"
         self.camera_animation_cam.preset_1(frames)
         
         self.camera_animation_cam.set_handles("AUTO")
         self.control.re_render()
 
     def camera_preset_2(self):
+        try:
+            self.camera_animation_cam.remove_keyframes()
+        except:
+            pass
         frames = self.frames_entry_var.get()
+        self.current_preset = "preset2"
         self.camera_animation_cam.preset_2(frames)
 
         self.camera_animation_cam.set_handles("AUTO")
         self.control.re_render()
 
     def camera_preset_3(self):
+        try:
+            self.camera_animation_cam.remove_keyframes()
+        except:
+            pass
         frames = self.frames_entry_var.get()
+        self.current_preset = "preset3"
         self.camera_animation_cam.preset_3(frames)
 
         self.camera_animation_cam.set_handles("AUTO")
@@ -342,9 +357,21 @@ class CameraAnimationControls(Frame):
         self.control.re_render()
 
     def set_frames(self, event):
-        self.control.frames.add_custom_animation(self.frames_entry_var.get())
-        self.control.frames.remove_animation(utils.Animation.DEFAULT)
-        print("Frames set to: " + str(self.frames_entry_var.get()))
+        try:
+            self.control.frames.add_custom_animation(self.frames_entry_var.get())
+            self.control.frames.remove_animation(utils.Animation.DEFAULT)
+            print("Frames set to: " + str(self.frames_entry_var.get()))
+
+            if(self.current_preset == "preset1"):
+                self.camera_animation_cam.remove_keyframes()
+                self.camera_preset_1()
+            elif(self.current_preset == "preset2"):
+                self.camera_animation_cam.remove_keyframes()
+                self.camera_preset_2()
+            elif(self.current_preset == "preset3"):
+                self.camera_preset_3()
+        except:
+            print("Frames not set, invalid value")
         self.control.re_render()
 
     def preview_1(self):

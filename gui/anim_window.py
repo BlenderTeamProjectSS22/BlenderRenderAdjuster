@@ -4,6 +4,7 @@ from tkinter import Frame, Toplevel, Label, Button, Entry
 from gui.properties import *
 import os
 from tkVideoPlayer import TkinterVideo
+from gui.properties import PATH_ANIM
 
 
 class PreviewWindow(Toplevel):
@@ -30,10 +31,7 @@ class PreviewContent(Frame):
         self.control = control
         
         # get the video file path
-        dirname = os.path.dirname(__file__)
-        parentdir = os.path.dirname(dirname)
-        assetdir = os.path.join(parentdir, "assets")
-        animdir = os.path.join(assetdir, "animation_presets")
+        animdir = PATH_ANIM
         filename = os.path.join(animdir, file1)
 
         # setup video player and start playing
