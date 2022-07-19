@@ -33,6 +33,7 @@ def geoNodeForObject(self,object):
         object.modifiers[-1].node_group = node_group
     nodes = node_group.nodes
     group_scale = nodes.new("GeometryNodeScaleElements")
+    bpy.data.node_groups["GeometryNodes"].nodes["Scale Elements"].inputs[2].default_value = 0.1
     group_in = nodes.get('Group Input')
     group_out = nodes.get('Group Output')
     point_node = nodes.new('GeometryNodeMeshToPoints')
@@ -119,5 +120,11 @@ def setCube(self):
 
 def setDisk(self):
     bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.disk
+
+
+def setInstanceObjectScale(self):
+    bpy.context.view_layer.objects.active = self.sphere
+    bpy.ops.transform.resize(value=(0.2, 0.2, 0.2))
+    self.selectMainObject()
 
         

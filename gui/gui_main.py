@@ -15,7 +15,7 @@ from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
-from CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube
+from CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube,setInstanceObjectScale
 import bpy
 import webbrowser
 import threading
@@ -881,11 +881,10 @@ class PointCloudWidgets(Frame):
     def reset(self):
 
         bpy.ops.object.modifier_remove(modifier="GeometryNodes")
+        #setInstanceObjectScale(self)
         self.hasconverted = False
-        #print(self.hasconverted)
         self.pointcloud.set(False)
-        #self.set_object()
-        #self.obj_selected.set("sphere")
+        
         
         
     
