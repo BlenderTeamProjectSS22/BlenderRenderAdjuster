@@ -3,6 +3,7 @@ renders/
 build/
 dist/
 .venv-blender
+.vscode
 *.zip
 data_samples
 preview.png

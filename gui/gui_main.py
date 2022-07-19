@@ -23,6 +23,7 @@ from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.panel_materials import MaterialWidgets
 from gui.settings import Control
+import gui.gui_utils as gui_utils
 
 from camera_animation import camera_animation_module as cammod
 
@@ -262,9 +263,9 @@ class CameraAnimationControls(Frame):
     def __init__(self, master, control):
         Frame.__init__(self, master)
     
-        validate_int = self.register(self.validate_integer)
         self.control = control
         self.camera_animation_cam = cammod.Camera("cam1", 5, 0, 0)
+        validate_int = self.register(gui_utils.validate_integer)
         self.columnconfigure(0, weight=2)
         self.columnconfigure(1, weight=1)
         lbl_camerapresets = tk.Label(master=self, text="Camera Presets", font="Arial 10 bold")
@@ -280,8 +281,8 @@ class CameraAnimationControls(Frame):
         self.frame_entry.bind("<Return>", self.set_frames)
         self.is_renderer = BooleanVar()
         check_renderer = tk.Checkbutton(master=self, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
-        self.is_tracking = BooleanVar()
-        check_tracking = tk.Checkbutton(master=self, text="Track camera", variable=self.is_tracking, anchor="w", command=self.switch_tracking)
+        self.track_model = BooleanVar()
+        track_model_check = tk.Checkbutton(master=self, text="Track camera", variable=self.track_model, anchor="w", command=self.switch_tracking)
         frame_entry_var = 120
         lbl_camerapresets.grid(columnspan=2)
         btn_preset1.grid(sticky="we", row = 1, column = 0)
@@ -292,33 +293,27 @@ class CameraAnimationControls(Frame):
         btn_preview3.grid(sticky="we", row = 3, column = 1)
         lbl_frames.grid(sticky="we", row = 4, column = 0)
         self.frame_entry.grid(row=4, column=1, sticky="we")
-        check_tracking.grid(sticky="w", columnspan=2)
+        track_model_check.grid(sticky="w", columnspan=2)
         check_renderer.grid(sticky="w", columnspan=2)
         
-
-    def validate_integer(self, P):
-        if str.isdigit(P) or P == "":
-            return True
-        else:
-            return False
         
     def camera_preset_1(self):
         frames = self.frames_entry_var.get()
-        self.camera_animation_cam.preset_1(frames, self.control.model, self.is_tracking.get())
+        self.camera_animation_cam.preset_1(frames)
         
         self.camera_animation_cam.set_handles("AUTO")
         self.control.re_render()
 
     def camera_preset_2(self):
         frames = self.frames_entry_var.get()
-        self.camera_animation_cam.preset_2(frames, self.control.model, self.is_tracking.get())
+        self.camera_animation_cam.preset_2(frames)
 
         self.camera_animation_cam.set_handles("AUTO")
         self.control.re_render()
 
     def camera_preset_3(self):
         frames = self.frames_entry_var.get()
-        self.camera_animation_cam.preset_3(frames, self.control.model, self.is_tracking.get())
+        self.camera_animation_cam.preset_3(frames)
 
         self.camera_animation_cam.set_handles("AUTO")
         self.control.re_render()
@@ -331,7 +326,7 @@ class CameraAnimationControls(Frame):
         self.control.re_render()
 
     def switch_tracking(self):
-        if self.is_tracking.get():
+        if self.track_model.get():
             self.camera_animation_cam.set_mode("track", self.control.model)
         else:
             self.camera_animation_cam.set_mode("free", self.control.model)

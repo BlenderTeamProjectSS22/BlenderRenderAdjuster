@@ -74,7 +74,7 @@ class Camera:
             pt.handle_right_type = mode
         
     # function that receives arrays of position and rotation and adds keyframes evenly deivided through the frames
-    def drive_by(self, frames: int, points: list, rotation: list, track: bool, object: bpy.types.Object,):
+    def drive_by(self, frames: int, points: list, rotation: list):
         #
         frame = 0
         rot = 0
@@ -98,32 +98,26 @@ class Camera:
             self.cam.constraints.remove(self.cam.constraints["Track To"])
 
     # presets for the camera animation
-    def preset_1(self, frames: int, object: bpy.types.Object, track: bool):
+    def preset_1(self, frames: int):
         #left to right drive by
         self.drive_by(
             frames,
             [[5, -3, 0],[5, 3, 0]],
             [90, 0, 90],
-            track,
-            object,
         )
 
-    def preset_2(self, frames: int, object: bpy.types.Object, track: bool):
+    def preset_2(self, frames: int):
         # get closer to the object/zoom in
         self.drive_by(
             frames,
             [[100, 0, 0],[3, 0, 0]],
             [90, 0, 90],
-            track,
-            object,
         )
 
-    def preset_3(self, frames: int, object: bpy.types.Object, track: bool):
+    def preset_3(self, frames: int):
         # fly over the object
         self.drive_by(
             frames,
             [[5, 0, 0],[1, 1, 5],[-4, 1, 0]],
             [90, 0, 90, 0, 45, 45, 90, 0, 270],
-            track,
-            object,
         )
