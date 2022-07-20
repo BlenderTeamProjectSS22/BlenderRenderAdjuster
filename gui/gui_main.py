@@ -292,7 +292,7 @@ class CameraAnimationControls(Frame):
         self.is_renderer = BooleanVar()
         check_renderer = tk.Checkbutton(master=self, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
         self.track_model = BooleanVar()
-        track_model_check = tk.Checkbutton(master=self, text="Track camera", variable=self.track_model, anchor="w", command=self.switch_tracking)
+        track_model_check = tk.Checkbutton(master=self, text="Track object", variable=self.track_model, anchor="w", command=self.switch_tracking)
         lbl_camerapresets.grid(columnspan=2)
         btn_preset1.grid(sticky="we", row = 1, column = 0)
         btn_preview1.grid(sticky="we", row = 1, column = 1)
