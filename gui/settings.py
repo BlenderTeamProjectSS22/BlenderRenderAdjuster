@@ -8,6 +8,7 @@
 from dataclasses import dataclass
 import typing as t
 import yaml
+import os, shutil
 from utils import Renderer, OrbitCam, FrameControl
 from gui.render_preview import RenderPreview
 from materials.materials import MaterialController
@@ -21,6 +22,12 @@ class AspectRatio:
     @classmethod
     def from_dict(cls: t.Type["AspectRatio"], dic: dict):
         return cls(width=dic["width"], height=dic["height"])
+    
+    def to_dict(self):
+        dic = dict()
+        dic["width"]  = self.width
+        dic["height"] = self.height
+        return dic
 
 @dataclass
 class Settings():
@@ -28,14 +35,23 @@ class Settings():
     renderer: Renderer
     auto_updatecheck: bool
     aspect: AspectRatio
+    timelimit: float
     
     @classmethod
     def from_dict(cls: t.Type["Settings"], renderer, dic: dict):
         return cls(
             renderer=renderer,
             auto_updatecheck=dic["auto_updatecheck"],
-            aspect = AspectRatio.from_dict(dic["aspect"])
+            aspect = AspectRatio.from_dict(dic["aspect"]),
+            timelimit = dic["timelimit"]
         )
+    
+    def to_dict(self):
+        dic = dict()
+        dic["auto_updatecheck"] = self.auto_updatecheck
+        dic["aspect"]           = self.aspect.to_dict()
+        dic["timelimit"]        = self.timelimit
+        return dic
     
     def set_aspect_ratio(self, width: int, height: int) -> None:
         self.aspect.width  = width
@@ -43,7 +59,10 @@ class Settings():
         # TODO Change the aspect ratio of the camera in here as well
         self.renderer.set_aspect_ratio(width, height)
 
-
+    def set_time_limit(self, limit: float):
+        assert limit >= 0
+        self.timelimit = limit
+        self.renderer.set_time_limit(limit)
     
 class Control:
     renderer: Renderer
@@ -71,7 +90,11 @@ class Control:
     # Parses and returns a Settings object
     # May return NoneType, please check outside
     def load_settings(self) -> Settings:
-        with open("assets/settings.yaml", "r") as f:
+        
+        if not os.path.exists(CONFIG_PATH):
+            shutil.copyfile(DEFAULT_CONFIG_PATH, CONFIG_PATH)
+            
+        with open(CONFIG_PATH, "r") as f:
             config = yaml.safe_load(f)
             print(config)
         try:
@@ -82,4 +105,6 @@ class Control:
        
     def save_settings(self, settings: Settings) -> None:
         print("Saving configuration")
-        pass
+        dic = self.settings.to_dict()
+        with open(CONFIG_PATH, "w") as settingsfile:
+            yaml.dump(dic, settingsfile)

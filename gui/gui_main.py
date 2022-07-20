@@ -6,9 +6,8 @@
 # GUI element: Main program, renders the GUI and connects it to other function
 
 
-from ctypes import pointer
 import tkinter as tk
-from tkinter import Frame, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage
+from tkinter import Frame, Toplevel, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage, Tk
 from tkinter import ttk
 from tkinter.colorchooser import askcolor
 from tkinter.messagebox import showinfo, showerror
@@ -21,15 +20,25 @@ import webbrowser
 import threading
 import requests
 import enum
-#from CreatePointcloudFromObject import createBasicPointcloud
+
+from Texture import load_texture, delete_texture
+from Vertex import load_vertex, delete_vertex
+
+import bpy
+import random
+
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
 from gui.panel_materials import MaterialWidgets
 from gui.settings import Control
-from mathutils import Vector
+import gui.gui_utils as gui_utils
+
+from camera_animation import camera_animation_module as cammod
+
 from gui.loading_screen import VideoLoadingScreen, ImageLoadingScreen
 import gui.properties as props
-from gui.properties import VERSION_PATCH, VERSION_MAJOR, VERSION_MINOR, UPDATE_URL
+from gui.anim_window import PreviewWindow, PreviewContent
+from gui.properties import *
 
 
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, create_default_light
@@ -61,14 +70,14 @@ class ProgramGUI(tk.Frame):
         hdri.initialize_world_texture()
 
         #generate HDRI previews
-        hdri_dir = os.fsencode("assets/HDRIs/")
+        hdri_dir = os.fsencode(PATH_HDRI)
         for file in os.listdir(hdri_dir):
             filename = os.fsdecode(file)
-            utils.generate_hdri_thumbnail("assets/HDRIs/" + filename)
+            utils.generate_hdri_thumbnail(PATH_HDRI + filename)
         
         master.title("Render adjuster")
         master.minsize(107+1135+184,507)
-        icon = ImageTk.PhotoImage(Image.open("assets/gui/icon.ico"))
+        icon = ImageTk.PhotoImage(Image.open(PATH_ICON))
         master.iconphoto(True, icon)
         
         self.columnconfigure(0, weight=0, minsize=107)
@@ -86,14 +95,15 @@ class ProgramGUI(tk.Frame):
         
         # Load defaul cube if debug is enabled
         if props.DEBUG:
-            self.control.model = utils.import_mesh("assets/STL samples/cube.obj")
+            self.control.model = utils.import_mesh(PATH_MODELS + "cube.obj")
             self.control.camera.rotate_z(45)
             self.control.camera.rotate_x(-20)
             self.control.camera.set_distance(10)
-            self.control.re_render()
-
+        self.control.re_render()
+        
         left  = LeftPanel(self, self.control)
         self.right = RightPanel(self, self.control)
+        
         camcontrols = CameraControls(mid, self.control)
         background_ctrl = BackgroundControl(mid, self.control)
         frm_frame = FrameWidgets(mid, self.control, self.max_frame)
@@ -118,7 +128,7 @@ class LeftPanel(Frame):
         self.control = control
         lbl_spacer = Label(master=self, text="")
 
-        lbl_fileop = Label(master=self, text="File operations", font="Arial 10 bold")
+        lbl_fileop = Label(master=self, text="File operations", font=FONT_TITLE)
         btn_import = Button(master=self, text="Import model", command=self.import_model)
         btn_export = Button(master=self, text="Export model", command=self.export_model)
         btn_render = Button(master=self, text="Save render", command=self.render_image)
@@ -133,21 +143,30 @@ class LeftPanel(Frame):
         sep.pack(fill=tk.X)
         
         # All general program widgets
-        frame_ops    = tk.Frame(master=self)
-        lbl_ops      = tk.Label(master=frame_ops, text="Actions", font="Arial 10 bold")
-        btn_settings = tk.Button(master=frame_ops, text="Settings", command=self.open_settings_window)
-        btn_updates  = tk.Button(master=frame_ops, text="Check for updates", command=self.check_update)
-        btn_help     = tk.Button(master=frame_ops, text="Help", command=self.open_help_page)
+        
+        lbl_ops      = tk.Label(master=self, text="Actions", font=FONT_TITLE)
+        btn_settings = tk.Button(master=self, text="Settings", command=self.open_settings_window)
+        btn_updates  = tk.Button(master=self, text="Check for updates", command=self.check_update)
+        btn_help     = tk.Button(master=self, text="Help", command=self.open_help_page)
+        lbl_spacer.pack()
+
         lbl_ops.pack(fill=tk.X)
         btn_settings.pack(fill=tk.X)
         btn_updates.pack(fill=tk.X)
         btn_help.pack(fill=tk.X)
-        frame_ops.pack()
         
+
+        # Initialize Animation controls
+        lbl_spacer2 = Label(master=self, text="")
+        lbl_spacer2.pack()
+        cameraanimationcontrols = CameraAnimationControls(self, self.control)
+        cameraanimationcontrols.pack(fill=tk.X)
+    
         lbl_spacer3 = Label(master=self, text="")
         lbl_spacer3.pack()
         modelcontrols = ModelControls(self, self.control)
         modelcontrols.pack(fill=tk.X)
+
     
     def import_model(self):
         filetypes = [
@@ -156,7 +175,7 @@ class LeftPanel(Frame):
             ("STL file", "*.stl"),
             ("Wavefront OBJ", "*.obj")
         ]
-        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes, initialdir="assets/model presets/")
+        filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes, initialdir=PATH_MODELS)
         if filename == "":
             return
         if self.control.model != None:
@@ -165,6 +184,10 @@ class LeftPanel(Frame):
            
         self.control.model = utils.import_mesh(filename)
         self.control.material.apply_material(self.control.model)
+        # recompute vertex colors if activated:
+        if(self.control.vertc.get()):
+            self.control.vertc.set(False)
+            self.control.vertc.set(True)
         self.control.camera.reset_position()
 
         self.control.re_render()
@@ -253,7 +276,122 @@ class LeftPanel(Frame):
     
     def open_help_page(self):
         webbrowser.open_new_tab("https://github.com/garvita-tiwari/blender_render/wiki")
+
+
+class CameraAnimationControls(Frame):
+    def __init__(self, master, control):
+        Frame.__init__(self, master)
+    
+        self.control = control
+        self.camera_animation_cam = cammod.Camera("cam1", 5, 0, 0)
+        validate_int = self.register(gui_utils.validate_integer)
+        self.columnconfigure(0, weight=2)
+        self.columnconfigure(1, weight=1)
+        lbl_camerapresets = tk.Label(master=self, text="Camera Presets", font="Arial 10 bold")
+        btn_preset1 = tk.Button(master=self, text="Preset 1", command=self.camera_preset_1)
+        btn_preview1 = tk.Button(master=self, text="Preview", command=self.preview_1)
+        btn_preset2 = tk.Button(master=self, text="Preset 2", command=self.camera_preset_2)
+        btn_preview2 = tk.Button(master=self, text="Preview", command=self.preview_2)
+        btn_preset3 = tk.Button(master=self, text="Preset 3", command=self.camera_preset_3)
+        btn_preview3 = tk.Button(master=self, text="Preview", command=self.preview_3)
+        lbl_frames = tk.Label(master=self, text="Set Frames:")
+        self.frames_entry_var = IntVar(value=120)
+        self.frame_entry = tk.Entry(master=self, textvariable=self.frames_entry_var, validate="key", validatecommand=(validate_int, '%P'), width=8)
+        self.frame_entry.bind("<Return>", self.set_frames)
+        self.is_renderer = BooleanVar()
+        check_renderer = tk.Checkbutton(master=self, text="Animation preview", variable=self.is_renderer, anchor="w", command=self.switch_renderer)
+        self.track_model = BooleanVar()
+        track_model_check = tk.Checkbutton(master=self, text="Track object", variable=self.track_model, anchor="w", command=self.switch_tracking)
+        lbl_camerapresets.grid(columnspan=2)
+        btn_preset1.grid(sticky="we", row = 1, column = 0)
+        btn_preview1.grid(sticky="we", row = 1, column = 1)
+        btn_preset2.grid(sticky="we", row = 2, column = 0)
+        btn_preview2.grid(sticky="we", row = 2, column = 1)
+        btn_preset3.grid(sticky="we", row = 3, column = 0)
+        btn_preview3.grid(sticky="we", row = 3, column = 1)
+        lbl_frames.grid(sticky="we", row = 4, column = 0)
+        self.frame_entry.grid(row=4, column=1, sticky="we")
+        track_model_check.grid(sticky="w", columnspan=2)
+        check_renderer.grid(sticky="w", columnspan=2)
+        self.current_preset = None
         
+        
+    def camera_preset_1(self):
+        try:
+            self.camera_animation_cam.remove_keyframes()
+        except:
+            pass
+        frames = self.frames_entry_var.get()
+        self.current_preset = "preset1"
+        self.camera_animation_cam.preset_1(frames)
+        
+        self.camera_animation_cam.set_handles("AUTO")
+        self.control.re_render()
+
+    def camera_preset_2(self):
+        try:
+            self.camera_animation_cam.remove_keyframes()
+        except:
+            pass
+        frames = self.frames_entry_var.get()
+        self.current_preset = "preset2"
+        self.camera_animation_cam.preset_2(frames)
+
+        self.camera_animation_cam.set_handles("AUTO")
+        self.control.re_render()
+
+    def camera_preset_3(self):
+        try:
+            self.camera_animation_cam.remove_keyframes()
+        except:
+            pass
+        frames = self.frames_entry_var.get()
+        self.current_preset = "preset3"
+        self.camera_animation_cam.preset_3(frames)
+
+        self.camera_animation_cam.set_handles("AUTO")
+        self.control.re_render()
+
+    def switch_renderer(self):
+        if self.is_renderer.get():
+            self.control.renderer.set_camera(self.camera_animation_cam.cam)
+        else:
+            self.control.renderer.set_camera(self.control.camera.camera)
+        self.control.re_render()
+
+    def switch_tracking(self):
+        if self.track_model.get():
+            self.camera_animation_cam.set_mode("track", self.control.model)
+        else:
+            self.camera_animation_cam.set_mode("free", self.control.model)
+        self.control.re_render()
+
+    def set_frames(self, event):
+        
+        self.control.frames.add_custom_animation(self.frames_entry_var.get())
+        self.control.frames.remove_animation(utils.Animation.DEFAULT)
+        print("Frames set to: " + str(self.frames_entry_var.get()))
+        if(self.current_preset == "preset1"):
+            self.camera_animation_cam.remove_keyframes()
+            self.camera_preset_1()
+        elif(self.current_preset == "preset2"):
+            self.camera_animation_cam.remove_keyframes()
+            self.camera_preset_2()
+        elif(self.current_preset == "preset3"):
+            self.camera_preset_3()
+    
+        self.control.re_render()
+
+    def preview_1(self):
+        PreviewWindow(self.master, self.control, "preview1.avi")
+
+    def preview_2(self):
+        PreviewWindow(self.master, self.control, "preview2.avi")
+
+    def preview_3(self):
+        PreviewWindow(self.master, self.control, "preview3.avi")
+    
+
 
 class CameraControls(Frame):
     def __init__(self, master, control):
@@ -267,7 +405,7 @@ class CameraControls(Frame):
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=4)
         
-        lbl_controls = Label(master=self, text="Camera Controls", font="Arial 10 bold")
+        lbl_controls = Label(master=self, text="Camera Controls", font=FONT_TITLE)
         
         light_gray = "#e6e6e6"
         frm_rot = Frame(master=self)
@@ -384,7 +522,7 @@ class ModelControls(Frame):
         Frame.__init__(self, master)
         
         self.control = control
-        lbl_controls = Label(master=self, text="Model Controls", font="Arial 10 bold")
+        lbl_controls = Label(master=self, text="Model Controls", font=FONT_TITLE)
         lbl_rot   = Label(master=self, text="Rotation:")
         lbl_controls.grid(row=0, column=0, columnspan=3)
         lbl_rot.grid(row=1, column=0)
@@ -410,15 +548,17 @@ class ColorMeshWidgets(Frame):
         
         self.current_color = None
         
-        lbl_look    = Label(master=self, text="Look", font="Arial 10 bold")
+        lbl_look    = Label(master=self, text="Look", font=FONT_TITLE)
         lbl_color   = Label(master=self, text="Color")
         btn_picker  = Button(master=self, text="pick", command=self.pick_color)
         lbl_add    = Label(master=self, text="Add")
-        self.vertc = BooleanVar()
+        self.control.vertc = BooleanVar()
         self.mesh  = BooleanVar()
-        self.point = BooleanVar()
-        check_vertc = Checkbutton(master=self, text="Vertex color", variable=self.vertc, anchor="w", command=self.switch_vertex_color)
+        # handle vertc variable with tracing since it is changed at model import
+        check_vertc = Checkbutton(master=self, text="Vertex color", variable=self.control.vertc, anchor="w")
+        self.control.vertc.trace_add("write", self.update_vertex_color)
         check_mesh  = Checkbutton(master=self, text="Plane", variable=self.mesh, anchor="w", command=self.add_plane)
+        
         lbl_look.grid(row=0, column=0, columnspan=2)
         lbl_color.grid(row=1, column=0)
         lbl_add.grid(row=1, column=1)
@@ -429,13 +569,18 @@ class ColorMeshWidgets(Frame):
     def pick_color(self):
     
         color = askcolor(self.current_color)[0]
-        
         if color is not None:
             self.current_color = color
             self.control.material.set_color(utils.convert_color_to_bpy(self.current_color))
             self.control.re_render()
     
-    def switch_vertex_color(self):
+    def update_vertex_color(self, var, index, mode):
+        if self.control.vertc.get():
+            if self.control.tex_selected.get() != "none": 
+                self.control.tex_selected.set("none")
+            load_vertex(self.control.model,self.control.material.material)
+        else:
+            delete_vertex(self.control.material.material)
         self.control.re_render()
 
 
@@ -473,34 +618,47 @@ class TextureWidgets(Frame):
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
-        tex_selected = StringVar(self)
-        tex_selected.set("none")
-        lbl_textures = Label(master=self, text="Texture selection:", font="Arial 10 bold")
+        
+        self.control.tex_selected = StringVar(self)
+        self.control.tex_selected.set("none")
+        lbl_textures = Label(master=self, text="Texture selection:", font=FONT_TITLE)
+        
         btn_import_texture = Button(master=self, text="Import", command=self.import_texture)
         lbl_sel_tex    = Label(master=self, text="Select:")
-        textures = (Textures.NONE.value, Textures.WOOD.value, Textures.BRICKS.value)
-        dropdown_textures = OptionMenu(self, tex_selected, *textures, command=self.set_texture)
+        textures = (Textures.NONE.value, Textures.WOOD.value, Textures.BRICKS.value, Textures.IRON.value)
+        dropdown_textures = OptionMenu(self, self.control.tex_selected, *textures)
+        self.control.tex_selected.trace_add("write", self.set_texture)
         lbl_textures.grid(row=0, column=0, columnspan=2, sticky="we")
         btn_import_texture.grid(row=1, column=0, columnspan=2, sticky="")
         lbl_sel_tex.grid(row=2, column=0, sticky="w")
         dropdown_textures.grid(row=2, column=1, sticky="we")
     
     def set_texture(self, *args):
-        tex = Textures(args[0])
+        tex = Textures(self.control.tex_selected.get())
         if tex == Textures.WOOD:
-            pass
+            self.control.vertc.set(False)
+            load_texture(PATH_TEXTURES + Textures.WOOD.value + ".png", self.control.material.material)
         elif tex == Textures.BRICKS:
-            pass
+            self.control.vertc.set(False)
+            load_texture(PATH_TEXTURES + Textures.BRICKS.value + ".png", self.control.material.material)
+        elif tex == Textures.IRON:
+            self.control.vertc.set(False)
+            load_texture(PATH_TEXTURES + Textures.IRON.value + ".png", self.control.material.material)
         else: # NONE
-            pass
+            delete_texture(self.control.material.material)
         self.control.re_render()
     
     def import_texture(self):
+        self.control.vertc.set(False)
         filetypes = [
             ("PNG image", "*.png"),
+            ("jpg image", "*.jpg")
         ]
         filename = filedialog.askopenfilename(title="Select a texture", filetypes=filetypes)
-        # TODO Apply the texure to the object
+        if filename == "":
+            return
+
+        load_texture(filename, self.control.material.material)
         self.control.re_render()
         
         
@@ -509,6 +667,8 @@ class Textures(enum.Enum):
     NONE = "none"
     WOOD = "wood"
     BRICKS = "bricks"
+    IRON = "iron"
+
 
 class LightingWidgets(Frame):
     # constants
@@ -528,6 +688,7 @@ class LightingWidgets(Frame):
         self.background_strength : float = 1
         self.is_day_night : bool = BooleanVar()
         self.is_brightness_changeble : bool = False
+        self.is_daytime_changeble : bool = False
         
         # grid
         self.columnconfigure(0, weight=1)
@@ -536,9 +697,9 @@ class LightingWidgets(Frame):
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
         # labels
-        lbl_light = Label(master=self, text="Lighting", font="Arial 10 bold")
+        lbl_light = Label(master=self, text="Lighting", font=FONT_TITLE)
         self.lbl_brightness = Label(master=self, text="Brightness(inactive)")
-        lbl_daytime = Label(master=self, text="Time of day/night")
+        self.lbl_daytime = Label(master=self, text="Time(inactive)")
         lbl_background = Label(master=self, text="Background Strength")
         # buttons
         btn_use_lights_switch = Button(master=self, text="Lights off", command=self.lights_off)
@@ -551,11 +712,11 @@ class LightingWidgets(Frame):
         # slider
         self.slider_brightness = Scale(master=self, to = 8.0, orient="horizontal",
                                   resolution = 0.1, showvalue=False, command=lambda val: self.set_brightness(val, False))
-        slider_daytime = Scale(master=self, from_= 0, to = 12, orient="horizontal", showvalue=True, command=lambda val: self.set_daytime(val, False))
+        self.slider_daytime = Scale(master=self, from_= 0, to = 12, orient="horizontal", showvalue=True, command=lambda val: self.set_daytime(val, False))
         slider_background = Scale(master=self, from_= 0, to = 10, orient="horizontal",
                                   resolution = 0.1, showvalue=False, command=lambda val: self.set_background_strength(val, False))
         self.slider_brightness.bind("<ButtonRelease-1>", lambda event : self.set_brightness(self.get_brightness(), True)) 
-        slider_daytime.bind("<ButtonRelease-1>", lambda event : self.set_daytime(self.get_daytime(), True)) 
+        self.slider_daytime.bind("<ButtonRelease-1>", lambda event : self.set_daytime(self.get_daytime(), True)) 
         slider_background.bind("<ButtonRelease-1>", lambda event : self.set_background_strength(self.get_background_strength(), True)) 
 
         # packing
@@ -568,8 +729,8 @@ class LightingWidgets(Frame):
         btn_night.grid(row=3, column=1, sticky="we",pady=1)
         btn_lantern.grid(row=4, column=1, sticky="we",pady=1, columnspan=2)
         check_day_night_circle.grid(row=5, column=0, sticky="", pady=1, columnspan=2)
-        lbl_daytime.grid(row=6, column=0, sticky="w")
-        slider_daytime.grid(row=6, column=1,  sticky="we", columnspan=2)  
+        self.lbl_daytime.grid(row=6, column=0, sticky="w")
+        self.slider_daytime.grid(row=6, column=1,  sticky="we", columnspan=2)  
         lbl_background.grid(row=7, column=0,  sticky="w") 
         slider_background.grid(row=7, column=1,  sticky="we", columnspan=2) 
 
@@ -577,6 +738,7 @@ class LightingWidgets(Frame):
         self.slider_brightness.set(self.get_brightness())  
         slider_background.set(self.get_background_strength())
         self.slider_brightness.configure(state="disable")
+        self.slider_daytime.configure(state="disable")
         
 
     # set the background strength and rerenders
@@ -594,6 +756,7 @@ class LightingWidgets(Frame):
     def lights_off(self) -> None:
         lights_enabled(False)
         self.activate_brightness_slider(False)
+        self.activate_daytime_slider(False)
         self.control.re_render()
 
     # puts the brightness slider active or inactive
@@ -607,10 +770,21 @@ class LightingWidgets(Frame):
             self.is_brightness_changeble = False
             self.lbl_brightness.configure(text="Brightness(inactive)")
 
+    # puts the daytime slider active or inactive
+    def activate_daytime_slider(self, is_active : bool) -> None:
+        if is_active:
+            self.slider_daytime.configure(state="active")
+            self.is_daytime_changeble = True
+            self.lbl_daytime.configure(text="Time(active)")
+        else:
+            self.slider_daytime.configure(state="disable")
+            self.is_daytime_changeble = False
+            self.lbl_daytime.configure(text="Time(inactive)")
+
     # set daytime value to "value"
     def set_daytime(self, value : int, is_released : bool) -> None:
         self.daytime = value
-        if is_released:
+        if is_released and self.slider_daytime["state"] == "active":
             self.fit_brightness_to_lights()
 
     # returns the daytime value
@@ -645,7 +819,6 @@ class LightingWidgets(Frame):
     # set default light
     def set_default_light(self) -> None:
         self.standard_light_settings(0)
-        self.activate_brightness_slider(False)
         self.light_objects = create_default_light()
         self.control.re_render()
         
@@ -654,6 +827,12 @@ class LightingWidgets(Frame):
         lights_enabled(True)
         if use_light_type != 0:
             self.activate_brightness_slider(True)
+        else:
+            self.activate_brightness_slider(False)
+        if use_light_type in [1, 2]:
+            self.activate_daytime_slider(True)
+        else:
+            self.activate_daytime_slider(False)
         self.use_light_type = use_light_type
         self.is_day_night.set(False)
         delete_all_lights()
@@ -682,6 +861,7 @@ class LightingWidgets(Frame):
         if self.is_day_night.get():
             self.control.frames.add_animation(utils.Animation.DAYNIGHT)
             self.activate_brightness_slider(False)
+            self.activate_daytime_slider(False)
             delete_lights(self.light_objects)
             self.light_objects = day_night_cycle(self.daytime + self.STARTING_TIME_OF_DAY, self.get_brightness(), True, self.control.camera, 3)
         else:
@@ -705,31 +885,31 @@ class BackgroundControl(Frame):
         self.columnconfigure(3, weight=1)
         self.columnconfigure(4, weight=1)
         self.control = control
-        lbl_controls = Label(master=self, text="Background", font="Arial 10 bold")
+        lbl_controls = Label(master=self, text="Background", font=FONT_TITLE)
         lbl_controls.grid(row=0, column=0, columnspan=5)
 
-        empty_bg_lbl = Label(master=self, text="Empty", font="Arial 10 bold")
+        empty_bg_lbl = Label(master=self, text="Empty", font=FONT_TITLE)
         empty_bg_lbl.grid(row=1, column=0)
-        self.empty_bg = PhotoImage(file = "assets/gui/empty_bg.png").subsample(2,2)
+        self.empty_bg = PhotoImage(file = PATH_EMPTY_BG).subsample(2,2)
         empty_bg_btn = Button(master=self, image=self.empty_bg, command=self.remove_background)
         empty_bg_btn.grid(row=2, column=0)
 
-        bg1_lbl = Label(master=self, text="Green Park", font="Arial 10 bold")
+        bg1_lbl = Label(master=self, text="Green Park", font=FONT_TITLE)
         bg1_lbl.grid(row=1, column=1)
         self.bg1 = PhotoImage(file = "assets/hdri_thumbs/green_point_park_2k.hdr.png").subsample(2,2)
-        bg1_btn = Button(master=self, image=self.bg1, command=lambda: self.load_hdri("assets/HDRIs/green_point_park_2k.hdr"))
+        bg1_btn = Button(master=self, image=self.bg1, command=lambda: self.load_hdri("assets/hdris/green_point_park_2k.hdr"))
         bg1_btn.grid(row=2, column=1)
 
-        bg2_lbl = Label(master=self, text="Old Depot", font="Arial 10 bold")
+        bg2_lbl = Label(master=self, text="Old Depot", font=FONT_TITLE)
         bg2_lbl.grid(row=1, column=2)
         self.bg2 = PhotoImage(file = "assets/hdri_thumbs/old_depot_2k.hdr.png").subsample(2,2)
-        bg2_btn = Button(master=self, image=self.bg2, command=lambda: self.load_hdri("assets/HDRIs/old_depot_2k.hdr"))
+        bg2_btn = Button(master=self, image=self.bg2, command=lambda: self.load_hdri("assets/hdris/old_depot_2k.hdr"))
         bg2_btn.grid(row=2, column=2)
 
-        bg3_lbl = Label(master=self, text="Desert", font="Arial 10 bold")
+        bg3_lbl = Label(master=self, text="Desert", font=FONT_TITLE)
         bg3_lbl.grid(row=1, column=3)
         self.bg3 = PhotoImage(file = "assets/hdri_thumbs/syferfontein_6d_clear_2k.hdr.png").subsample(2,2)
-        bg3_btn = Button(master=self, image=self.bg3, command=lambda: self.load_hdri("assets/HDRIs/syferfontein_6d_clear_2k.hdr"))
+        bg3_btn = Button(master=self, image=self.bg3, command=lambda: self.load_hdri("assets/hdris/syferfontein_6d_clear_2k.hdr"))
         bg3_btn.grid(row=2, column=3)
 
         btn_import_hdri = Button(master=self, text="Import custom HDRI", command=self.import_hdri)
@@ -768,7 +948,7 @@ class FrameWidgets(Frame):
         self.columnconfigure(0, weight=1)
 
         # labels and sliders
-        lbl_frame_setting = Label(master=self, text="Frame", font="Arial 10 bold")
+        lbl_frame_setting = Label(master=self, text="Frame", font=FONT_TITLE)
         self.slider_frame_setting = Scale(master=self, from_= 0, to=self.max_frame.get(), orient="horizontal", command=lambda val: self.set_frame(val, False))
         self.slider_frame_setting.bind("<ButtonRelease-1>", lambda event : self.set_frame(self.get_frame(), True)) 
         
@@ -936,10 +1116,9 @@ class RightPanel(Frame):
         
         # Lighting widgets
         frm_light = LightingWidgets(self, control)
+        
         frm_light.grid(row=3, column=0, sticky="we")
 
         # Pointcloud widgets
         self.frm_point = PointCloudWidgets(self, control)
         self.frm_point.grid(row=4, column=0, sticky="we")
-    
-  

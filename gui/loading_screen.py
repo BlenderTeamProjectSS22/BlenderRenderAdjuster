@@ -64,6 +64,7 @@ class VideoLoadingScreen(tk.Toplevel):
             utils.unregister_handler(render_per_frame, utils.Handler.PER_FRAME)
             utils.unregister_handler(render_finished,  utils.Handler.FINISHED)
             frame_set_enabled(self.content, True)
+            self.close_window()
         
         utils.register_handler(render_per_frame, utils.Handler.PER_FRAME)
         utils.register_handler(render_finished, utils.Handler.FINISHED)

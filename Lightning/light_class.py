@@ -99,8 +99,8 @@ class PointLight(Light):
     # set the radius (only positiv values allowed)
     def set_radius(self, new_radius: float) -> None:
         if (new_radius < 0):
-            print(str(self._name)+": radius: only positiv values allowed")
-            self._radius = 0.25
+            print(str(self._name) + ": radius: only positiv values allowed")
+            self._radius = 0.25 # standard value
         else:
             self._radius = new_radius
         self._light_data.shadow_soft_size = new_radius
@@ -129,47 +129,3 @@ class RotateLight(Light):
     # get the rotation as [x,y,z]-array
     def get_rotation(self) -> list[int]:
         return [self._x_rotation, self._y_rotation, self._z_rotation]
-
-### for testing
-
-## variables
-#
-## angle of the light
-# angle = 10
-## distance of the light
-# radius = 20
-## brightness of the light
-# sun_brightness = 3
-## color
-# color = [0.001, 0.044, 0.107]
-
-## delete all test lights
-# bpy.ops.object.select_all(action = 'DESELECT')
-# if bpy.context.scene.objects.get('Sonne'):
-#     bpy.data.objects['Sonne'].select_set(True)
-# if bpy.context.scene.objects.get('fill'):
-#     bpy.data.objects['fill'].select_set(True)
-## delete all selected objects
-# bpy.ops.object.delete()
-
-## test lights
-# l1 = Light("Sonne", "SUN", radius * math.sin(math.radians(10)),
-#            radius * math.cos(math.radians(angle)),
-#            radius * math.sin(math.radians(angle)),
-#            sun_brightness)
-# l1.set_color(color[0], color[1], color[2])
-# l1.set_position(0, 0, 10)
-# l1.rename("Ilios")
-# l1.set_brightness(100)
-# print(l1.get_color())
-# l2 = PointLight("fill", -14, 16, 0.3, 3000, 2)
-# l2.set_radius(5)
-# l3 = RotateLight("Sonne", "SUN", radius * math.sin(math.radians(10)),
-#               radius * math.cos(math.radians(angle)),
-#               radius * math.sin(math.radians(angle)),
-#               0, 0, 0, -4)
-# l3.set_rotation(-math.cos(math.radians(angle)), math.sin(math.radians(10)), 0)
-
-## update scene, if needed
-# dg = bpy.context.evaluated_depsgraph_get() 
-# dg.update()
