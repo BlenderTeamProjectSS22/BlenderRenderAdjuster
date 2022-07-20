@@ -851,6 +851,7 @@ class LightingWidgets(Frame):
             self.control.frames.remove_animation(utils.Animation.DAYNIGHT)
             delete_light_animation(self.light_objects)
             self.use_light_type = 0
+            self.fit_brightness_to_lights()
         self.control.re_render()
     
     
