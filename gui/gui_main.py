@@ -27,6 +27,7 @@ import random
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
+from gui.gui_utils import widget_set_enabled
 from gui.panel_materials import MaterialWidgets
 from gui.settings import Control
 import gui.gui_utils as gui_utils
@@ -540,8 +541,8 @@ class ColorMeshWidgets(Frame):
         self.current_color = None
         
         lbl_look    = Label(master=self, text="Look", font=FONT_TITLE)
-        lbl_color   = Label(master=self, text="Color")
-        btn_picker  = Button(master=self, text="pick", command=self.pick_color)
+        self.lbl_color   = Label(master=self, text="Color")
+        self.btn_picker  = Button(master=self, text="pick", command=self.pick_color)
         lbl_type    = Label(master=self, text="Type")
         self.control.vertc = BooleanVar()
         self.mesh  = BooleanVar()
@@ -552,9 +553,9 @@ class ColorMeshWidgets(Frame):
         check_mesh  = Checkbutton(master=self, text="Full mesh", variable=self.mesh, anchor="w", command=self.switch_mesh)
         check_point = Checkbutton(master=self, text="Point cloud", variable=self.point, anchor="w", command=self.switch_pointcloud)
         lbl_look.grid(row=0, column=0, columnspan=2)
-        lbl_color.grid(row=1, column=0)
+        self.lbl_color.grid(row=1, column=0)
         lbl_type.grid(row=1, column=1)
-        btn_picker.grid(row=2, column=0)
+        self.btn_picker.grid(row=2, column=0)
         check_vertc.grid(row=3, column=0, sticky="w")
         check_mesh.grid(row=2, column=1, sticky="w")
         check_point.grid(row=3, column=1, sticky="w")
@@ -569,10 +570,14 @@ class ColorMeshWidgets(Frame):
     
     def update_vertex_color(self, var, index, mode):
         if self.control.vertc.get():
+            widget_set_enabled(self.lbl_color, False)
+            widget_set_enabled(self.btn_picker, False)
             if self.control.tex_selected.get() != "none": 
                 self.control.tex_selected.set("none")
             load_vertex(self.control.model,self.control.material.material)
         else:
+            widget_set_enabled(self.lbl_color, True)
+            widget_set_enabled(self.btn_picker, True)
             delete_vertex(self.control.material.material)
         self.control.re_render()
     
