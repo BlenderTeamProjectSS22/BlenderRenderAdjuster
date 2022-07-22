@@ -137,7 +137,6 @@ class Renderer:
     
     # render image/video to configured output destination 
     def render(self, animation: bool) -> None:
-        print(self.scene.render.resolution_y)
         self.scene.render.image_settings.file_format = "AVI_JPEG" if animation else "PNG"
         if props.VERBOSE:
             bpy.ops.render.render(write_still=True, animation=animation)
