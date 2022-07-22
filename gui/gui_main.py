@@ -38,6 +38,7 @@ from gui.loading_screen import VideoLoadingScreen, ImageLoadingScreen
 import gui.properties as props
 from gui.anim_window import PreviewWindow, PreviewContent
 from gui.properties import *
+from gui.settings import load_settings, save_settings
 
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, create_default_light
 from Lightning.light_functions import day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
@@ -58,8 +59,9 @@ class ProgramGUI:
     
         # blender initialization
         utils.clear_scene()
+        settings = load_settings()
         camera   = utils.OrbitCam()
-        renderer = utils.Renderer(camera.camera)
+        renderer = utils.Renderer(camera.camera, settings.timelimit, (settings.aspect.width, settings.aspect.height))
         renderer.set_preview_render()
         self.max_frame = IntVar()
         frames = utils.FrameControl(self.max_frame)
@@ -86,7 +88,7 @@ class ProgramGUI:
         # Create global control object
         mid = Frame(master=master)
         self.preview = RenderPreview(master)
-        self.control = Control(renderer, self.preview, camera, frames)
+        self.control = Control(renderer, settings, self.preview, camera, frames)
         self.control.material = MaterialController()
         self.control.model = None
         
