@@ -61,6 +61,7 @@ class ProgramGUI(tk.Frame):
     
         # blender initialization
         utils.clear_scene()
+        utils.clear_files()
         settings = load_settings()
         camera   = utils.OrbitCam()
         renderer = utils.Renderer(camera.camera, settings.timelimit, (settings.aspect.width, settings.aspect.height))
@@ -94,14 +95,6 @@ class ProgramGUI(tk.Frame):
         self.control.material = MaterialController()
         self.control.model = None
         
-        # Load defaul cube if debug is enabled
-        if props.DEBUG:
-            self.control.model = utils.import_mesh(PATH_MODELS + "cube.obj")
-            self.control.camera.rotate_z(45)
-            self.control.camera.rotate_x(-20)
-            self.control.camera.set_distance(10)
-        self.control.re_render()
-        
         self.left  = LeftPanel(self, self.control)
         self.right = RightPanel(self, self.control)
         
@@ -122,6 +115,11 @@ class ProgramGUI(tk.Frame):
         self.preview.grid(row=0, column=1, sticky="nwes")
         mid.grid(row=1, column=1, sticky="nwes")
         self.right.grid(row=0, column=2, sticky="ne", rowspan=2)
+        
+        # Load defaul cube if debug is enabled
+        if props.DEBUG:
+            self.left.import_model(PATH_MODELS + "cube.obj")
+        self.control.re_render()
     
     # Disables all frames that require an object
     def disable_model_widgets(self):
@@ -147,7 +145,7 @@ class LeftPanel(Frame):
         lbl_spacer = Label(master=self, text="")
 
         lbl_fileop = Label(master=self, text="File operations", font=FONT_TITLE)
-        btn_import = Button(master=self, text="Import model", command=self.import_model)
+        btn_import = Button(master=self, text="Import model", command=self.ask_import_model)
         btn_export = Button(master=self, text="Export model", command=self.export_model)
         btn_render = Button(master=self, text="Save render", command=self.render_image)
         btn_video  = Button(master=self, text="Save video", command=self.render_video)
@@ -186,7 +184,7 @@ class LeftPanel(Frame):
         self.modelcontrols.pack(fill=tk.X)
 
     
-    def import_model(self):
+    def ask_import_model(self):
         filetypes = [
             ("All model files", "*.ply *.stl *.obj"),
             ("PLY object", "*.ply"),
@@ -196,6 +194,11 @@ class LeftPanel(Frame):
         filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes, initialdir=PATH_MODELS)
         if filename == "":
             return
+        self.import_model(filename)
+        self.control.re_render()
+    
+    # Imports an object, filename must be valid
+    def import_model(self, filename):
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
@@ -210,9 +213,6 @@ class LeftPanel(Frame):
         if self.master.nomodel:
             self.master.enable_model_widgets()
             self.master.nomodel = False
-                
-        self.control.re_render()
-        
     
     def export_model(self):
         filename = filedialog.asksaveasfilename(

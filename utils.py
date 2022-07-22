@@ -14,7 +14,7 @@ import fnmatch
 from PIL import Image, ImageOps
 import sys
 import gui.properties as props
-from gui.properties import PATH_THUMB
+from gui.properties import PATH_THUMB, PATH_PREVIEW
 from contextlib import contextmanager, redirect_stdout
 from tkinter import IntVar
 import enum
@@ -263,6 +263,11 @@ def clear_scene(keepLight: bool = True) -> None:
     for o in bpy.data.objects:
         if not(o.name == "Light" and keepLight):
             bpy.data.objects.remove(o)
+
+# Clears files, like the previously generated preview image
+def clear_files():
+    if os.path.exists(PATH_PREVIEW):
+        os.remove(PATH_PREVIEW)
 
 def remove_object(obj: bpy.types.Object) -> None:
    bpy.data.objects.remove(obj)
