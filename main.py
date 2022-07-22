@@ -31,5 +31,7 @@ if args.verbose:
 
 root = tk.Tk()
 my_gui = ProgramGUI(root)
-my_gui.pack(fill=tk.BOTH)
+root.columnconfigure(0, weight=1)
+root.rowconfigure(0, weight=1)
+my_gui.grid(row=0, column=0, sticky="news")
 root.mainloop()
