@@ -9,6 +9,7 @@ import tkinter as tk
 from tkinter import Frame, Toplevel, Label, Button, Entry
 from gui.properties import *
 from gui.gui_utils import validate_integer, validate_float
+from gui.settings import save_settings
 
 class SettingsWindow(Toplevel):
         def __init__(self, master, control):
@@ -89,13 +90,13 @@ class SettingsContent(Frame):
         if self.ent_width.get() != "" and self.ent_height.get() != "":
             w = int(self.ent_width.get())
             h = int(self.ent_height.get())
-            self.control.settings.set_aspect_ratio(w, h)
+            self.control.set_aspect_ratio(w, h)
         
         if self.ent_limit.get() != "":
             limit = float(self.ent_limit.get().replace(",", "."))
-            self.control.settings.set_time_limit(limit)
+            self.control.set_time_limit(limit)
         
-        self.control.save_settings(self.control.settings)
+        save_settings(self.control.settings)
         self.control.re_render()
         self.close_window()
         print("New settings: " + str(self.control.settings))

@@ -137,6 +137,17 @@ class MaterialController:
             bump         = False
         )
     
+    def gold_material(self):
+        self.material_preset(
+            transmission = 0,
+            roughness    = 0.3,
+            metallic     = 0.9,
+            emissive     = False,
+            glow         = False,
+            bump         = False)
+        goldcolor = (0.650005, 0.387667, 0.0340343, 1)
+        self.set_color(goldcolor)
+    
     def glass_material(self):
         self.material_preset(
             transmission = 1,

@@ -27,7 +27,7 @@ import random
 
 from gui.render_preview import RenderPreview
 from gui.gui_options import SettingsWindow
-from gui.gui_utils import widget_set_enabled
+from gui.gui_utils import widget_set_enabled, frame_set_enabled
 from gui.panel_materials import MaterialWidgets
 from gui.settings import Control
 import gui.gui_utils as gui_utils
@@ -38,6 +38,7 @@ from gui.loading_screen import VideoLoadingScreen, ImageLoadingScreen
 import gui.properties as props
 from gui.anim_window import PreviewWindow, PreviewContent
 from gui.properties import *
+from gui.settings import load_settings, save_settings
 
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, create_default_light
 from Lightning.light_functions import day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
@@ -53,13 +54,17 @@ import HDRI.hdri as hdri
 if props.DEBUG:
     import bpy
 
-class ProgramGUI:
+class ProgramGUI(tk.Frame):
     def __init__(self, master):
+        Frame.__init__(self, master)
+        self.nomodel = True
     
         # blender initialization
         utils.clear_scene()
+        utils.clear_files()
+        settings = load_settings()
         camera   = utils.OrbitCam()
-        renderer = utils.Renderer(camera.camera)
+        renderer = utils.Renderer(camera.camera, settings.timelimit, (settings.aspect.width, settings.aspect.height))
         renderer.set_preview_render()
         self.max_frame = IntVar()
         frames = utils.FrameControl(self.max_frame)
@@ -77,31 +82,27 @@ class ProgramGUI:
         icon = ImageTk.PhotoImage(Image.open(PATH_ICON))
         master.iconphoto(True, icon)
         
-        master.columnconfigure(0, weight=0, minsize=107)
-        master.columnconfigure(1, weight=16, minsize=1135)
-        master.columnconfigure(2, weight=0, minsize=184)
-        master.rowconfigure(0, weight=15, minsize=307)
-        master.rowconfigure(1, weight=1)
+        self.columnconfigure(0, weight=0, minsize=107)
+        self.columnconfigure(1, weight=16, minsize=1135)
+        self.columnconfigure(2, weight=0, minsize=184)
+        self.rowconfigure(0, weight=15, minsize=307)
+        self.rowconfigure(1, weight=1)
         
         # Create global control object
-        mid = Frame(master=master)
-        self.preview = RenderPreview(master)
-        self.control = Control(renderer, self.preview, camera, frames)
+        mid = Frame(master=self)
+        self.preview = RenderPreview(master=self)
+        self.control = Control(renderer, settings, self.preview, camera, frames)
         self.control.material = MaterialController()
         self.control.model = None
         
-        # Load defaul cube if debug is enabled
-        if props.DEBUG:
-            self.control.model = utils.import_mesh(PATH_MODELS + "cube.obj")
-            self.control.camera.rotate_z(45)
-            self.control.camera.rotate_x(-20)
-            self.control.camera.set_distance(10)
-        self.control.re_render()
-        left  = LeftPanel(master, self.control)
-        right = RightPanel(master, self.control)
+        self.left  = LeftPanel(self, self.control)
+        self.right = RightPanel(self, self.control)
+        
         camcontrols = CameraControls(mid, self.control)
         background_ctrl = BackgroundControl(mid, self.control)
         frm_frame = FrameWidgets(mid, self.control, self.max_frame)
+        
+        self.disable_model_widgets()
         
         mid.rowconfigure(1, weight=1)
         mid.columnconfigure(0, weight=1)
@@ -110,11 +111,31 @@ class ProgramGUI:
         background_ctrl.grid(row=1, column=1, sticky="nwse")
         frm_frame.grid(row=0, columnspan=2, sticky="esw")
         
-        left.grid(row=0, column=0, sticky="nw", rowspan=2)
+        self.left.grid(row=0, column=0, sticky="nw", rowspan=2)
         self.preview.grid(row=0, column=1, sticky="nwes")
         mid.grid(row=1, column=1, sticky="nwes")
-        right.grid(row=0, column=2, sticky="ne", rowspan=2)
-
+        self.right.grid(row=0, column=2, sticky="ne", rowspan=2)
+        
+        # Load defaul cube if debug is enabled
+        if props.DEBUG:
+            self.left.import_model(PATH_MODELS + "cube.obj")
+        self.control.re_render()
+    
+    # Disables all frames that require an object
+    def disable_model_widgets(self):
+        frame_set_enabled(self.right, False)
+        frame_set_enabled(self.left.modelcontrols, False)
+    
+    # Enables all relevant widgets that require an object
+    def enable_model_widgets(self):
+        frame_set_enabled(self.left.modelcontrols, True)
+        frame_set_enabled(self.right.frm_look, True)
+        frame_set_enabled(self.right.frm_mat, True)
+        frame_set_enabled(self.right.frm_mat.frm_bump, False)
+        frame_set_enabled(self.right.frm_mat.frm_emissive, False)
+        frame_set_enabled(self.right.frm_tex, True)
+        frame_set_enabled(self.right.frm_light, True)
+        self.right.frm_light.activate_brightness_slider(True)
 
 class LeftPanel(Frame):
     def __init__(self, master, control):
@@ -124,7 +145,7 @@ class LeftPanel(Frame):
         lbl_spacer = Label(master=self, text="")
 
         lbl_fileop = Label(master=self, text="File operations", font=FONT_TITLE)
-        btn_import = Button(master=self, text="Import model", command=self.import_model)
+        btn_import = Button(master=self, text="Import model", command=self.ask_import_model)
         btn_export = Button(master=self, text="Export model", command=self.export_model)
         btn_render = Button(master=self, text="Save render", command=self.render_image)
         btn_video  = Button(master=self, text="Save video", command=self.render_video)
@@ -159,11 +180,11 @@ class LeftPanel(Frame):
     
         lbl_spacer3 = Label(master=self, text="")
         lbl_spacer3.pack()
-        modelcontrols = ModelControls(self, self.control)
-        modelcontrols.pack(fill=tk.X)
+        self.modelcontrols = ModelControls(self, self.control)
+        self.modelcontrols.pack(fill=tk.X)
 
     
-    def import_model(self):
+    def ask_import_model(self):
         filetypes = [
             ("All model files", "*.ply *.stl *.obj"),
             ("PLY object", "*.ply"),
@@ -173,6 +194,11 @@ class LeftPanel(Frame):
         filename = filedialog.askopenfilename(title="Select model to import", filetypes=filetypes, initialdir=PATH_MODELS)
         if filename == "":
             return
+        self.import_model(filename)
+        self.control.re_render()
+    
+    # Imports an object, filename must be valid
+    def import_model(self, filename):
         if self.control.model != None:
             utils.remove_object(self.control.model)
         self.control.model = utils.import_mesh(filename)
@@ -182,8 +208,11 @@ class LeftPanel(Frame):
             self.control.vertc.set(False)
             self.control.vertc.set(True)
         self.control.camera.reset_position()
-        self.control.re_render()
         
+        # Enabled all model controls
+        if self.master.nomodel:
+            self.master.enable_model_widgets()
+            self.master.nomodel = False
     
     def export_model(self):
         filename = filedialog.asksaveasfilename(
@@ -750,11 +779,11 @@ class LightingWidgets(Frame):
     # puts the brightness slider active or inactive
     def activate_brightness_slider(self, is_active : bool) -> None:
         if is_active:
-            self.slider_brightness.configure(state="active")
+            widget_set_enabled(self.slider_brightness, True)
             self.is_brightness_changeble = True
             self.lbl_brightness.configure(text="Brightness(active)")
         else:
-            self.slider_brightness.configure(state="disable")
+            widget_set_enabled(self.slider_brightness, False)
             self.is_brightness_changeble = False
             self.lbl_brightness.configure(text="Brightness(inactive)")
 
@@ -975,17 +1004,17 @@ class RightPanel(Frame):
         self.columnconfigure(0, weight=1)
         
         # Color and render type widgets
-        frm_look = ColorMeshWidgets(self, control)
-        frm_look.grid(row=0, column=0, sticky="we")
+        self.frm_look = ColorMeshWidgets(self, control)
+        self.frm_look.grid(row=0, column=0, sticky="we")
         
         # Material widgets
-        frm_mat = MaterialWidgets(self, control)
-        frm_mat.grid(row=1, column=0, sticky="ew")
+        self.frm_mat = MaterialWidgets(self, control)
+        self.frm_mat.grid(row=1, column=0, sticky="ew")
         
         # Texture widgets
-        frm_tex = TextureWidgets(self, control)
-        frm_tex.grid(row=2, column=0, sticky="ew")
+        self.frm_tex = TextureWidgets(self, control)
+        self.frm_tex.grid(row=2, column=0, sticky="ew")
         
         # Lighting widgets
-        frm_light = LightingWidgets(self, control)
-        frm_light.grid(row=3, column=0, sticky="we")
+        self.frm_light = LightingWidgets(self, control)
+        self.frm_light.grid(row=3, column=0, sticky="we")

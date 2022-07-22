@@ -14,7 +14,7 @@ import fnmatch
 from PIL import Image, ImageOps
 import sys
 import gui.properties as props
-from gui.properties import PATH_THUMB
+from gui.properties import PATH_THUMB, PATH_PREVIEW
 from contextlib import contextmanager, redirect_stdout
 from tkinter import IntVar
 import enum
@@ -126,11 +126,14 @@ class OrbitCam:
 # basic renderer
 class Renderer:
     def __init__(self, 
-                 camera: bpy.types.Object):
+                 camera: bpy.types.Object,
+                 timelimit: int,
+                 aspect: (int, int)):
         self.scene = bpy.context.scene
         self.camera = camera
         self.scene.camera = self.camera
-        self.time_limit = 0
+        self.time_limit = timelimit
+        self.aspect = aspect
     
     # render image/video to configured output destination 
     def render(self, animation: bool) -> None:
@@ -157,6 +160,7 @@ class Renderer:
         self.scene.cycles.max_bounces = 4
         self.scene.cycles.tile_size = 4096
         self.scene.cycles.time_limit = self.time_limit
+        self.set_resolution(self.aspect[0], self.aspect[1], 640)
         
     # Change the maximum render time
     def set_time_limit(self, limit: float):
@@ -180,9 +184,18 @@ class Renderer:
         self.scene.cycles.tile_size = 2048
         self.scene.cycles.use_fast_gi = False
         self.scene.cycles.time_limit = 0
-   
+        self.set_resolution(self.aspect[0], self.aspect[1], 1280)
+    
+    # set resolution with aspect ratio w, h and factor
+    def set_resolution(self, width: int, height: int, max_width: int):
+        self.aspect = (width, height)
+        fac = int(max_width / width)
+        self.scene.render.resolution_y = height * fac
+        self.scene.render.resolution_x = width  * fac
+    
     # set aspect ratio
     def set_aspect_ratio(self, w: int, h: int) -> None:
+        self.aspect = (w, h)
         self.scene.render.resolution_y = int(self.scene.render.resolution_x / (w / h))
     
     # set camera
@@ -250,6 +263,11 @@ def clear_scene(keepLight: bool = True) -> None:
     for o in bpy.data.objects:
         if not(o.name == "Light" and keepLight):
             bpy.data.objects.remove(o)
+
+# Clears files, like the previously generated preview image
+def clear_files():
+    if os.path.exists(PATH_PREVIEW):
+        os.remove(PATH_PREVIEW)
 
 def remove_object(obj: bpy.types.Object) -> None:
    bpy.data.objects.remove(obj)

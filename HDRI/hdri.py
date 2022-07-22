@@ -77,5 +77,4 @@ def set_background_brightness(new_strength : float) -> None:
 def background_brightness_affects_objects(is_affecting : bool) -> None:
     world = bpy.data.worlds["World"]
     world.cycles_visibility.diffuse      = is_affecting
-    world.cycles_visibility.transmission = is_affecting
     world.cycles_visibility.scatter      = is_affecting

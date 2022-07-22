@@ -48,9 +48,8 @@ class MaterialWidgets(Frame):
         self.slider_transmiss.bind("<ButtonRelease-1>", lambda event: self.set_transmission(self.slider_transmiss.get(), True)) 
         self.slider_emissive.bind("<ButtonRelease-1>", lambda event: self.set_emissive(True)) 
         
-        
         lbl_sel_mat   = Label(master=self, text="Select:")
-        materials = ("default", Materials.GLASS.value, Materials.WATER.value, Materials.STONE.value, Materials.EMISSIVE.value, Materials.THICK_GLASS.value)
+        materials = ("default", Materials.GOLD.value, Materials.GLASS.value, Materials.WATER.value, Materials.STONE.value, Materials.EMISSIVE.value, Materials.THICK_GLASS.value)
         dropdown_materials = OptionMenu(self, mat_selected, *materials, command=self.set_material)
         
         self.frm_bump   = Frame(master=self, borderwidth=3)
@@ -107,8 +106,6 @@ class MaterialWidgets(Frame):
         self.frm_bump.grid(row=13, column=0, columnspan=2)
         
         self.default_values()
-        self.toogle_bumpiness(rerender=False)
-        self.toggle_emissive(rerender=False)
         
         
     def default_values(self):
@@ -141,6 +138,9 @@ class MaterialWidgets(Frame):
             case Materials.THICK_GLASS:
                 if self.control.model is not None:
                     self.control.material.thick_glass(self.control.model)
+            case Materials.GOLD:
+                self.control.material.gold_material()
+                
             case _:
                 self.default_values()
         self.adjust_sliders()
@@ -158,9 +158,11 @@ class MaterialWidgets(Frame):
         self.noise_detail.set(self.control.material.noise.detail)
         self.noise_distortion.set(self.control.material.noise.distortion)
         self.toogle_bumpiness(rerender=False)
+        self.emissive_strength.set(int(self.control.material.strength*100))
+        self.ent_emissive.delete(0, tk.END)
+        self.ent_emissive.insert(tk.END, self.emissive_strength.get())
         self.toggle_emissive(rerender=False)
         if self.emissive.get():
-            self.emissive_strength.set(int(self.control.material.strength*100))
             self.set_emissive(isReleased=False)
     
     def set_metallic_input(self, event):
@@ -168,28 +170,25 @@ class MaterialWidgets(Frame):
         if self.ent_metallic.get() != "":
             x = utils.clamp(int(self.ent_metallic.get()), 0, 100)
         self.set_metallic(x, True)
-        self.control.re_render()
         
     def set_roughness_input(self, event):
         x = 0
         if self.ent_roughness.get() != "":
             x = utils.clamp(int(self.ent_roughness.get()), 0, 100)
         self.set_roughness(x, True)
-        self.control.re_render()
         
     def set_transmiss_input(self, event):
         x = 0
         if self.ent_transmiss.get() != "":
             x = utils.clamp(int(self.ent_transmiss.get()), 0, 100)
         self.set_transmission(x, True)
-        self.control.re_render()
     
     def set_emissive_input(self, event):
         x = 0
         if self.ent_emissive.get() != "":
             x = utils.clamp(int(self.ent_emissive.get()), 0, 100)
-        self.set_emissive(x, True)
-        self.control.re_render()
+            self.emissive_strength.set(x)
+        self.set_emissive(True)
         
     def set_metallic(self, value: int, isReleased: bool):
         self.ent_metallic.delete(0, tk.END)
@@ -243,13 +242,15 @@ class MaterialWidgets(Frame):
             self.slider_emissive.unbind("<ButtonRelease-1>")
             
         self.control.material.set_emissive(is_emissive)
-        print("Setting emissive to " + str(is_emissive))
+        
         if rerender:
+            print("Setting emissive to " + str(is_emissive))
             self.control.re_render()
     
     def toggle_glow(self):
         frame_set_enabled(self.slider_emissive, self.glow.get())
         self.control.material.compositing.set_glow(self.glow.get())
+        print("Setting glow to " + str(self.glow.get()))
         self.control.re_render()
         
     def toogle_bumpiness(self, rerender: bool):
@@ -269,6 +270,7 @@ class MaterialWidgets(Frame):
             self.slider_distortion.unbind("<ButtonRelease-1>")
             self.control.material.noise.disable()
         if rerender:
+            print("Setting bumpiness to " + str(self.bump.get()))
             self.control.re_render()
     
     def set_noise_scale(self, isReleased: bool):
@@ -297,4 +299,5 @@ class Materials(enum.Enum):
     EMISSIVE = "emissive"
     WATER = "water"
     THICK_GLASS = "thick glass"
+    GOLD = "gold"
 
