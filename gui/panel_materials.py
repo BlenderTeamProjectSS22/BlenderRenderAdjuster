@@ -49,7 +49,7 @@ class MaterialWidgets(Frame):
         self.slider_emissive.bind("<ButtonRelease-1>", lambda event: self.set_emissive(True)) 
         
         lbl_sel_mat   = Label(master=self, text="Select:")
-        materials = ("default", Materials.GLASS.value, Materials.WATER.value, Materials.STONE.value, Materials.EMISSIVE.value, Materials.THICK_GLASS.value)
+        materials = ("default", Materials.GOLD.value, Materials.GLASS.value, Materials.WATER.value, Materials.STONE.value, Materials.EMISSIVE.value, Materials.THICK_GLASS.value)
         dropdown_materials = OptionMenu(self, mat_selected, *materials, command=self.set_material)
         
         self.frm_bump   = Frame(master=self, borderwidth=3)
@@ -138,6 +138,9 @@ class MaterialWidgets(Frame):
             case Materials.THICK_GLASS:
                 if self.control.model is not None:
                     self.control.material.thick_glass(self.control.model)
+            case Materials.GOLD:
+                self.control.material.gold_material()
+                
             case _:
                 self.default_values()
         self.adjust_sliders()
@@ -296,4 +299,5 @@ class Materials(enum.Enum):
     EMISSIVE = "emissive"
     WATER = "water"
     THICK_GLASS = "thick glass"
+    GOLD = "gold"
 
