@@ -106,8 +106,6 @@ class MaterialWidgets(Frame):
         self.frm_bump.grid(row=13, column=0, columnspan=2)
         
         self.default_values()
-        self.toogle_bumpiness(rerender=False)
-        self.toggle_emissive(rerender=False)
         
         
     def default_values(self):
@@ -169,21 +167,18 @@ class MaterialWidgets(Frame):
         if self.ent_metallic.get() != "":
             x = utils.clamp(int(self.ent_metallic.get()), 0, 100)
         self.set_metallic(x, True)
-        self.control.re_render()
         
     def set_roughness_input(self, event):
         x = 0
         if self.ent_roughness.get() != "":
             x = utils.clamp(int(self.ent_roughness.get()), 0, 100)
         self.set_roughness(x, True)
-        self.control.re_render()
         
     def set_transmiss_input(self, event):
         x = 0
         if self.ent_transmiss.get() != "":
             x = utils.clamp(int(self.ent_transmiss.get()), 0, 100)
         self.set_transmission(x, True)
-        self.control.re_render()
     
     def set_emissive_input(self, event):
         x = 0
@@ -191,7 +186,6 @@ class MaterialWidgets(Frame):
             x = utils.clamp(int(self.ent_emissive.get()), 0, 100)
             self.emissive_strength.set(x)
         self.set_emissive(True)
-        self.control.re_render()
         
     def set_metallic(self, value: int, isReleased: bool):
         self.ent_metallic.delete(0, tk.END)
@@ -245,13 +239,15 @@ class MaterialWidgets(Frame):
             self.slider_emissive.unbind("<ButtonRelease-1>")
             
         self.control.material.set_emissive(is_emissive)
-        print("Setting emissive to " + str(is_emissive))
+        
         if rerender:
+            print("Setting emissive to " + str(is_emissive))
             self.control.re_render()
     
     def toggle_glow(self):
         frame_set_enabled(self.slider_emissive, self.glow.get())
         self.control.material.compositing.set_glow(self.glow.get())
+        print("Setting glow to " + str(self.glow.get()))
         self.control.re_render()
         
     def toogle_bumpiness(self, rerender: bool):
@@ -271,6 +267,7 @@ class MaterialWidgets(Frame):
             self.slider_distortion.unbind("<ButtonRelease-1>")
             self.control.material.noise.disable()
         if rerender:
+            print("Setting bumpiness to " + str(self.bump.get()))
             self.control.re_render()
     
     def set_noise_scale(self, isReleased: bool):
