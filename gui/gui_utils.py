@@ -1,5 +1,5 @@
 from tkinter import Entry, OptionMenu, Frame
-from tkinter.ttk import Progressbar
+from tkinter.ttk import Progressbar, Separator
 
 # Enable/disable frame, recursively applied to all widgets contained in the frame
 def frame_set_enabled(frame, is_enabled: bool):
@@ -9,7 +9,7 @@ def frame_set_enabled(frame, is_enabled: bool):
             widget_set_enabled(widget, is_enabled)
         elif widget.winfo_children():
             frame_set_enabled(widget, is_enabled)
-        elif isinstance(widget, Progressbar):
+        elif isinstance(widget, Progressbar) or isinstance(widget, Separator):
             pass
         else:
             widget_set_enabled(widget, is_enabled)
