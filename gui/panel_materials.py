@@ -48,7 +48,6 @@ class MaterialWidgets(Frame):
         self.slider_transmiss.bind("<ButtonRelease-1>", lambda event: self.set_transmission(self.slider_transmiss.get(), True)) 
         self.slider_emissive.bind("<ButtonRelease-1>", lambda event: self.set_emissive(True)) 
         
-        
         lbl_sel_mat   = Label(master=self, text="Select:")
         materials = ("default", Materials.GLASS.value, Materials.WATER.value, Materials.STONE.value, Materials.EMISSIVE.value, Materials.THICK_GLASS.value)
         dropdown_materials = OptionMenu(self, mat_selected, *materials, command=self.set_material)
@@ -158,9 +157,11 @@ class MaterialWidgets(Frame):
         self.noise_detail.set(self.control.material.noise.detail)
         self.noise_distortion.set(self.control.material.noise.distortion)
         self.toogle_bumpiness(rerender=False)
+        self.emissive_strength.set(int(self.control.material.strength*100))
+        self.ent_emissive.delete(0, tk.END)
+        self.ent_emissive.insert(tk.END, self.emissive_strength.get())
         self.toggle_emissive(rerender=False)
         if self.emissive.get():
-            self.emissive_strength.set(int(self.control.material.strength*100))
             self.set_emissive(isReleased=False)
     
     def set_metallic_input(self, event):
@@ -188,7 +189,8 @@ class MaterialWidgets(Frame):
         x = 0
         if self.ent_emissive.get() != "":
             x = utils.clamp(int(self.ent_emissive.get()), 0, 100)
-        self.set_emissive(x, True)
+            self.emissive_strength.set(x)
+        self.set_emissive(True)
         self.control.re_render()
         
     def set_metallic(self, value: int, isReleased: bool):
