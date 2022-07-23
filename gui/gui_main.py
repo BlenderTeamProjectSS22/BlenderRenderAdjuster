@@ -979,12 +979,13 @@ class PointCloudWidgets(Frame):
     modeltest = None
 
     def __init__(self, master, control):
-        createPointObjects(self)
+        
 
         self.size : float = 1
         Frame.__init__(self, master, borderwidth=2, relief="groove")
         self.master = master
         self.control = control
+        createPointObjects(self)
         self.random  = BooleanVar()
         self.vertices = BooleanVar()
         self.pointcloud = BooleanVar()
@@ -1053,10 +1054,11 @@ class PointCloudWidgets(Frame):
         return self.size
 
     def set_size(self, value, is_released : bool) -> None:
-        self.size = float(value)
-        setSize(self,value)
-        if is_released:
-            self.control.re_render()
+        if(self.control.model != None):
+            self.size = float(value)
+            setSize(self,value)
+            if is_released:
+                self.control.re_render()
 
     
     def switch_to_random(self):

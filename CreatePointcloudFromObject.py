@@ -130,11 +130,15 @@ def createPointObjects(self):
     self.cube = bpy.context.object
     bpy.context.object.hide_render = True
     bpy.context.object.hide_viewport = True
+    so = bpy.context.active_object
+    self.control.material.apply_material(so)
 
     bpy.ops.mesh.primitive_uv_sphere_add(radius=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
     self.sphere = bpy.context.object
     bpy.context.object.hide_render = True
     bpy.context.object.hide_viewport = True
+    so = bpy.context.active_object
+    self.control.material.apply_material(so)
     
     bpy.ops.mesh.primitive_circle_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
     bpy.ops.object.editmode_toggle()
@@ -143,3 +147,5 @@ def createPointObjects(self):
     self.disk = bpy.context.object
     bpy.context.object.hide_render = True
     bpy.context.object.hide_viewport = True
+    so = bpy.context.active_object
+    self.control.material.apply_material(so)
