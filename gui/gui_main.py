@@ -547,6 +547,8 @@ class ColorMeshWidgets(Frame):
         self.control = control
         
         self.current_color = None
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
         
         lbl_look    = Label(master=self, text="Look", font=FONT_TITLE)
         lbl_color   = Label(master=self, text="Color")
@@ -563,8 +565,8 @@ class ColorMeshWidgets(Frame):
         lbl_color.grid(row=1, column=0)
         lbl_add.grid(row=1, column=1)
         btn_picker.grid(row=2, column=0)
-        check_vertc.grid(row=3, column=0, sticky="w")
-        check_mesh.grid(row=2, column=1, sticky="w")
+        check_vertc.grid(row=3, column=0)
+        check_mesh.grid(row=2, column=1)
     
     def pick_color(self):
     
@@ -602,10 +604,6 @@ class ColorMeshWidgets(Frame):
         bpy.ops.object.select_all(action = "DESELECT")
         bpy.data.objects[self.control.model.name].select_set(True) 
         self.control.re_render()
-
-
-    
-
 
 
 class TextureWidgets(Frame):
