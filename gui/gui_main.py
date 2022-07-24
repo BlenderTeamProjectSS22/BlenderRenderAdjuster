@@ -14,7 +14,7 @@ from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
-from CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube,createPointObjects,setSize
+from CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube,createPointObjects,setSize,addplane,selectmainobject,removemod
 import bpy
 import webbrowser
 import threading
@@ -585,25 +585,9 @@ class ColorMeshWidgets(Frame):
             delete_vertex(self.control.material.material)
         self.control.re_render()
 
-
+    # calls the addplane function in CreatePointcloudFromObject
     def add_plane(self):
-        self.has_plane = False
-        for obj in bpy.context.scene.objects:
-            if obj.name == "Plane":
-                self.has_plane = True
-            
-        if self.has_plane:
-            bpy.ops.object.select_all(action = "DESELECT")
-            bpy.data.objects["Plane"].select_set(True) 
-            bpy.ops.object.delete()   
-            
-        else:
-            bpy.ops.mesh.primitive_plane_add(enter_editmode=False, align='WORLD', location=(0, 0, -1), scale=(1, 1, 1))
-            bpy.ops.transform.resize(value=(15, 15, 15))
-        
-        bpy.ops.object.select_all(action = "DESELECT")
-        bpy.data.objects[self.control.model.name].select_set(True) 
-        self.control.re_render()
+        addplane(self)
 
 
 class TextureWidgets(Frame):
@@ -970,6 +954,7 @@ class FrameWidgets(Frame):
             self.control.re_render()
 
 class PointCloudWidgets(Frame):
+    # global varibles in PointCloudWidgets
     hasconverted = False
     cube = None
     sphere = None
@@ -978,12 +963,15 @@ class PointCloudWidgets(Frame):
 
     def __init__(self, master, control):
         
-
         self.size : float = 1
         Frame.__init__(self, master, borderwidth=2, relief="groove")
         self.master = master
         self.control = control
+
+        # creates objects that are instanced in the pointcloud
         createPointObjects(self)
+
+        # variables
         self.random  = BooleanVar()
         self.vertices = BooleanVar()
         self.pointcloud = BooleanVar()
@@ -991,11 +979,15 @@ class PointCloudWidgets(Frame):
         self.obj_selected.set("sphere")
         self.vertices.set(True)
 
+        # grid
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=1)
+
+
+        # buttons, sliders and selection box
         lbl_pointcloudsettings =  Label(master=self, text="Pointcloud Object:", font="Arial 10 bold")
         check_pointcloud = Checkbutton(master=self, text="Pointcloud", variable=self.pointcloud, anchor="w", command=self.converter)
         check_vertices  = Checkbutton(master=self, text="vertices", variable=self.vertices, anchor="w", command=self.switch_to_vertex)
@@ -1012,6 +1004,7 @@ class PointCloudWidgets(Frame):
         slider_size.set(self.get_size())  
 
 
+        # grid
         check_pointcloud.grid(row=1, column=0, sticky="w")
         lbl_size.grid(row=2, column=0, sticky="w")
         slider_size.grid(row=2, column=1,  sticky="we")
@@ -1021,6 +1014,7 @@ class PointCloudWidgets(Frame):
         lbl_pointcloudobjects.grid(row=4, column=0,  sticky="we")
         dropdown_objects.grid(row=4, column=1, sticky="w")
 
+    # sets the instanced object to be the object selected in the gui
     def set_object(self, *args):
         tex = PointCloudObjects(args[0])
         if tex == PointCloudObjects.SPHERE:
@@ -1030,24 +1024,24 @@ class PointCloudWidgets(Frame):
         elif tex == PointCloudObjects.DISK:
             setDisk(self)
         
-        self.selectMainObject()
+        self.select_main_object()
         self.control.re_render()
 
-    def selectMainObject(self):
-        bpy.context.view_layer.objects.active = self.control.model
+    # selects the self.control.model object
+    def select_main_object(self):
+        selectmainobject(self)
    
-
+    # resets the pointcloud and settings when importing a new object
     def reset(self):
-        bpy.ops.object.modifier_remove(modifier="GeometryNodes")
+        removemod()
         self.hasconverted = False
         self.pointcloud.set(False)
 
-            
-    
+    # converts the selected object into a pointcloud 
     def converter(self):
         convert(self)
     
-    
+    # returns the size of the instanced objects
     def get_size(self) -> float:
         return self.size
 
@@ -1058,7 +1052,7 @@ class PointCloudWidgets(Frame):
             if is_released:
                 self.control.re_render()
 
-    
+    # switches between the random and vertex buttons so only one is selected at any time and switches the pointcloud into random-point mode
     def switch_to_random(self):
     
         if self.random.get():
@@ -1069,6 +1063,7 @@ class PointCloudWidgets(Frame):
             self.vertices.set(True)
         self.control.re_render()
 
+    # switches between the random and vertex buttons so only one is selected at any time and switches the pointcloud into vertex-pointcloud mode
     def switch_to_vertex(self):
         
         if self.vertices.get():
@@ -1087,8 +1082,6 @@ class PointCloudObjects(enum.Enum):
     DISK = "disk"
 
    
-
-
 class RightPanel(Frame):
         
     def __init__(self, master, control):
