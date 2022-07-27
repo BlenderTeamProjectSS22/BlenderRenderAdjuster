@@ -14,7 +14,7 @@ from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
-from pointcloud.CreatePointcloudFromObject import convert,switch_random,switch_vertex,set_sphere,set_disk,set_cube,set_monkey,create_point_objects,set_size,add_plane,select_main_object,remove_mod
+from pointcloud.CreatePointcloudFromObject import convert_active_to_pointcloud,switch_random,switch_vertex,set_sphere,set_disk,set_cube,set_monkey,create_point_objects,set_size,add_plane,select_main_object,remove_mod
 import webbrowser
 import threading
 import requests
@@ -586,7 +586,7 @@ class ColorMeshWidgets(Frame):
 
     # calls the addplane function in CreatePointcloudFromObject
     def add_plane(self):
-        addplane(self)
+        add_plane(self)
 
 
 class TextureWidgets(Frame):
@@ -988,7 +988,7 @@ class PointCloudWidgets(Frame):
 
         # buttons, sliders and selection box
         lbl_pointcloudsettings =  Label(master=self, text="Pointcloud Object:", font="Arial 10 bold")
-        check_pointcloud = Checkbutton(master=self, text="Pointcloud", variable=self.pointcloud, anchor="w", command=self.converter)
+        check_pointcloud = Checkbutton(master=self, text="Pointcloud", variable=self.pointcloud, anchor="w", command=self.convert_active_to_pointcloud)
         check_vertices  = Checkbutton(master=self, text="vertices", variable=self.vertices, anchor="w", command=self.switch_to_vertex)
         check_random = Checkbutton(master=self, text="random", variable=self.random, anchor="w", command=self.switch_to_random)
         pointcloudobjects = (PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value)
@@ -1039,9 +1039,9 @@ class PointCloudWidgets(Frame):
         self.pointcloud.set(False)
 
     # converts the selected object into a pointcloud 
-    def converter(self):
+    def convert_active_to_pointcloud(self):
         self.control.vertc.set(False)
-        convert(self)
+        convert_active_to_pointcloud(self)
     
     # returns the size of the instanced objects
     def get_size(self) -> float:
