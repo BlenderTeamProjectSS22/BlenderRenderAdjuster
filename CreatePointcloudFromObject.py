@@ -44,6 +44,8 @@ def geoNodeForObject(self,object):
     nodes.new('GeometryNodeDistributePointsOnFaces')
     object_node = nodes.new("GeometryNodeObjectInfo")
     instance_node = nodes.new ('GeometryNodeInstanceOnPoints')
+    bpy.data.node_groups["GeometryNodes"].nodes["Instance on Points"].inputs[5].default_value[0] = -1.570796
+    bpy.data.node_groups["GeometryNodes"].nodes["Instance on Points"].inputs[5].default_value[1] = 1.5708
     node_group.links.new(group_in.outputs[0], point_node.inputs['Mesh'])
     node_group.links.new(instance_node.inputs[0], point_node.outputs[0])
     node_group.links.new(instance_node.inputs[2], group_scale.outputs[0])
@@ -123,9 +125,12 @@ def setCube(self):
 def setDisk(self):
     bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.disk
 
+def setMonkey(self):
+    bpy.data.node_groups["GeometryNodes"].nodes["Object Info"].inputs[0].default_value = self.monkey
+
 # changes the size of the instanced objects from the pointcloud
 def setSize(self,value):
-    bpy.data.node_groups["GeometryNodes"].nodes["Scale Elements"].inputs[2].default_value = (value + 0.1) / 10
+    bpy.data.node_groups["GeometryNodes"].nodes["Scale Elements"].inputs[2].default_value = (float(value) + 0.1) / 10
 
 
 # creates default objects that are instanced to create the pointcloud (are hidden in viewport and render).      
@@ -153,6 +158,29 @@ def createPointObjects(self):
     bpy.context.object.hide_viewport = True
     so = bpy.context.active_object
     self.control.material.apply_material(so)
+
+
+    bpy.ops.mesh.primitive_monkey_add(size=2, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.separate(type='LOOSE')
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.object.select_all(action = "DESELECT")
+    for obj in bpy.context.scene.objects:
+        if  obj.name == "Suzanne.001" or obj.name == "Suzanne":
+            bpy.data.objects[obj.name].select_set(True)
+            bpy.ops.object.delete()  
+    
+    for obj in bpy.context.scene.objects:
+      
+        if  obj.name == "Suzanne.002":
+            bpy.context.view_layer.objects.active = obj
+            
+    self.monkey = bpy.context.object
+    bpy.context.object.hide_render = True
+    bpy.context.object.hide_viewport = True
+    so = bpy.context.active_object
+    self.control.material.apply_material(so)
+    
 
 
 # adds a plane into the scene or deletes it if a plane is present.

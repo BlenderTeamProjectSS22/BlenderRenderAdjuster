@@ -14,7 +14,7 @@ from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
-from CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube,createPointObjects,setSize,addplane,selectmainobject,removemod
+from CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube,setMonkey,createPointObjects,setSize,addplane,selectmainobject,removemod
 import bpy
 import webbrowser
 import threading
@@ -994,7 +994,7 @@ class PointCloudWidgets(Frame):
         check_random = Checkbutton(master=self, text="random", variable=self.random, anchor="w", command=self.switch_to_random)
         pointcloudobjects = (PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value)
         lbl_pointcloudobjects =  Label(master=self, text="Select Object:") 
-        pointcloudobjects = (PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value )
+        pointcloudobjects = (PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value, PointCloudObjects.MONKEY.value )
         dropdown_objects = OptionMenu(self, self.obj_selected, *pointcloudobjects, command=self.set_object)
        
         lbl_size = Label(master=self, text="Point Size")
@@ -1023,6 +1023,8 @@ class PointCloudWidgets(Frame):
             setCube(self)
         elif tex == PointCloudObjects.DISK:
             setDisk(self)
+        elif tex == PointCloudObjects.MONKEY:
+            setMonkey(self)
         
         self.select_main_object()
         self.control.re_render()
@@ -1080,6 +1082,7 @@ class PointCloudObjects(enum.Enum):
     SPHERE = "sphere"
     CUBE = "cube"
     DISK = "disk"
+    MONKEY = "monkey"
 
    
 class RightPanel(Frame):
