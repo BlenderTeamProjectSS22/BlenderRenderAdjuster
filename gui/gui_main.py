@@ -41,7 +41,6 @@ from gui.anim_window import PreviewWindow, PreviewContent
 from gui.properties import *
 from gui.settings import load_settings, save_settings
 
-
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, create_default_light
 from Lightning.light_functions import day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
 from materials.materials import MaterialController
@@ -213,8 +212,6 @@ class LeftPanel(Frame):
             self.control.vertc.set(False)
             self.control.vertc.set(True)
         self.control.camera.reset_position()
-
-        self.control.re_render()
         
         # Enabled all model controls
         if self.master.nomodel:
