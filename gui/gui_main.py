@@ -14,8 +14,7 @@ from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
-from CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube,setMonkey,createPointObjects,setSize,addplane,selectmainobject,removemod
-import bpy
+from pointcloud.CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube,setMonkey,createPointObjects,setSize,addplane,selectmainobject,removemod
 import webbrowser
 import threading
 import requests
@@ -1041,6 +1040,7 @@ class PointCloudWidgets(Frame):
 
     # converts the selected object into a pointcloud 
     def converter(self):
+        self.control.vertc.set(False)
         convert(self)
     
     # returns the size of the instanced objects
