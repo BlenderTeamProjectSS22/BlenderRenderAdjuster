@@ -5,7 +5,7 @@
 # description:
 # GUI element: Main program, renders the GUI and connects it to other function
 
-from pickle import FALSE
+
 import tkinter as tk
 from tkinter import Frame, Toplevel, Label, Button, StringVar, BooleanVar, IntVar, Checkbutton, OptionMenu, Scale, Canvas, Entry, PhotoImage, Tk
 from tkinter import ttk
@@ -14,6 +14,7 @@ from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
+from pointcloud.CreatePointcloudFromObject import convert_active_to_pointcloud,switch_random,switch_vertex,set_sphere,set_disk,set_cube,set_monkey,create_point_objects,set_size,add_plane,select_main_object,remove_mod
 import webbrowser
 import threading
 import requests
@@ -39,6 +40,7 @@ import gui.properties as props
 from gui.anim_window import PreviewWindow, PreviewContent
 from gui.properties import *
 from gui.settings import load_settings, save_settings
+
 
 from Lightning.light_functions import day_light, night_light, delete_lights, lantern_light, create_default_light
 from Lightning.light_functions import day_night_cycle, delete_all_lights, delete_light_animation, lights_enabled
@@ -135,6 +137,7 @@ class ProgramGUI(tk.Frame):
         frame_set_enabled(self.right.frm_mat.frm_emissive, False)
         frame_set_enabled(self.right.frm_tex, True)
         frame_set_enabled(self.right.frm_light, True)
+        frame_set_enabled(self.right.frm_point, True)
         self.right.frm_light.activate_brightness_slider(True)
 
 class LeftPanel(Frame):
@@ -200,7 +203,9 @@ class LeftPanel(Frame):
     # Imports an object, filename must be valid
     def import_model(self, filename):
         if self.control.model != None:
+            self.master.right.frm_point.reset()
             utils.remove_object(self.control.model)
+           
         self.control.model = utils.import_mesh(filename)
         self.control.material.apply_material(self.control.model)
         # recompute vertex colors if activated:
@@ -208,6 +213,8 @@ class LeftPanel(Frame):
             self.control.vertc.set(False)
             self.control.vertc.set(True)
         self.control.camera.reset_position()
+
+        self.control.re_render()
         
         # Enabled all model controls
         if self.master.nomodel:
@@ -568,26 +575,29 @@ class ColorMeshWidgets(Frame):
         self.control = control
         
         self.current_color = None
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
         
         lbl_look    = Label(master=self, text="Look", font=FONT_TITLE)
+
         self.lbl_color   = Label(master=self, text="Color")
         self.btn_picker  = Button(master=self, text="pick", command=self.pick_color)
-        lbl_type    = Label(master=self, text="Type")
+        lbl_add    = Label(master=self, text="Add")
+
         self.control.vertc = BooleanVar()
         self.mesh  = BooleanVar()
-        self.point = BooleanVar()
         # handle vertc variable with tracing since it is changed at model import
         check_vertc = Checkbutton(master=self, text="Vertex color", variable=self.control.vertc, anchor="w")
         self.control.vertc.trace_add("write", self.update_vertex_color)
-        check_mesh  = Checkbutton(master=self, text="Full mesh", variable=self.mesh, anchor="w", command=self.switch_mesh)
-        check_point = Checkbutton(master=self, text="Point cloud", variable=self.point, anchor="w", command=self.switch_pointcloud)
+        check_mesh  = Checkbutton(master=self, text="Plane", variable=self.mesh, anchor="w", command=self.add_plane)
+        
         lbl_look.grid(row=0, column=0, columnspan=2)
         self.lbl_color.grid(row=1, column=0)
-        lbl_type.grid(row=1, column=1)
+        lbl_add.grid(row=1, column=1)
         self.btn_picker.grid(row=2, column=0)
-        check_vertc.grid(row=3, column=0, sticky="w")
-        check_mesh.grid(row=2, column=1, sticky="w")
-        check_point.grid(row=3, column=1, sticky="w")
+        check_vertc.grid(row=3, column=0)
+        check_mesh.grid(row=2, column=1)
+
     
     def pick_color(self):
     
@@ -609,20 +619,10 @@ class ColorMeshWidgets(Frame):
             widget_set_enabled(self.btn_picker, True)
             delete_vertex(self.control.material.material)
         self.control.re_render()
-    
-    def switch_mesh(self):
-        if self.mesh.get():
-            self.point.set(False)
-        else:
-            self.point.set(True)
-        self.control.re_render()
-    
-    def switch_pointcloud(self):
-        if self.point.get():
-            self.mesh.set(False)
-        else:
-            self.mesh.set(True)
-        self.control.re_render()
+
+    # calls the addplane function in CreatePointcloudFromObject
+    def add_plane(self):
+        add_plane(self)
 
 
 class TextureWidgets(Frame):
@@ -989,7 +989,139 @@ class FrameWidgets(Frame):
             self.control.frames.set_current_frame(int(value))
             self.control.re_render()
 
+class PointCloudWidgets(Frame):
+    # global varibles in PointCloudWidgets
+    hasconverted = False
+    cube = None
+    sphere = None
+    disk = None
+    modeltest = None
 
+    def __init__(self, master, control):
+        
+        self.size : float = 1
+        Frame.__init__(self, master, borderwidth=2, relief="groove")
+        self.master = master
+        self.control = control
+
+        # creates objects that are instanced in the pointcloud
+        create_point_objects(self)
+
+        # variables
+        self.random  = BooleanVar()
+        self.vertices = BooleanVar()
+        self.pointcloud = BooleanVar()
+        self.obj_selected = StringVar(self)
+        self.obj_selected.set("sphere")
+        self.vertices.set(True)
+
+        # grid
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+
+
+        # buttons, sliders and selection box
+        lbl_pointcloudsettings =  Label(master=self, text="Pointcloud Object:", font="Arial 10 bold")
+        check_pointcloud = Checkbutton(master=self, text="Pointcloud", variable=self.pointcloud, anchor="w", command=self.convert_active_to_pointcloud)
+        check_vertices  = Checkbutton(master=self, text="vertices", variable=self.vertices, anchor="w", command=self.switch_to_vertex)
+        check_random = Checkbutton(master=self, text="random", variable=self.random, anchor="w", command=self.switch_to_random)
+        pointcloudobjects = (PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value)
+        lbl_pointcloudobjects =  Label(master=self, text="Select Object:") 
+        pointcloudobjects = (PointCloudObjects.SPHERE.value, PointCloudObjects.CUBE.value, PointCloudObjects.DISK.value, PointCloudObjects.MONKEY.value )
+        dropdown_objects = OptionMenu(self, self.obj_selected, *pointcloudobjects, command=self.set_object)
+       
+        lbl_size = Label(master=self, text="Point Size")
+        slider_size = Scale(master=self, to = 2, orient="horizontal",
+                                  resolution = 0.05, showvalue=False, command=lambda val: self.set_size(val, False))
+        slider_size.bind("<ButtonRelease-1>", lambda event : self.set_size(self.get_size(), True)) 
+        slider_size.set(self.get_size())  
+
+
+        # grid
+        check_pointcloud.grid(row=1, column=0, sticky="w")
+        lbl_size.grid(row=2, column=0, sticky="w")
+        slider_size.grid(row=2, column=1,  sticky="we")
+        lbl_pointcloudsettings.grid(row=0, column=0, columnspan=2)
+        check_vertices.grid(row=3, column=1, sticky="w")
+        check_random.grid(row=3, column=0, sticky="w")
+        lbl_pointcloudobjects.grid(row=4, column=0,  sticky="we")
+        dropdown_objects.grid(row=4, column=1, sticky="w")
+
+    # sets the instanced object to be the object selected in the gui
+    def set_object(self, *args):
+        tex = PointCloudObjects(args[0])
+        if tex == PointCloudObjects.SPHERE:
+            set_sphere(self)
+        elif tex == PointCloudObjects.CUBE:
+            set_cube(self)
+        elif tex == PointCloudObjects.DISK:
+            set_disk(self)
+        elif tex == PointCloudObjects.MONKEY:
+            set_monkey(self)
+        
+        self.select_main_object()
+        self.control.re_render()
+
+    # selects the self.control.model object
+    def select_main_object(self):
+        select_main_object(self)
+   
+    # resets the pointcloud and settings when importing a new object
+    def reset(self):
+        remove_mod()
+        self.hasconverted = False
+        self.pointcloud.set(False)
+
+    # converts the selected object into a pointcloud 
+    def convert_active_to_pointcloud(self):
+        self.control.vertc.set(False)
+        convert_active_to_pointcloud(self)
+    
+    # returns the size of the instanced objects
+    def get_size(self) -> float:
+        return self.size
+
+    def set_size(self, value, is_released : bool) -> None:
+        if(self.control.model != None):
+            self.size = float(value)
+            set_size(self,value)
+            if is_released:
+                self.control.re_render()
+
+    # switches between the random and vertex buttons so only one is selected at any time and switches the pointcloud into random-point mode
+    def switch_to_random(self):
+    
+        if self.random.get():
+            if(self.hasconverted):
+                switch_random(self)
+            self.vertices.set(False)
+        else:
+            self.vertices.set(True)
+        self.control.re_render()
+
+    # switches between the random and vertex buttons so only one is selected at any time and switches the pointcloud into vertex-pointcloud mode
+    def switch_to_vertex(self):
+        
+        if self.vertices.get():
+            if(self.hasconverted):
+                switch_vertex(self)
+            self.random.set(False)
+        else:
+            self.random.set(True)
+        self.control.re_render()
+
+
+# Enum containing all possibe point cloud objects
+class PointCloudObjects(enum.Enum):
+    SPHERE = "sphere"
+    CUBE = "cube"
+    DISK = "disk"
+    MONKEY = "monkey"
+
+   
 class RightPanel(Frame):
         
     def __init__(self, master, control):
@@ -1018,3 +1150,8 @@ class RightPanel(Frame):
         # Lighting widgets
         self.frm_light = LightingWidgets(self, control)
         self.frm_light.grid(row=3, column=0, sticky="we")
+
+        # Pointcloud widgets
+        self.frm_point = PointCloudWidgets(self, control)
+        self.frm_point.grid(row=4, column=0, sticky="we")
+
