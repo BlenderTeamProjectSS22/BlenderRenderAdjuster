@@ -14,7 +14,7 @@ from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
-from pointcloud.CreatePointcloudFromObject import convert,switchrandom,switchvertex,setSphere,setDisk,setCube,setMonkey,createPointObjects,setSize,addplane,selectmainobject,removemod
+from pointcloud.CreatePointcloudFromObject import convert,switch_random,switch_vertex,set_sphere,set_disk,set_cube,set_monkey,create_point_objects,set_size,add_plane,select_main_object,remove_mod
 import webbrowser
 import threading
 import requests
@@ -968,7 +968,7 @@ class PointCloudWidgets(Frame):
         self.control = control
 
         # creates objects that are instanced in the pointcloud
-        createPointObjects(self)
+        create_point_objects(self)
 
         # variables
         self.random  = BooleanVar()
@@ -1017,24 +1017,24 @@ class PointCloudWidgets(Frame):
     def set_object(self, *args):
         tex = PointCloudObjects(args[0])
         if tex == PointCloudObjects.SPHERE:
-            setSphere(self)
+            set_sphere(self)
         elif tex == PointCloudObjects.CUBE:
-            setCube(self)
+            set_cube(self)
         elif tex == PointCloudObjects.DISK:
-            setDisk(self)
+            set_disk(self)
         elif tex == PointCloudObjects.MONKEY:
-            setMonkey(self)
+            set_monkey(self)
         
         self.select_main_object()
         self.control.re_render()
 
     # selects the self.control.model object
     def select_main_object(self):
-        selectmainobject(self)
+        select_main_object(self)
    
     # resets the pointcloud and settings when importing a new object
     def reset(self):
-        removemod()
+        remove_mod()
         self.hasconverted = False
         self.pointcloud.set(False)
 
@@ -1050,7 +1050,7 @@ class PointCloudWidgets(Frame):
     def set_size(self, value, is_released : bool) -> None:
         if(self.control.model != None):
             self.size = float(value)
-            setSize(self,value)
+            set_size(self,value)
             if is_released:
                 self.control.re_render()
 
@@ -1059,7 +1059,7 @@ class PointCloudWidgets(Frame):
     
         if self.random.get():
             if(self.hasconverted):
-                switchrandom(self)
+                switch_random(self)
             self.vertices.set(False)
         else:
             self.vertices.set(True)
@@ -1070,7 +1070,7 @@ class PointCloudWidgets(Frame):
         
         if self.vertices.get():
             if(self.hasconverted):
-                switchvertex(self)
+                switch_vertex(self)
             self.random.set(False)
         else:
             self.random.set(True)
