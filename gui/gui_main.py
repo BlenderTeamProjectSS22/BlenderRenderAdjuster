@@ -14,7 +14,7 @@ from tkinter.messagebox import showinfo, showerror
 from tkinter import filedialog
 from PIL import ImageTk, Image
 
-from pointcloud.CreatePointcloudFromObject import convert_active_to_pointcloud,switch_random,switch_vertex,set_sphere,set_disk,set_cube,set_monkey,create_point_objects,set_size,add_plane,select_main_object,remove_mod
+from pointcloud.CreatePointcloudFromObject import convert_active_to_pointcloud,switch_random,switch_vertex,set_sphere,set_disk,set_cube,set_monkey,create_point_objects,set_size,add_plane,select_main_object,remove_geometry_mod
 import webbrowser
 import threading
 import requests
@@ -1068,7 +1068,7 @@ class PointCloudWidgets(Frame):
    
     # resets the pointcloud and settings when importing a new object
     def reset(self):
-        remove_mod()
+        remove_geometry_mod()
         self.hasconverted = False
         self.pointcloud.set(False)
 
