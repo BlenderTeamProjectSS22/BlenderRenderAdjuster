@@ -584,7 +584,7 @@ class ColorMeshWidgets(Frame):
         self.control.vertc = BooleanVar()
         self.mesh  = BooleanVar()
         # handle vertc variable with tracing since it is changed at model import
-        check_vertc = Checkbutton(master=self, text="Vertex color", variable=self.control.vertc, anchor="w")
+        check_vertc = Checkbutton(master=self, text="Vertex color", variable=self.control.vertc, anchor="w", command=self.control.re_render)
         self.control.vertc.trace_add("write", self.update_vertex_color)
         check_mesh  = Checkbutton(master=self, text="Plane", variable=self.mesh, anchor="w", command=self.add_plane)
         
@@ -615,7 +615,6 @@ class ColorMeshWidgets(Frame):
             widget_set_enabled(self.lbl_color, True)
             widget_set_enabled(self.btn_picker, True)
             delete_vertex(self.control.material.material)
-        self.control.re_render()
 
     # calls the addplane function in CreatePointcloudFromObject
     def add_plane(self):
