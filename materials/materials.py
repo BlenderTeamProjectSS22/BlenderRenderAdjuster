@@ -1,5 +1,12 @@
+"""
+author: Alexander Ritter
+created on: 27/02/2022
+description:
+The logic responsible for initialising a materials,
+modifying its properties and applying presets
+"""
+
 import bpy
-from abc import ABC, abstractmethod
 
 DEFAULT_COLOR = (0, 0, 0.8, 1)
 
@@ -229,9 +236,8 @@ class MaterialController:
             self.bsdf.inputs["Emission Strength"].default_value = strength
     
     def set_solidified(self, obj, solidify_enabled: bool):
-        if solidify_enabled:
+        if self.solidify is None:
             self.solidify = obj.modifiers.new("Solidify", "SOLIDIFY")
-        else:
-            if self.solidify is not None:
-                bpy.ops.object.modifier_remove(modifier="Solidify")
-                self.solidify = None
+        
+        self.solidify.show_render   = solidify_enabled
+        self.solidify.show_viewport = solidify_enabled
