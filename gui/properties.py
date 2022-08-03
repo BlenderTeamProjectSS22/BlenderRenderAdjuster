@@ -3,7 +3,7 @@ UPDATE_URL = "https://raw.githubusercontent.com/AlexanderRitter02/update_checks/
 
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
-VERSION_PATCH = 0
+VERSION_PATCH = 1
 
 DEBUG = False
 VERBOSE = False
