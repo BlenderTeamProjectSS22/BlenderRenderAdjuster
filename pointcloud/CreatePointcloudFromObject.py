@@ -129,7 +129,8 @@ def set_monkey(self):
 
 # changes the size of the instanced objects from the pointcloud
 def set_size(self,value):
-    bpy.data.node_groups["GeometryNodes"].nodes["Scale Elements"].inputs[2].default_value = (float(value) + 0.1) / 10
+    if (self.hasconverted):
+        bpy.data.node_groups["GeometryNodes"].nodes["Scale Elements"].inputs[2].default_value = (float(value) + 0.1) / 10
 
 
 # creates default objects that are instanced to create the pointcloud (are hidden in viewport and render).      
